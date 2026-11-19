@@ -1,0 +1,2332 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Jadwal Armada Arsyi Trans</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>window.__SB={url:"__SUPABASE_URL__",key:"__SUPABASE_ANON_KEY__"};</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: papan dispatch. Header + tab, lalu timeline unit per hari (baris = bus). Semua edit lewat panel samping. */
+:root{
+  --bg:#edf1ef; --surface:#ffffff; --surface-2:#f4f7f5; --line:#d6ddda; --line-strong:#b7c3bf;
+  --fg:#13201e; --muted:#586866;
+  --accent:#0a6a64; --accent-fg:#ffffff; --accent-soft:#d6ede9;
+  --sea:#dcebea; --land:#f5f7f1; --coast:#a9bbb6;
+  --ok:#1b7a3d; --ok-soft:#d9f0e1; --warn:#955300; --warn-soft:#fbe8c4; --bad:#b3261e; --bad-soft:#fadcd8;
+  --bar-s:48%; --bar-l:87%; --bar-fg-l:18%; --bar-line-l:56%;
+  --font-ui:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --cw:38px; --label-w:128px; --row-h:46px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1615; --surface:#162120; --surface-2:#1b2827; --line:#2b3b39; --line-strong:#3e5350;
+    --fg:#e5eeec; --muted:#93a6a3;
+    --accent:#4fc3b8; --accent-fg:#05211e; --accent-soft:#16413d;
+    --sea:#0f1c1b; --land:#1d2c2a; --coast:#3a544f;
+    --ok:#5fd18a; --ok-soft:#173a26; --warn:#f0b24a; --warn-soft:#3d2d0e; --bad:#ff948b; --bad-soft:#462220;
+    --bar-s:32%; --bar-l:26%; --bar-fg-l:90%; --bar-line-l:44%;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1615; --surface:#162120; --surface-2:#1b2827; --line:#2b3b39; --line-strong:#3e5350;
+  --fg:#e5eeec; --muted:#93a6a3;
+  --accent:#4fc3b8; --accent-fg:#05211e; --accent-soft:#16413d;
+    --sea:#0f1c1b; --land:#1d2c2a; --coast:#3a544f;
+  --ok:#5fd18a; --ok-soft:#173a26; --warn:#f0b24a; --warn-soft:#3d2d0e; --bad:#ff948b; --bad-soft:#462220;
+  --bar-s:32%; --bar-l:26%; --bar-fg-l:90%; --bar-line-l:44%;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--fg); font-family:var(--font-ui); font-size:14px; line-height:1.45;
+  padding-block:20px 56px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+}
+body.lock{overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3,h4,p{margin:0}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.mono{font-family:var(--font-mono)}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-mark{font-family:var(--font-mono);font-weight:600;font-size:15px;letter-spacing:.06em;background:var(--accent);color:var(--accent-fg);border-radius:6px;padding:6px 9px;line-height:1}
+.brand h1{font-size:18px;font-weight:600;letter-spacing:-.01em}
+.brand p{color:var(--muted);font-size:12px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs a{padding:9px 14px;color:var(--muted);text-decoration:none;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs a[aria-current="page"]{color:var(--fg);border-bottom-color:var(--accent)}
+.tabs a:hover{color:var(--fg)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 14px;border-radius:7px;border:1px solid var(--line-strong);background:var(--surface);cursor:pointer;font-weight:500;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.primary:hover{filter:brightness(1.07);background:var(--accent)}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn.danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,var(--line))}
+.btn.danger.armed{background:var(--bad);color:var(--surface);border-color:var(--bad)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+/* banner / states */
+.note{padding:10px 12px;border-radius:8px;background:var(--warn-soft);color:var(--warn);font-size:13px}
+.empty{border:1px dashed var(--line-strong);border-radius:10px;padding:28px 20px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:10px;align-items:center;background:var(--surface)}
+.empty strong{color:var(--fg);font-size:15px}
+.hint{color:var(--muted);font-size:12.5px}
+
+/* jadwal toolbar + summary */
+.bar-tools{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.month{display:flex;align-items:center;gap:6px}
+.month h2{font-size:17px;font-weight:600;min-width:150px;text-align:center;letter-spacing:-.01em}
+.summary{display:flex;gap:8px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12.5px;font-weight:500;background:var(--surface);border:1px solid var(--line)}
+.pill b{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.pill.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.pill.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.pill.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.pill.acc{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12.5px;align-items:center}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.sw{width:22px;height:12px;border-radius:3px;border:1px solid hsl(172 40% var(--bar-line-l));background:hsl(172 var(--bar-s) var(--bar-l))}
+.sw.dash{border-style:dashed}
+.sw.cut{clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+.sw.hatch{background:repeating-linear-gradient(135deg,transparent 0 4px,color-mix(in srgb,var(--fg) 14%,transparent) 4px 5px);border-color:var(--line-strong)}
+
+/* gantt */
+.gantt{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.g-inner{min-width:max-content}
+.g-row,.g-head{display:flex}
+.g-row{height:var(--row-h);border-top:1px solid var(--line)}
+.g-row.sep{border-top:2px solid var(--line-strong)}
+.g-head{height:46px}
+.g-label{position:sticky;left:0;z-index:3;width:var(--label-w);flex:none;background:var(--surface);border-right:1px solid var(--line-strong);padding:0 10px;display:flex;flex-direction:column;justify-content:center;gap:1px;min-width:0}
+.g-label .plate{font-family:var(--font-mono);font-weight:600;font-size:13px}
+.g-label .meta{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-head .g-label{color:var(--muted);font-size:12px;font-weight:500}
+.hd{width:var(--cw);flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;color:var(--muted);box-shadow:inset -1px 0 var(--line)}
+.hd b{font-family:var(--font-mono);font-size:13px;color:var(--fg);font-weight:500;font-variant-numeric:tabular-nums}
+.hd.we{background:var(--surface-2)}
+.hd.today{background:var(--accent-soft);color:var(--accent)}
+.hd.today b{color:var(--accent);font-weight:600}
+.track{position:relative;display:flex;width:calc(var(--cw) * var(--n));flex:none}
+.cell{width:var(--cw);flex:none;box-shadow:inset -1px 0 var(--line);cursor:pointer}
+.cell.we{background:var(--surface-2)}
+.cell.today{background:var(--accent-soft)}
+.cell:hover{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.g-row.down .track{background:repeating-linear-gradient(135deg,transparent 0 8px,color-mix(in srgb,var(--fg) 8%,transparent) 8px 9px)}
+.g-row.down .cell{cursor:not-allowed}
+.tag{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:1px 5px;border-radius:4px;background:var(--warn-soft);color:var(--warn);align-self:flex-start}
+.bar{position:absolute;top:5px;bottom:5px;left:calc(var(--cw) * var(--bl));width:calc(var(--cw) * var(--bw) - 2px);margin-left:1px;z-index:2;
+  border:1px solid hsl(var(--h) 40% var(--bar-line-l));background:hsl(var(--h) var(--bar-s) var(--bar-l));color:hsl(var(--h) 55% var(--bar-fg-l));
+  border-radius:6px;padding:2px 7px;text-align:left;overflow:hidden;display:flex;flex-direction:column;justify-content:center;cursor:pointer;line-height:1.2}
+.bar b{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar small{font-size:10.5px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar:hover{filter:brightness(.96)}
+.bar.tentatif{border-style:dashed}
+.bar.selesai{opacity:.55}
+.bar.s-in{clip-path:polygon(9px 0,100% 0,100% 100%,0 100%);padding-left:12px}
+.bar.s-out{clip-path:polygon(0 0,100% 0,calc(100% - 9px) 100%,0 100%);padding-right:12px}
+.bar.s-in.s-out{clip-path:polygon(9px 0,100% 0,calc(100% - 9px) 100%,0 100%)}
+
+/* orders list */
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.filters input,.filters select{padding:8px 10px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface);min-width:0}
+.filters input{flex:1 1 220px}
+.list{display:flex;flex-direction:column;gap:8px}
+.item{display:grid;grid-template-columns:118px minmax(0,1fr) auto;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.item .when{display:flex;flex-direction:column;gap:2px}
+.item .when b{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.item .when span{font-size:12px;color:var(--muted)}
+.item .main{min-width:0;display:flex;flex-direction:column;gap:4px}
+.item .main h3{font-size:15px;font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.item .route{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.chips-sm{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.code{font-family:var(--font-mono);font-size:11.5px;font-weight:600;border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px;background:var(--surface-2)}
+.st{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line)}
+.st.pasti{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.st.tentatif{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.st.batal{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.item .acts{display:flex;gap:6px}
+
+/* armada */
+.fleet{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.fleet h3{font-size:13px;font-weight:600;padding:10px 14px;background:var(--surface-2);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+.fleet h3 span{color:var(--muted);font-weight:400}
+.frow{display:grid;grid-template-columns:96px minmax(0,1.4fr) 70px minmax(0,1.2fr) auto;gap:12px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.frow:first-of-type{border-top:0}
+.frow .plate{font-family:var(--font-mono);font-weight:600}
+.frow small{color:var(--muted);display:block}
+.frow .acts{display:flex;gap:6px}
+
+/* sheet */
+#scrim{position:fixed;inset:0;background:color-mix(in srgb,#000 45%,transparent);z-index:40}
+.sheet{position:fixed;top:0;right:0;bottom:0;width:min(620px,100%);background:var(--surface);z-index:50;display:flex;flex-direction:column;
+  box-shadow:-12px 0 32px color-mix(in srgb,#000 22%,transparent);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px max(16px,env(safe-area-inset-right,0px)) 12px 18px;border-bottom:1px solid var(--line)}
+.sheet-head h2{font-size:17px;font-weight:600}
+.sheet-form{display:flex;flex-direction:column;min-height:0;flex:1}
+.sheet-body{flex:1;overflow-y:auto;padding:16px max(18px,env(safe-area-inset-right,0px)) 16px 18px;display:flex;flex-direction:column;gap:18px}
+.sheet-foot{display:flex;gap:8px;align-items:center;padding:12px max(16px,env(safe-area-inset-right,0px)) 12px 18px;border-top:1px solid var(--line);background:var(--surface)}
+.sheet-foot .grow{flex:1}
+fieldset{border:0;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+legend{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:0;margin-bottom:8px;float:left;width:100%}
+legend + *{clear:both}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld.full{grid-column:1/-1}
+.fld label{font-size:12.5px;font-weight:500}
+.fld input,.fld select,.fld textarea{padding:8px 10px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface);width:100%;min-width:0}
+.fld textarea{resize:vertical;min-height:64px}
+.err{color:var(--bad);font-size:13px;font-weight:500;min-height:0}
+
+/* plot */
+.plot-head{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.plot-head h3{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.plot-group{margin-bottom:14px}
+.plot-group header{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:6px;flex-wrap:wrap}
+.plot-group h4{font-size:13px;font-weight:600}
+.count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.count.ok{color:var(--ok);font-weight:600}
+.count.warn{color:var(--warn);font-weight:600}
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px}
+.chip{position:relative;display:flex;flex-direction:column;gap:3px;text-align:left;padding:8px 10px;border-radius:8px;border:1px solid var(--line-strong);background:var(--surface-2);cursor:pointer;min-height:54px}
+.chip .plate{font-family:var(--font-mono);font-weight:600;font-size:14px}
+.chip .sub{font-size:11.5px;color:var(--ok);line-height:1.25}
+.chip:hover{border-color:var(--accent)}
+.chip.stut{background:var(--warn-soft)}
+.chip.stut .sub{color:var(--warn)}
+.chip .tag{position:absolute;top:7px;right:7px}
+.chip.busy,.chip.down{background:repeating-linear-gradient(135deg,transparent 0 6px,color-mix(in srgb,var(--fg) 8%,transparent) 6px 7px),var(--surface-2);cursor:not-allowed}
+.chip.busy .sub,.chip.down .sub{color:var(--muted)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.chip.on .sub{color:var(--accent-fg);opacity:.9}
+.chip.on.busy,.chip.on.down{background:var(--bad);border-color:var(--bad);color:var(--surface);cursor:pointer}
+.chip.on .tag{background:color-mix(in srgb,var(--accent-fg) 85%,transparent);color:var(--warn)}
+
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:70;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:500;max-width:calc(100% - 32px);box-shadow:0 8px 24px color-mix(in srgb,#000 30%,transparent)}
+#toast.bad{background:var(--bad);color:var(--surface)}
+
+.gap{display:inline-flex;gap:6px;align-items:center;color:var(--fg);font-size:12.5px}
+.gap input{width:64px;padding:4px 6px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface)}
+.fld select:disabled{opacity:.5}
+.trk{display:flex;flex-direction:column;gap:14px}
+.trk-bar{display:flex;gap:8px 14px;align-items:center;flex-wrap:wrap}
+.speeds,.jump{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.jump input{padding:6px 8px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface);min-width:0}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.clockbox{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.clockbox .mono{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.mapbox{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--sea)}
+.mapbox svg{display:block;width:100%;height:auto}
+.m-sea{fill:var(--sea)}
+.m-land{fill:var(--land);stroke:var(--coast);stroke-width:1;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.m-route{fill:none;stroke:var(--line-strong);stroke-width:1.5;opacity:.6;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round}
+.m-route.hot{stroke:hsl(var(--h) 60% 42%);opacity:.95;stroke-width:3}
+.m-route.selr{stroke-width:4.5}
+.m-city{fill:var(--muted)}
+.m-lbl{fill:var(--fg);font-family:var(--font-ui);font-weight:500;paint-order:stroke;stroke:var(--sea);stroke-linejoin:round}
+.m-pool{fill:var(--fg);stroke:var(--surface);stroke-width:1.5;vector-effect:non-scaling-stroke}
+.m-bus{cursor:pointer}
+.m-bus .hit{fill:transparent}
+.m-bus .body{fill:hsl(var(--h) 65% 44%);stroke:var(--surface);stroke-width:2;vector-effect:non-scaling-stroke}
+.m-bus.park .body{fill-opacity:.6}
+.m-bus.tent .body{stroke-dasharray:3 2}
+.m-bus .ring{fill:none;stroke:var(--accent);stroke-width:2;vector-effect:non-scaling-stroke}
+.m-bt{fill:var(--fg);font-family:var(--font-mono);font-weight:600;paint-order:stroke;stroke:var(--sea);stroke-linejoin:round}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:10px}
+.tcard{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;cursor:pointer;min-width:0}
+.tcard.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.tcard h3{font-size:14px;font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.prog{height:6px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+.prog i{display:block;height:100%;background:hsl(var(--h) 60% 42%)}
+.tdet{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 12px;font-size:12.5px;border-top:1px solid var(--line);padding:8px 0 0;margin:0}
+.tdet dt{color:var(--muted)}
+.tdet dd{margin:0;overflow-wrap:anywhere}
+.sec-h{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.rtbl{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.rtbl summary{cursor:pointer;font-weight:500}
+.rtbl .tw{overflow-x:auto;margin-top:8px}
+.rtbl table{width:100%;border-collapse:collapse}
+.rtbl td{padding:6px 8px;border-top:1px solid var(--line);font-size:13px}
+.rtbl input.sp{width:84px;padding:5px 7px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface)}
+.m-route.m-toll{stroke-width:2.2;opacity:.75}
+.m-route.hot.back{stroke-dasharray:6 4;opacity:.65}
+.photo-prev{aspect-ratio:16/9;width:100%;max-width:360px;border:1px dashed var(--line-strong);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--surface-2,var(--surface))}
+.photo-prev img,.pn-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.pn-photo{aspect-ratio:16/9;width:100%;flex:none;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--fg) 7%,var(--surface));color:var(--muted);font-size:12px;text-align:center;padding:0}
+.thumb{width:56px;aspect-ratio:16/9;object-fit:cover;border-radius:4px;vertical-align:middle;margin-right:8px}
+button.code{cursor:pointer;font:inherit}
+#sheet-nota{z-index:60;width:min(760px,100%)}
+.nota-edit{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.nota-edit .full{grid-column:1/-1}
+.nota-edit textarea{min-height:80px}
+.nota{background:#fff;color:#111;border:1px solid #ccc;padding:22px;font-size:13px;line-height:1.45}
+.nota h1{font-size:18px;margin:0;letter-spacing:.04em}
+.nota .nh{display:flex;justify-content:space-between;gap:12px;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:12px}
+.nota .nh small{display:block;color:#444}
+.nota .nt{text-align:center;font-weight:700;font-size:15px;margin:6px 0 2px;letter-spacing:.06em}
+.nota .nm{text-align:center;color:#444;margin-bottom:12px}
+.nota table{width:100%;border-collapse:collapse;margin:8px 0}
+.nota th,.nota td{border:1px solid #999;padding:5px 7px;text-align:left;vertical-align:top}
+.nota th{background:#eee}
+.nota td.r,.nota th.r{text-align:right;white-space:nowrap}
+.nota .kv td:first-child{width:34%;font-weight:600;background:#f6f6f6}
+.nota .tot td{font-weight:700}
+.nota ol{margin:4px 0 0 18px;padding:0}
+.nota .sig{display:flex;justify-content:space-around;margin-top:18px;text-align:center}
+.nota .sig div{min-width:170px}
+.nota .sig i{display:block;height:64px}
+.nota .rdt td{border:0;padding:1px 6px 1px 0}
+.nota .rdt td:first-child{white-space:nowrap;width:84px}
+.nota .rdh{font-weight:700;text-decoration:underline;margin:12px 0 4px}
+.nota .rdt tr.b td{font-weight:700}
+@media print{
+ body>*:not(#sheet-nota){display:none!important}
+ #sheet-nota{position:static!important;width:auto!important;height:auto!important;box-shadow:none!important;transform:none!important;overflow:visible!important}
+ #sheet-nota .sheet-head,#sheet-nota .sheet-foot,#sheet-nota .nota-edit{display:none!important}
+ #sheet-nota .sheet-body{overflow:visible!important;padding:0!important}
+ .nota{border:0;padding:0}
+}
+.m-bus .bb{fill:hsl(var(--h) 85% 55%);stroke:#fff;stroke-width:1.3;vector-effect:non-scaling-stroke}
+.m-bus .bw{fill:#e6f5ff}
+.m-bus .bt{fill:#111;stroke:#fff;stroke-width:1;vector-effect:non-scaling-stroke}
+.m-bus.park .bb{fill-opacity:.65}
+.m-bus.tent .bb{stroke-dasharray:3 2}
+.m-bus .ring{rx:6}
+.revgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.revc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:2px}
+.revc span{font-size:12px;color:var(--muted)}
+.revc b{font-size:18px;font-variant-numeric:tabular-nums}
+.revrow{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:13px;font-variant-numeric:tabular-nums}
+.revbar{height:10px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+.revbar i{display:block;height:100%;background:var(--accent)}
+.revbox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.revtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.revtop select{padding:6px 8px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface);color:var(--fg)}
+.pricelb{font-weight:600}
+.mapbox{background:#06222f}
+.mapbox>svg{position:relative;z-index:1;touch-action:none;cursor:grab}
+.mapbox>canvas.sat{position:absolute;left:0;top:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.m-sea,.m-land{fill:transparent}
+.m-land{stroke:rgba(255,255,255,.2)}
+.m-route{stroke:rgba(255,255,255,.5);opacity:.8}
+.m-route.hot{stroke:hsl(var(--h) 95% 62%)}
+.m-city,.m-pool{fill:#fff}
+.m-pool{stroke:#000}
+.m-lbl,.m-bt{fill:#fff;stroke:rgba(0,0,0,.72)}
+.m-bus .body{fill:hsl(var(--h) 85% 55%);stroke:#fff}
+.mapzoom{position:absolute;left:8px;top:44px;z-index:2;width:34px;display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(0,0,0,.5);border-radius:8px;padding:4px 0}
+.mapzoom button{width:26px;height:26px;border:0;border-radius:6px;background:#fff;color:#000;font-size:16px;line-height:1;cursor:pointer}
+.mapzoom .zbox{position:relative;width:26px;height:120px}
+.mapzoom input{position:absolute;left:50%;top:50%;width:112px;margin:0;transform:translate(-50%,-50%) rotate(-90deg)}
+.code.on{outline:2px solid hsl(var(--h) 60% 42%)}
+.m-route.hot.pick{stroke-dasharray:2 5;opacity:.7}
+.m-route.hot.tour{stroke-dasharray:1 3;stroke-width:2}
+.m-spot{opacity:.9}
+.mapbox{position:relative}
+.mapctl{position:absolute;left:8px;top:8px;z-index:2}
+.mappanel{position:absolute;z-index:3;background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;padding:10px 12px;box-shadow:0 8px 24px color-mix(in srgb,#000 28%,transparent);overflow-y:auto;display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:var(--fg)}
+.pn-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.pn-h b{font-size:14px}
+.spd{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.spd .big{font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+.tr{font-size:12px;font-weight:600}
+.tr.up{color:var(--ok)}
+.tr.down{color:var(--warn)}
+.tr.flat{color:var(--muted)}
+.mappanel .spark{width:100%;height:36px;min-height:36px;max-height:36px;flex:none;display:block}
+.spark polyline{fill:none;stroke:hsl(var(--h) 60% 42%);stroke-width:1.8;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.spark .base{stroke:var(--line-strong);stroke-width:1;vector-effect:non-scaling-stroke}
+.spd-s{font-size:12.5px;color:var(--muted)}
+.spd-s b{color:var(--fg);font-size:14px}
+@media (max-width:640px){
+  :root{--cw:34px;--label-w:104px}
+  .item{grid-template-columns:minmax(0,1fr);gap:8px}
+  .item .acts{justify-content:flex-start}
+  .frow{grid-template-columns:84px minmax(0,1fr) auto;row-gap:2px}
+  .frow .f-seat,.frow .f-state{grid-column:2/3}
+  .frow .acts{grid-column:3;grid-row:1/3;align-self:center}
+  fieldset{grid-template-columns:minmax(0,1fr)}
+  .month h2{min-width:120px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .chip,.btn,.bar{transition:background-color .12s,border-color .12s,filter .12s}
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="brand-mark">AT</span>
+      <div><h1>Arsyi Trans</h1><p>Jadwal armada &amp; plotting unit</p></div>
+    </div>
+    <button type="button" class="btn primary" id="btn-new-order">+ Order baru</button>
+  </header>
+  <nav class="tabs" id="tabs" aria-label="Menu">
+    <a href="#jadwal" data-tab="jadwal">Jadwal</a>
+    <a href="#tracking" data-tab="tracking">Tracking</a>
+    <a href="#order" data-tab="order">Order</a>
+    <a href="#armada" data-tab="armada">Armada</a>
+    <a href="#pendapatan" data-tab="pendapatan">Pendapatan</a>
+  </nav>
+  <div id="banner"></div>
+  <main id="view" aria-live="polite"></main>
+</div>
+
+<div id="scrim" hidden></div>
+
+<aside class="sheet" id="sheet-order" role="dialog" aria-modal="true" aria-labelledby="so-title" hidden>
+  <div class="sheet-head"><h2 id="so-title">Order baru</h2><button type="button" class="btn ghost sm" data-close>Tutup</button></div>
+  <form class="sheet-form" id="order-form" autocomplete="off" novalidate>
+    <div class="sheet-body">
+      <fieldset>
+        <legend>Customer</legend>
+        <div class="fld"><label for="f-customer">Nama customer / instansi *</label><input id="f-customer" type="text" placeholder="mis. SMA Negeri 1 Majenang"></div>
+        <div class="fld"><label for="f-phone">Telepon / WA</label><input id="f-phone" type="tel" placeholder="08xx xxxx xxxx"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Jadwal &amp; rute</legend>
+        <div class="fld"><label for="f-start">Berangkat *</label><input id="f-start" type="date"></div>
+        <div class="fld"><label for="f-stime">Jam berangkat dari titik jemput</label><input id="f-stime" type="time"></div>
+        <div class="fld"><label for="f-end">Pulang *</label><input id="f-end" type="date"></div>
+        <div class="fld"><label for="f-etime">Jam pulang (tiba kembali)</label><input id="f-etime" type="time"></div>
+        <p class="hint" id="f-days" style="grid-column:1/-1"></p>
+        <p class="hint" style="grid-column:1/-1">Isi kedua jam supaya stut dihitung per jam. Tanpa jam, stut hanya dihitung per tanggal.</p>
+        <div class="fld"><label for="f-pickup">Titik penjemputan</label><input id="f-pickup" type="text" placeholder="mis. Halaman sekolah, Majenang"></div>
+        <div class="fld"><label for="f-dest">Tujuan</label><input id="f-dest" type="text" list="dl-dest" placeholder="mis. Yogyakarta"></div>
+        <p class="hint" id="f-route-hint" style="grid-column:1/-1"></p>
+      </fieldset>
+      <fieldset>
+        <legend>Kebutuhan</legend>
+        <div class="fld"><label for="f-big">Jumlah big bus</label><input id="f-big" type="number" min="0" max="20" value="1" inputmode="numeric"></div>
+        <div class="fld"><label for="f-med">Jumlah medium bus</label><input id="f-med" type="number" min="0" max="20" value="0" inputmode="numeric"></div>
+        <div class="fld"><label for="f-seat">Seat big bus</label><select id="f-seat"><option value="">Belum ditentukan</option><option value="lr35">35+1 TL (Leg Rest)</option><option value="s48">48+1 TL (2+2)</option><option value="s50">50+1 TL (2-2)</option></select></div>
+        <div class="fld"><label for="f-status">Status order</label>
+          <select id="f-status"><option value="tentatif">Tentatif</option><option value="pasti">Terkonfirmasi</option><option value="selesai">Selesai</option><option value="batal">Dibatalkan</option></select></div>
+        <div class="fld full"><label for="f-note">Catatan</label><textarea id="f-note" placeholder="DP, jam jemput, titik jemput tambahan, dll."></textarea></div>
+      </fieldset>
+      <fieldset>
+        <legend>Harga sewa</legend>
+        <div class="fld"><label for="f-price">Harga sewa (Rp)</label><input id="f-price" type="number" min="0" step="50000" inputmode="numeric"></div>
+        <div class="fld"><label>&nbsp;</label><button type="button" class="btn sm" id="f-price-auto">Pakai estimasi</button></div>
+        <p class="hint" id="f-price-hint" style="grid-column:1/-1"></p>
+      </fieldset>
+      <section>
+        <div class="plot-head"><h3>Pilih unit</h3>
+          <div style="display:flex;gap:6px"><button type="button" class="btn sm" id="auto-fill">Isi otomatis</button><button type="button" class="btn sm ghost" id="clear-sel">Kosongkan</button></div></div>
+        <div id="plot"></div>
+      </section>
+      <p class="err" id="f-error" role="alert"></p>
+    </div>
+    <div class="sheet-foot">
+      <button type="button" class="btn danger" id="del-order" hidden>Hapus order</button>
+      <button type="button" class="btn" id="f-rundown">Rundown</button><button type="button" class="btn" id="f-nota">Terbitkan nota</button>
+      <span class="grow"></span>
+      <button type="button" class="btn" data-close>Batal</button>
+      <button type="submit" class="btn primary">Simpan order</button>
+    </div>
+  </form>
+</aside>
+
+<aside class="sheet" id="sheet-nota" role="dialog" aria-modal="true" aria-labelledby="sn-title" hidden>
+  <div class="sheet-head"><h2 id="sn-title">Nota sewa bus</h2><button type="button" class="btn ghost sm" id="nota-close">Tutup</button></div>
+  <div class="sheet-body">
+    <div class="nota-edit">
+      <div class="fld"><label for="n-usaha">Nama usaha</label><input id="n-usaha" type="text"></div>
+      <div class="fld"><label for="n-telp">Telepon</label><input id="n-telp" type="text" placeholder="08xx xxxx xxxx"></div>
+      <div class="fld full"><label for="n-alamat">Alamat</label><input id="n-alamat" type="text"></div>
+      <div class="fld"><label for="n-rek">Rekening pembayaran</label><input id="n-rek" type="text" placeholder="mis. BCA 1234567890 a.n. ..."></div>
+      <div class="fld"><label for="n-dp">Uang muka / DP (Rp)</label><input id="n-dp" type="number" min="0" step="50000" inputmode="numeric"></div>
+      <div class="fld full"><label for="n-terms">Syarat dan ketentuan (satu poin per baris)</label><textarea id="n-terms"></textarea></div>
+    </div>
+    <div class="nota" id="nota-doc"></div>
+  </div>
+  <div class="sheet-foot"><span class="grow"></span><button type="button" class="btn" id="nota-copy">Salin teks</button><button type="button" class="btn primary" id="nota-print">Simpan file</button></div>
+</aside>
+<aside class="sheet" id="sheet-bus" role="dialog" aria-modal="true" aria-labelledby="sb-title" hidden>
+  <div class="sheet-head"><h2 id="sb-title">Unit baru</h2><button type="button" class="btn ghost sm" data-close>Tutup</button></div>
+  <form class="sheet-form" id="bus-form" autocomplete="off" novalidate>
+    <div class="sheet-body">
+      <fieldset>
+        <div class="fld"><label for="b-code">Kode unit *</label><input id="b-code" type="text" class="mono" placeholder="AT-013"></div>
+        <div class="fld"><label for="b-type">Tipe</label><select id="b-type"><option value="big">Big bus</option><option value="medium">Medium bus</option></select></div>
+        <div class="fld"><label for="b-model">Karoseri / model</label><input id="b-model" type="text" placeholder="Jetbus 5 SHD"></div>
+        <div class="fld"><label for="b-chassis">Sasis</label><input id="b-chassis" type="text" placeholder="Hino RM 280"></div>
+        <div class="fld"><label for="b-seats">Jumlah kursi</label><input id="b-seats" type="number" min="0" max="80" inputmode="numeric"></div>
+        <div class="fld"><label for="b-km">Odometer awal (km), belum termasuk order di sistem</label><input id="b-km" type="number" min="0" max="2000000" step="1" inputmode="numeric" placeholder="mis. 54000"></div>
+        <div class="fld"><label for="b-status">Kondisi</label><select id="b-status"><option value="aktif">Aktif</option><option value="bengkel">Di bengkel</option></select></div>
+        <div class="fld full"><label for="b-note">Catatan</label><textarea id="b-note" placeholder="mis. servis berkala, ganti ban"></textarea></div>
+        <div class="fld full"><label for="b-photo">Foto bus (rasio 16:9)</label>
+          <div class="photo-prev" id="b-prev"><span class="hint">Belum ada foto</span></div>
+          <div class="photo-acts"><input id="b-photo" type="file" accept="image/*"><button type="button" class="btn sm" id="b-photo-del" hidden>Hapus foto</button></div>
+          <p class="hint">Foto otomatis dipotong 16:9 dan dikecilkan. Muncul di keterangan saat bus diklik di tracker.</p></div>
+      </fieldset>
+      <p class="hint" id="b-hint"></p>
+      <p class="err" id="b-error" role="alert"></p>
+    </div>
+    <div class="sheet-foot">
+      <span class="grow"></span>
+      <button type="button" class="btn" data-close>Batal</button>
+      <button type="submit" class="btn primary">Simpan unit</button>
+    </div>
+  </form>
+</aside>
+
+<div id="toast" role="status" hidden></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- util ---------- */
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var DAY=864e5;
+var MONTHS=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+var MON3=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+var DOW=['M','S','S','R','K','J','S'];
+var pad=function(n){return String(n).padStart(2,'0')};
+var toDay=function(s){var a=String(s).split('-').map(Number);return Math.round(Date.UTC(a[0],a[1]-1,a[2])/DAY)};
+var toStr=function(n){return new Date(n*DAY).toISOString().slice(0,10)};
+var parts=function(n){var d=new Date(n*DAY);return {y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate(),w:d.getUTCDay()}};
+var fmtDay=function(n){var p=parts(n);return p.d+' '+MON3[p.m]};
+var fmtRange=function(t){var s=toDay(t.start),e=toDay(t.end);return s===e?fmtDay(s):fmtDay(s)+' – '+fmtDay(e)};
+var tmin=function(s){if(!s)return null;var a=String(s).split(':'),h=+a[0],m=+a[1]||0;return isNaN(h)?null:h*60+m};
+var hasTimes=function(t){return tmin(t.startTime)!=null&&tmin(t.endTime)!=null};
+var fmtWhen=function(t){
+  var s=toDay(t.start),e=toDay(t.end);
+  if(!hasTimes(t))return fmtRange(t);
+  return s===e?fmtDay(s)+' '+t.startTime+'–'+t.endTime:fmtDay(s)+' '+t.startTime+' – '+fmtDay(e)+' '+t.endTime;
+};
+var _n=new Date();
+var TODAY=toDay(_n.getFullYear()+'-'+pad(_n.getMonth()+1)+'-'+pad(_n.getDate()));
+var HUES=[172,212,28,282,342,96,48,252,8,194];
+var hash=function(s){var h=0;String(s).split('').forEach(function(c){h=(h*31+c.charCodeAt(0))>>>0});return h};
+var STATUS={tentatif:'Tentatif',pasti:'Terkonfirmasi',selesai:'Selesai',batal:'Dibatalkan'};
+var TYPE={big:'Big Bus',medium:'Medium Bus'};
+var SEAT={lr35:'35+1 TL (Leg Rest)',s48:'48+1 TL (2+2)',s50:'50+1 TL (2-2)'};
+var newId=function(){return 't'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)};
+var busSort=function(a,b){
+  if(a.type!==b.type)return a.type==='big'?-1:1;
+  return String(a.code).localeCompare(String(b.code),'id',{numeric:true});
+};
+
+/* ---------- state ---------- */
+var S={buses:[],trips:[],ready:{buses:false,trips:false},tab:'jadwal',month:{y:parts(TODAY).y,m:parts(TODAY).m},
+  filter:{q:'',status:''},confirmKey:null,mode:'',slow:false,error:null,gap:3,settings:{},sel:null,mapView:'auto'};
+var store=null, F=null, B=null, OPEN=null, raf=0;
+
+var kmBase=function(b){return b.km!=null&&b.km!==''&&!isNaN(+b.km)?+b.km:30000+(hash('km|'+b.code)*7919)%90000};
+var fmtKm=function(n){return Math.round(n).toLocaleString('id-ID')+' km'};
+var DEFAULT_FLEET=function(){
+  var a=[],i;
+  for(i=1;i<=10;i++)a.push({code:'AT-'+String(i).padStart(3,'0'),type:'big',model:'Jetbus 5 SHD',chassis:'Hino RM 280',seats:null,status:'aktif',note:''});
+  a.forEach(function(b){b.km=kmBase(b)});
+  a.push({code:'AT-011',type:'medium',model:'Medium Bus',chassis:'',seats:null,status:'aktif',note:''});
+  a.push({code:'AT-012',type:'medium',model:'Medium Bus',chassis:'',seats:null,status:'aktif',note:''});
+  a.forEach(function(b){if(b.km==null)b.km=kmBase(b)});
+  return a;
+};
+
+/* ---------- penyimpanan: db bila tersedia, kalau tidak localStorage ---------- */
+function makeDbStore(db){
+  return {
+    mode:'db',
+    start:function(onB,onT,onS,onErr){
+      var map=function(s){return s.docs.map(function(d){var o=d.data()||{};o.id=d.id;return o})};
+      db.collection('buses').onSnapshot(function(s){onB(map(s))},onErr);
+      db.collection('trips').onSnapshot(function(s){onT(map(s))},onErr);
+      db.collection('settings').onSnapshot(function(s){onS(map(s))},onErr);
+    },
+    put:function(col,id,doc){return db.doc(col+'/'+id).set(doc)},
+    del:function(col,id){return db.doc(col+'/'+id).delete()}
+  };
+}
+function makeSbStore(cfg){
+  var client=window.supabase.createClient(cfg.url,cfg.key,{auth:{persistSession:false,autoRefreshToken:false}});
+  var cache={buses:[],trips:[],settings:[]},cb={},TB=['buses','trips','settings'];
+  var emit=function(t){var f={buses:cb.b,trips:cb.t,settings:cb.s}[t];if(f)f(cache[t].slice())};
+  var rowOf=function(r){var o=Object.assign({},r.data||{});o.id=r.id;return o};
+  return {
+    mode:'sb',
+    start:function(onB,onT,onS,onErr){
+      cb={b:onB,t:onT,s:onS};
+      var load=function(t){return client.from(t).select('id,data').then(function(r){
+        if(r.error){onErr(r.error);return}
+        cache[t]=(r.data||[]).map(rowOf);
+        if(t==='buses'&&!cache.buses.length&&!client.__seeded){
+          client.__seeded=1;
+          var seed=DEFAULT_FLEET().map(function(b){return {id:b.code,data:b}});
+          client.from('buses').upsert(seed).then(function(x){if(x.error)onErr(x.error);else load('buses')});
+        }
+        emit(t);
+      })};
+      TB.forEach(load);
+      var ch=client.channel('arsyi-sync');
+      TB.forEach(function(t){ch.on('postgres_changes',{event:'*',schema:'public',table:t},function(){load(t)})});
+      ch.subscribe();
+      setInterval(function(){if(!document.hidden)TB.forEach(load)},30000);
+    },
+    put:function(col,id,doc){
+      var d=Object.assign({},doc);delete d.id;
+      var i=cache[col].findIndex(function(x){return x.id===id}),row=Object.assign({},d,{id:id});
+      if(i>=0)cache[col][i]=row;else cache[col].push(row);
+      emit(col);
+      return client.from(col).upsert({id:id,data:d,updated_at:new Date().toISOString()}).then(function(r){if(r.error)throw r.error});
+    },
+    del:function(col,id){
+      cache[col]=cache[col].filter(function(x){return x.id!==id});emit(col);
+      return client.from(col).delete().eq('id',id).then(function(r){if(r.error)throw r.error});
+    }
+  };
+}
+function makeLocalStore(){
+  var KEY='arsyi-trans-jadwal-v1', data=null, cb={};
+  try{data=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){data=null}
+  if(!data||!Array.isArray(data.buses)||!Array.isArray(data.trips)){
+    data={buses:DEFAULT_FLEET().map(function(b){b.id=b.code;return b}),trips:[]};
+  }
+  if(!Array.isArray(data.settings))data.settings=[];
+  var save=function(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}};
+  var push=function(){if(cb.b)cb.b(data.buses.slice());if(cb.t)cb.t(data.trips.slice());if(cb.s)cb.s(data.settings.slice())};
+  return {
+    mode:'local',
+    start:function(onB,onT,onS){cb={b:onB,t:onT,s:onS};push()},
+    put:function(col,id,doc){
+      var arr=data[col],row=Object.assign({},doc,{id:id}),i=arr.findIndex(function(x){return x.id===id});
+      if(i>=0)arr[i]=row;else arr.push(row);
+      save();push();return Promise.resolve();
+    },
+    del:function(col,id){data[col]=data[col].filter(function(x){return x.id!==id});save();push();return Promise.resolve()}
+  };
+}
+
+/* ---------- logika ketersediaan & stut (berbasis jam) ---------- */
+// Bila kedua order punya jam berangkat dan pulang, unit boleh stut kalau jeda antara pulang trip pertama dan
+// berangkat trip kedua minimal S.gap jam (untuk bongkar, cuci, cek unit). Bila salah satu belum punya jam,
+// dipakai aturan tanggal saja: trip pertama minimal 2 hari, pulang dan berangkat lagi di hari yang sama.
+function span(x){
+  var s=toDay(x.start),e=toDay(x.end),timed=tmin(x.startTime)!=null&&tmin(x.endTime)!=null;
+  return {s:s,e:e,timed:timed,sm:timed?s*1440+tmin(x.startTime):null,em:timed?e*1440+tmin(x.endTime):null};
+}
+function gapTxt(){var g=+S.gap||0;return (g%1?g.toFixed(1):g)+' jam'}
+function relOf(a,b){
+  if(a.e<b.s||b.e<a.s)return {r:'free'};
+  if(a.timed&&b.timed){
+    var gap=Math.round((+S.gap||0)*60);
+    if(a.em+gap<=b.sm)return {r:'stut-out'};
+    if(b.em+gap<=a.sm)return {r:'stut-in'};
+    return {r:'conflict',tight:!(a.sm<b.em&&b.sm<a.em)};
+  }
+  var lo=Math.max(a.s,b.s),hi=Math.min(a.e,b.e);
+  if(lo===hi){
+    if(b.e===lo&&b.s<lo&&a.s===lo)return {r:'stut-in',approx:true};
+    if(a.e===lo&&a.s<lo&&b.s===lo)return {r:'stut-out',approx:true};
+  }
+  return {r:'conflict'};
+}
+function availability(bus,cand,ignoreId){
+  if(bus.status==='bengkel')return {state:'down',note:'Di bengkel'+(bus.note?' · '+bus.note:'')};
+  var a=span(cand),notes=[],approx=false,i,t,r;
+  for(i=0;i<S.trips.length;i++){
+    t=S.trips[i];
+    if(t.id===ignoreId||t.status==='batal'||(t.buses||[]).indexOf(bus.code)<0)continue;
+    r=relOf(a,span(t));
+    if(r.r==='conflict')return {state:'busy',note:(r.tight?'Jeda kurang dari '+gapTxt()+': ':'')+t.customer+' · '+fmtWhen(t),trip:t};
+    if(r.r==='stut-in'){notes.push('Pulang dari '+t.customer+' '+fmtDay(toDay(t.end))+(hasTimes(t)?' '+t.endTime:''));if(r.approx)approx=true}
+    if(r.r==='stut-out'){notes.push('Lanjut '+t.customer+' '+fmtDay(toDay(t.start))+(hasTimes(t)?' '+t.startTime:''));if(r.approx)approx=true}
+  }
+  if(notes.length)return {state:'stut',note:notes.join(' · ')+(approx?' · jam belum lengkap':'')};
+  return {state:'free',note:'Tersedia'};
+}
+
+/* ---------- render utama ---------- */
+function queueRender(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;render()})}
+function onData(){queueRender();autoFinish();if(OPEN==='#sheet-order'&&F)renderPlot()}
+
+function render(){
+  $$('#tabs a').forEach(function(a){if(a.dataset.tab===S.tab)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  var banner='';
+  if(S.mode==='local')banner='<p class="note">Mode lokal: Supabase belum terhubung, data hanya tersimpan di browser ini.</p>';
+  if(S.error)banner='<p class="note">Data belum bisa dimuat ('+esc(S.error.message||S.error.code||'error')+'). Coba muat ulang halaman.</p>';
+  $('#banner').innerHTML=banner;
+  var v=$('#view');
+  if(!(S.ready.buses&&S.ready.trips)){
+    v.innerHTML='<div class="empty"><strong>Memuat data armada…</strong>'+(S.slow?'<span>Koneksi ke penyimpanan lambat. Data yang tampil bisa belum terbaru.</span>':'')+'</div>';
+    return;
+  }
+  if(S.tab==='tracking'){v.innerHTML=viewTrack();mountSat()}
+  else if(S.tab==='order')v.innerHTML=viewOrders();
+  else if(S.tab==='armada')v.innerHTML=viewFleet();
+  else if(S.tab==='pendapatan')v.innerHTML=viewRevenue();
+  else v.innerHTML=viewJadwal();
+}
+
+/* ---------- tab Jadwal ---------- */
+function viewJadwal(){
+  if(!S.buses.length)return emptyFleet();
+  var y=S.month.y,m=S.month.m;
+  var ms=toDay(y+'-'+pad(m+1)+'-01'),dim=new Date(Date.UTC(y,m+1,0)).getUTCDate(),me=ms+dim-1;
+  var jalan=0,bengkel=0,siap=0;
+  S.buses.forEach(function(b){
+    if(b.status==='bengkel'){bengkel++;return}
+    var on=S.trips.some(function(t){return t.status!=='batal'&&(t.buses||[]).indexOf(b.code)>=0&&toDay(t.start)<=TODAY&&TODAY<=toDay(t.end)});
+    if(on)jalan++;else siap++;
+  });
+  var pending=S.trips.filter(function(t){return t.status!=='batal'&&t.status!=='selesai'&&(t.buses||[]).length<(+t.needBig||0)+(+t.needMed||0)}).length;
+  var head='<div class="g-head"><div class="g-label">Unit</div><div class="track" style="--n:'+dim+'">';
+  for(var i=0;i<dim;i++){
+    var d=ms+i,w=parts(d).w;
+    head+='<div class="hd'+(w===0||w===6?' we':'')+(d===TODAY?' today':'')+'"><b>'+(i+1)+'</b>'+DOW[w]+'</div>';
+  }
+  head+='</div></div>';
+  var rows=S.buses.map(function(b,idx){
+    var prev=S.buses[idx-1];
+    return rowHtml(b,ms,me,dim,prev&&prev.type!==b.type);
+  }).join('');
+  return ''
+  +'<div class="bar-tools">'
+  +'<div class="month"><button class="btn sm" data-act="prev" aria-label="Bulan sebelumnya">‹</button><h2>'+MONTHS[m]+' '+y+'</h2><button class="btn sm" data-act="next" aria-label="Bulan berikutnya">›</button><button class="btn sm ghost" data-act="today">Bulan ini</button></div>'
+  +'<div class="summary"><span class="pill acc">Hari ini ('+fmtDay(TODAY)+')</span><span class="pill ok"><b>'+siap+'</b> siap</span><span class="pill"><b>'+jalan+'</b> jalan</span>'+(bengkel?'<span class="pill bad"><b>'+bengkel+'</b> bengkel</span>':'')+(pending?'<span class="pill warn"><b>'+pending+'</b> order unit belum lengkap</span>':'')+'</div>'
+  +'</div>'
+  +'<div class="gantt"><div class="g-inner">'+head+rows+'</div></div>'
+  +'<div class="legend"><span><i class="sw"></i>Terkonfirmasi</span><span><i class="sw dash"></i>Tentatif</span><span><i class="sw cut"></i>Stut tanpa jam (dihitung per tanggal)</span><span><i class="sw hatch"></i>Bengkel</span><label class="gap" for="gap">Jeda stut minimal <input id="gap" type="number" min="0" max="24" step="0.5" value="'+S.gap+'" inputmode="decimal"> jam</label><span class="hint">Klik kotak kosong untuk order baru, klik blok untuk mengubah.</span></div>';
+}
+function rowHtml(b,ms,me,dim,sep){
+  var bt=S.trips.filter(function(t){return t.status!=='batal'&&(t.buses||[]).indexOf(b.code)>=0});
+  var cells='';
+  for(var i=0;i<dim;i++){
+    var d=ms+i,w=parts(d).w;
+    cells+='<div class="cell'+(w===0||w===6?' we':'')+(d===TODAY?' today':'')+'" data-act="cell" data-d="'+d+'" data-bus="'+esc(b.code)+'"></div>';
+  }
+  var bars=bt.map(function(t){return barHtml(t,bt,ms,me)}).join('');
+  var meta=b.status==='bengkel'?'<span class="tag">Bengkel</span>':'<span class="meta">'+esc(b.model||TYPE[b.type])+'</span>';
+  return '<div class="g-row'+(b.status==='bengkel'?' down':'')+(sep?' sep':'')+'"><div class="g-label"><span class="plate">'+esc(b.code)+'</span>'+meta+'</div><div class="track" style="--n:'+dim+'">'+cells+bars+'</div></div>';
+}
+function barHtml(t,bt,ms,me){
+  var sp=span(t),s=sp.s,e=sp.e;
+  if(e<ms||s>me)return '';
+  var l,r,stutIn=false,stutOut=false;
+  if(sp.timed){
+    l=Math.max(s,ms)-ms+(s>=ms?tmin(t.startTime)/1440:0);
+    r=Math.min(e,me)-ms+(e<=me?tmin(t.endTime)/1440:1);
+  }else{
+    stutIn=bt.some(function(u){return u.id!==t.id&&toDay(u.end)===s&&toDay(u.start)<toDay(u.end)});
+    stutOut=s<e&&bt.some(function(u){return u.id!==t.id&&toDay(u.start)===e});
+    l=Math.max(s,ms)-ms;r=Math.min(e,me)-ms+1;
+    if(stutIn&&s>=ms)l+=.5;
+    if(stutOut&&e<=me)r-=.5;
+  }
+  var w=Math.max(r-l,.3),hue=HUES[hash(t.id)%HUES.length];
+  var tip=t.customer+' · '+fmtWhen(t)+(t.pickup?' · Jemput: '+t.pickup:'')+(t.destination?' · Tujuan: '+t.destination:'')+(t.seatBig&&SEAT[t.seatBig]&&+t.needBig>0?' · Seat: '+SEAT[t.seatBig]:'');
+  var sub=(sp.timed?t.startTime+' · ':'')+(t.destination||t.pickup||'');
+  return '<button type="button" class="bar '+esc(t.status)+(stutIn&&s>=ms?' s-in':'')+(stutOut&&e<=me?' s-out':'')+'" data-act="bar" data-id="'+esc(t.id)+'" style="--h:'+hue+';--bl:'+l+';--bw:'+w+'" title="'+esc(tip)+'"><b>'+esc(t.customer)+'</b><small>'+esc(sub)+'</small></button>';
+}
+
+/* ---------- tab Order ---------- */
+function viewOrders(){
+  var opts=Object.keys(STATUS).map(function(k){return '<option value="'+k+'"'+(S.filter.status===k?' selected':'')+'>'+STATUS[k]+'</option>'}).join('');
+  return '<div class="filters"><input id="q" type="search" placeholder="Cari customer, tujuan, atau kode unit…" value="'+esc(S.filter.q)+'" aria-label="Cari order"><select id="fstatus" aria-label="Filter status"><option value="">Semua status</option>'+opts+'</select></div><div class="list" id="orderList">'+ordersListHtml()+'</div>';
+}
+function ordersListHtml(){
+  var q=S.filter.q.trim().toLowerCase(),st=S.filter.status;
+  var list=S.trips.filter(function(t){
+    if(st&&t.status!==st)return false;
+    if(!q)return true;
+    return [t.customer,t.pickup,t.destination,t.phone,(t.buses||[]).join(' ')].join(' ').toLowerCase().indexOf(q)>=0;
+  }).sort(function(a,b){return toDay(a.start)-toDay(b.start)||String(a.customer).localeCompare(String(b.customer))});
+  if(!list.length){
+    return '<div class="empty"><strong>'+(S.trips.length?'Tidak ada order yang cocok':'Belum ada order')+'</strong><span>'+(S.trips.length?'Ubah kata kunci atau filter status.':'Tambah order pertama, lalu klik unit yang tersedia.')+'</span>'+(S.trips.length?'':'<button class="btn primary" data-act="new-order">+ Order baru</button>')+'</div>';
+  }
+  return list.map(orderItem).join('');
+}
+function orderItem(t){
+  var s=toDay(t.start),e=toDay(t.end),days=e-s+1,codes=t.buses||[];
+  var need=(+t.needBig||0)+(+t.needMed||0),kurang=need-codes.length;
+  var armed=S.confirmKey==='order:'+t.id;
+  var chips=codes.map(function(c){return '<span class="code">'+esc(c)+'</span>'}).join('');
+  if(t.status!=='batal'&&t.status!=='selesai'&&kurang>0)chips+='<span class="pill warn">Kurang '+kurang+' unit</span>';
+  if(!codes.length&&kurang<=0)chips+='<span class="hint">Belum ada unit</span>';
+  var timeLine=hasTimes(t)?'<span>Jam '+esc(t.startTime)+' – '+esc(t.endTime)+'</span>':'<span>Jam belum diisi</span>';
+  var seat=t.seatBig&&SEAT[t.seatBig]&&+t.needBig>0?'<p class="route">Seat big bus: '+esc(SEAT[t.seatBig])+'</p>':'';
+  return '<article class="item"><div class="when"><b>'+esc(fmtRange(t))+'</b><span>'+days+' hari · '+parts(s).y+'</span>'+timeLine+'</div>'
+  +'<div class="main"><h3>'+esc(t.customer)+'<span class="st '+esc(t.status)+'">'+esc(STATUS[t.status]||t.status)+'</span>'+(t.example?'<span class="st">contoh</span>':'')+'</h3>'
+  +'<p class="route">'+esc(t.pickup||'—')+' → '+esc(t.destination||'—')+(t.phone?' · '+esc(t.phone):'')+'</p>'+seat+priceLine(t)+'<div class="chips-sm">'+chips+'</div></div>'
+  +'<div class="acts"><button class="btn sm" data-act="rundown" data-id="'+esc(t.id)+'">Rundown</button><button class="btn sm" data-act="nota" data-id="'+esc(t.id)+'">Nota</button><button class="btn sm" data-act="edit-order" data-id="'+esc(t.id)+'">Ubah</button><button class="btn sm danger'+(armed?' armed':'')+'" data-act="'+(armed?'del-order-yes':'del-order')+'" data-id="'+esc(t.id)+'">'+(armed?'Yakin hapus?':'Hapus')+'</button></div></article>';
+}
+
+/* ---------- tab Armada ---------- */
+function emptyFleet(){
+  return '<div class="empty"><strong>Armada belum ada</strong><span>Muat daftar awal: 10 big bus (AT-001 sampai AT-010, Jetbus 5 SHD, Hino RM 280) dan 2 medium bus. Kodenya bisa kamu ubah lagi.</span><button class="btn primary" data-act="seed-fleet">Muat armada awal</button><button class="btn" data-act="new-bus">Tambah unit manual</button></div>';
+}
+function viewFleet(){
+  if(!S.buses.length)return emptyFleet();
+  var html='<div style="display:flex;justify-content:flex-end"><button class="btn primary" data-act="new-bus">+ Tambah unit</button></div>';
+  ['big','medium'].forEach(function(type){
+    var list=S.buses.filter(function(b){return b.type===type});
+    html+='<section class="fleet"><h3>'+TYPE[type]+'<span>'+list.length+' unit</span></h3>';
+    html+=list.length?list.map(busRow).join(''):'<div class="frow"><span class="hint">Belum ada unit.</span></div>';
+    html+='</section>';
+  });
+  return html;
+}
+function busRow(b){
+  var cur=S.trips.find(function(t){return t.status!=='batal'&&(t.buses||[]).indexOf(b.code)>=0&&toDay(t.start)<=TODAY&&TODAY<=toDay(t.end)});
+  var state=b.status==='bengkel'?'<span class="pill bad">Bengkel</span>':cur?'<span class="pill">Jalan · '+esc(cur.customer)+'</span>':'<span class="pill ok">Siap</span>';
+  var armed=S.confirmKey==='bus:'+b.code;
+  return '<div class="frow"><span class="plate">'+esc(b.code)+'</span><div>'+(b.photo?'<img class="thumb" alt="" src="'+b.photo+'" style="float:left">':'')+'<b>'+esc(b.model||'—')+'</b><small>'+esc(b.chassis||'Sasis belum diisi')+' · Odometer '+fmtKm(odoAt(b.code,Date.now()))+(b.note?' · '+esc(b.note):'')+'</small></div>'
+  +'<span class="f-seat">'+(b.seats?esc(b.seats)+' kursi':'—')+'</span><span class="f-state">'+state+'</span>'
+  +'<div class="acts"><button class="btn sm" data-act="edit-bus" data-code="'+esc(b.code)+'">Ubah</button><button class="btn sm danger'+(armed?' armed':'')+'" data-act="'+(armed?'del-bus-yes':'del-bus')+'" data-code="'+esc(b.code)+'">'+(armed?'Yakin hapus?':'Hapus')+'</button></div></div>';
+}
+
+/* ---------- panel order ---------- */
+function showSheet(sel){
+  $('#scrim').hidden=false;$(sel).hidden=false;document.body.classList.add('lock');OPEN=sel;
+  setTimeout(function(){var f=$(sel).querySelector('input,select,textarea');if(f)f.focus()},40);
+}
+function closeSheet(){
+  $('#sheet-order').hidden=true;$('#sheet-bus').hidden=true;$('#sheet-nota').hidden=true;$('#scrim').hidden=true;
+  document.body.classList.remove('lock');OPEN=null;F=null;B=null;
+}
+function candFromForm(){return {start:$('#f-start').value,end:$('#f-end').value,startTime:$('#f-stime').value,endTime:$('#f-etime').value}}
+function syncNeed(){$('#f-seat').disabled=!(+$('#f-big').value>0);renderPlot()}
+function openOrder(id,preset){
+  preset=preset||{};
+  var t=id?S.trips.find(function(x){return x.id===id}):null;
+  if(id&&!t)return;
+  var presetBus=preset.bus?S.buses.find(function(b){return b.code===preset.bus}):null;
+  F={id:t?t.id:null,sel:new Set(t?(t.buses||[]):(presetBus?[presetBus.code]:[])),confirmDel:false};
+  var d=t||{customer:'',phone:'',start:preset.start||toStr(TODAY),end:preset.end||preset.start||toStr(TODAY),pickup:'',destination:'',
+    needBig:presetBus&&presetBus.type==='medium'?0:1,needMed:presetBus&&presetBus.type==='medium'?1:0,status:'tentatif',note:'',startTime:'',endTime:'',seatBig:''};
+  $('#so-title').textContent=t?'Ubah order':'Order baru';
+  $('#f-customer').value=d.customer||'';$('#f-phone').value=d.phone||'';
+  $('#f-start').value=d.start;$('#f-end').value=d.end;
+  $('#f-stime').value=d.startTime||'';$('#f-etime').value=d.endTime||'';
+  $('#f-pickup').value=d.pickup||'';$('#f-dest').value=d.destination||'';routeHint();
+  $('#f-big').value=d.needBig==null?0:d.needBig;$('#f-med').value=d.needMed==null?0:d.needMed;
+  $('#f-seat').value=d.seatBig||'';$('#f-seat').disabled=!(+$('#f-big').value>0);
+  $('#f-status').value=d.status||'tentatif';$('#f-note').value=d.note||'';
+  F.pm=!!(t&&t.priceManual);$('#f-price').value=F.pm?t.price:'';priceSync();
+  $('#f-error').textContent='';
+  var del=$('#del-order');del.hidden=!t;del.textContent='Hapus order';del.classList.remove('armed');
+  renderPlot();showSheet('#sheet-order');
+}
+function timeProblem(c){
+  var a=!!c.startTime,b=!!c.endTime;
+  if(a!==b)return 'Isi jam berangkat dan jam pulang sekaligus, atau kosongkan keduanya.';
+  if(a&&b&&c.start&&c.end&&c.start===c.end&&tmin(c.endTime)<=tmin(c.startTime))return 'Jam pulang harus setelah jam berangkat.';
+  return '';
+}
+function renderPlot(){
+  var c=candFromForm(),box=$('#plot');
+  if(!c.start||!c.end||toDay(c.end)<toDay(c.start)){
+    $('#f-days').textContent='';
+    box.innerHTML='<p class="hint">Isi tanggal berangkat dan pulang dulu. Unit yang tersedia di tanggal itu akan muncul di sini.</p>';return;
+  }
+  var tp=timeProblem(c);
+  $('#f-days').textContent=(toDay(c.end)-toDay(c.start)+1)+' hari · '+fmtWhen(c);
+  if(tp){box.innerHTML='<p class="hint">'+esc(tp)+'</p>';return}
+  var need={big:+$('#f-big').value||0,medium:+$('#f-med').value||0};
+  box.innerHTML=['big','medium'].map(function(type){
+    var list=S.buses.filter(function(b){return b.type===type});
+    var av=list.map(function(b){return availability(b,c,F.id)});
+    var chosen=list.filter(function(b){return F.sel.has(b.code)}).length;
+    var ok=av.filter(function(a){return a.state==='free'||a.state==='stut'}).length;
+    var cls=chosen>need[type]?'warn':(chosen===need[type]&&need[type]>0?'ok':'');
+    var chips=list.map(function(b,i){return chipHtml(b,av[i])}).join('')||'<p class="hint">Belum ada unit tipe ini.</p>';
+    return '<div class="plot-group"><header><h4>'+TYPE[type]+'</h4><span class="count '+cls+'">'+chosen+' dipilih · butuh '+need[type]+' · '+ok+' tersedia</span></header><div class="chips">'+chips+'</div></div>';
+  }).join('');
+}
+function chipHtml(b,a){
+  var on=F.sel.has(b.code),clash=on&&(a.state==='busy'||a.state==='down');
+  var disabled=!on&&(a.state==='busy'||a.state==='down');
+  var sub=clash?'Bentrok · '+esc(a.note):(a.state==='free'?'Tersedia':esc(a.note));
+  return '<button type="button" class="chip '+a.state+(on?' on':'')+'" data-code="'+esc(b.code)+'"'+(disabled?' disabled':'')+' aria-pressed="'+on+'"><span class="plate">'+esc(b.code)+'</span><span class="sub">'+sub+'</span>'+(a.state==='stut'?'<span class="tag">Stut</span>':'')+'</button>';
+}
+function autoFill(){
+  var c=candFromForm(),err=$('#f-error');
+  if(!c.start||!c.end||toDay(c.end)<toDay(c.start)){err.textContent='Isi tanggal berangkat dan pulang dulu.';return}
+  var tp=timeProblem(c);if(tp){err.textContent=tp;return}
+  err.textContent='';
+  var short=[];
+  [['big','#f-big'],['medium','#f-med']].forEach(function(x){
+    var need=+$(x[1]).value||0,list=S.buses.filter(function(b){return b.type===x[0]});
+    var cur=list.filter(function(b){return F.sel.has(b.code)}).length;
+    var cands=list.filter(function(b){return !F.sel.has(b.code)}).map(function(b){return {b:b,a:availability(b,c,F.id)}});
+    var ordered=cands.filter(function(k){return k.a.state==='free'}).concat(cands.filter(function(k){return k.a.state==='stut'}));
+    ordered.forEach(function(k){if(cur<need){F.sel.add(k.b.code);cur++}});
+    if(cur<need)short.push((need-cur)+' '+TYPE[x[0]].toLowerCase());
+  });
+  renderPlot();
+  if(short.length)err.textContent='Unit tidak cukup. Masih kurang '+short.join(' dan ')+' untuk jadwal ini.';
+}
+async function saveOrder(){
+  var err=$('#f-error');err.textContent='';
+  var customer=$('#f-customer').value.trim(),c=candFromForm();
+  if(!customer){err.textContent='Nama customer wajib diisi.';$('#f-customer').focus();return}
+  if(!c.start||!c.end){err.textContent='Tanggal berangkat dan pulang wajib diisi.';return}
+  if(toDay(c.end)<toDay(c.start)){err.textContent='Tanggal pulang tidak boleh sebelum tanggal berangkat.';return}
+  var tp=timeProblem(c);if(tp){err.textContent=tp;return}
+  var status=$('#f-status').value,codes=[];
+  F.sel.forEach(function(k){if(S.buses.some(function(b){return b.code===k}))codes.push(k)});
+  if(status!=='batal'){
+    var bad=[];
+    codes.forEach(function(k){var b=S.buses.find(function(x){return x.code===k}),a=availability(b,c,F.id);if(a.state==='busy'||a.state==='down')bad.push(k+' ('+a.note+')')});
+    if(bad.length){err.textContent='Unit bentrok: '+bad.join('; ')+'. Lepas unit itu atau ubah jadwal.';return}
+  }
+  var old=F.id?S.trips.find(function(t){return t.id===F.id}):null;
+  var needBig=Math.max(0,+$('#f-big').value||0);
+  var doc={customer:customer,phone:$('#f-phone').value.trim(),start:c.start,end:c.end,startTime:c.startTime||'',endTime:c.endTime||'',
+    pickup:$('#f-pickup').value.trim(),destination:$('#f-dest').value.trim(),needBig:needBig,needMed:Math.max(0,+$('#f-med').value||0),
+    seatBig:needBig>0?$('#f-seat').value:'',buses:codes.sort(),status:status,note:$('#f-note').value.trim(),price:Math.max(0,+$('#f-price').value||0),priceManual:!!(F.pm&&$('#f-price').value!==''),created:old&&old.created?old.created:Date.now()};
+  try{await store.put('trips',F.id||newId(),doc);closeSheet();toast('Order disimpan')}
+  catch(e){err.textContent='Gagal menyimpan: '+(e&&(e.message||e.code)||'coba lagi')+'.'}
+}
+async function deleteOrder(id){
+  try{await store.del('trips',id);S.confirmKey=null;if(OPEN)closeSheet();toast('Order dihapus');queueRender()}
+  catch(e){toast('Gagal menghapus: '+(e&&(e.message||e.code)||'coba lagi'),true)}
+}
+
+/* ---------- panel unit ---------- */
+function openBus(code){
+  var b=code?S.buses.find(function(x){return x.code===code}):null;
+  if(code&&!b)return;
+  B={code:b?b.code:null};
+  $('#sb-title').textContent=b?'Ubah unit '+b.code:'Unit baru';
+  var c=$('#b-code');c.value=b?b.code:'';c.readOnly=!!b;
+  $('#b-type').value=b?b.type:'big';$('#b-model').value=b?(b.model||''):'';$('#b-chassis').value=b?(b.chassis||''):'';
+  $('#b-seats').value=b&&b.seats?b.seats:'';$('#b-km').value=b?Math.round(kmBase(b)):'';$('#b-status').value=b?(b.status||'aktif'):'aktif';$('#b-note').value=b?(b.note||''):'';
+  $('#b-hint').textContent=b?'Kode unit tidak bisa diganti karena dipakai sebagai acuan di order. Untuk ganti kode, tambah unit baru lalu hapus yang lama.':'Unit yang berstatus "Di bengkel" tidak muncul sebagai pilihan saat plotting.';
+  $('#b-error').textContent='';
+  B.photo=b&&b.photo?b.photo:null;paintPhoto();
+  showSheet('#sheet-bus');
+}
+function paintPhoto(){
+  var pv=$('#b-prev');pv.innerHTML=B&&B.photo?'<img alt="Foto bus" src="'+B.photo+'">':'<span class="hint">Belum ada foto</span>';
+  $('#b-photo-del').hidden=!(B&&B.photo);
+}
+function readPhoto(file){
+  return new Promise(function(res,rej){
+    var fr=new FileReader();
+    fr.onerror=function(){rej(new Error('File tidak terbaca'))};
+    fr.onload=function(){
+      var im=new Image();
+      im.onerror=function(){rej(new Error('Bukan file gambar yang valid'))};
+      im.onload=function(){
+        var W=640,H=360,c=document.createElement('canvas');c.width=W;c.height=H;
+        var sw=im.width,sh=im.height,r=16/9,cw=sw,ch=sh;
+        if(sw/sh>r)cw=sh*r;else ch=sw/r;
+        c.getContext('2d').drawImage(im,(sw-cw)/2,(sh-ch)/2,cw,ch,0,0,W,H);
+        res(c.toDataURL('image/jpeg',.78));
+      };
+      im.src=fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+async function saveBus(){
+  var err=$('#b-error');err.textContent='';
+  var code=$('#b-code').value.trim().toUpperCase();
+  if(!/^[A-Z0-9][A-Z0-9_-]{1,19}$/.test(code)){err.textContent='Kode unit wajib diisi: huruf, angka, atau tanda hubung (mis. AT-013).';return}
+  if(!B.code&&S.buses.some(function(b){return b.code===code})){err.textContent='Kode '+code+' sudah dipakai unit lain.';return}
+  var seats=parseInt($('#b-seats').value,10);
+  var doc={code:code,type:$('#b-type').value,model:$('#b-model').value.trim(),chassis:$('#b-chassis').value.trim(),seats:seats>0?seats:null,status:$('#b-status').value,note:$('#b-note').value.trim()};
+  var kmv=parseInt($('#b-km').value,10);if(kmv>=0)doc.km=kmv;
+  if(B.photo)doc.photo=B.photo;
+  try{await store.put('buses',code,doc);closeSheet();toast('Unit disimpan')}
+  catch(e){err.textContent='Gagal menyimpan: '+(e&&(e.message||e.code)||'coba lagi')+'.'}
+}
+async function deleteBus(code){
+  var used=S.trips.filter(function(t){return (t.buses||[]).indexOf(code)>=0}).length;
+  S.confirmKey=null;
+  if(used){toast('Unit '+code+' masih tercantum di '+used+' order. Lepas dulu dari order tersebut.',true);queueRender();return}
+  try{await store.del('buses',code);toast('Unit dihapus')}
+  catch(e){toast('Gagal menghapus: '+(e&&(e.message||e.code)||'coba lagi'),true)}
+}
+async function seedFleet(){
+  try{var f=DEFAULT_FLEET();for(var i=0;i<f.length;i++){await store.put('buses',f[i].code,f[i])}toast('Armada awal dimuat')}
+  catch(e){toast('Gagal memuat armada: '+(e&&(e.message||e.code)||'coba lagi'),true)}
+}
+
+/* ---------- toast ---------- */
+var tt=0;
+function toast(msg,bad){var el=$('#toast');el.textContent=msg;el.className=bad?'bad':'';el.hidden=false;clearTimeout(tt);tt=setTimeout(function(){el.hidden=true},3600)}
+
+/* ---------- tracking: GPS simulasi ---------- */
+// Posisi bus dihitung dari jadwal order dan jam simulasi, bukan dari GPS asli.
+// Jalur dipilih otomatis: jaringan jalan utama Jawa (perkiraan) + pencarian jalur tercepat.
+var DAYN=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+var NODE={},ADJ={},EDGE={},EDGES=[];
+function N(id,lon,lat,name,al,spot){NODE[id]={id:id,lon:lon,lat:lat,name:name,al:al||[],spot:!!spot,par:spot?(typeof spot==='string'?spot:'jkt'):null};ADJ[id]=[]}
+N('cil',109.015,-7.725,'Cilacap',['cilacap','cilacap kota','kota cilacap']);
+// wilayah di sekitar Kota Cilacap (koordinat dari Wikipedia, NGA GEOnet, OpenStreetMap/Mapcarta, GEM)
+N('cl_gml',109.0425,-7.6851,'Gumilir',['gumilir','cilacap utara']);
+N('cl_krk',109.0895,-7.6737,'Karangkandri',['karangkandri']);
+N('cl_kls',109.0961,-7.6408,'Kalisabuk',['kalisabuk']);
+N('cl_kes',109.0915,-7.6262,'Kesugihan',['kesugihan']);
+N('cl_mos',109.1465,-7.5949,'Maos',['maos']);
+N('cl_sam',109.2014,-7.5808,'Sampang',['sampang']);
+N('cl_kpt',108.9987,-7.7001,'Kilang Pertamina',['kilang pertamina','pertamina cilacap','kilang cilacap','donan']);
+N('cl_sel',109.0069,-7.7361,'Cilacap Selatan',['cilacap selatan','sidakaya','stasiun cilacap']);
+N('bpd',109.03,-7.745,'Benteng Pendem',['benteng pendem']);
+N('tlp',109.06,-7.75,'Teluk Penyu',['teluk penyu']);
+N('nus',108.99,-7.77,'Nusakambangan',['nusakambangan','nusa kambangan','sodong']);
+N('srd',109.17,-7.68,'Gunung Srandil',['srandil','adipala']);
+N('kry',109.25,-7.63,'Kroya',['kroya']);
+N('sdr',108.80,-7.52,'Sidareja',['sidareja']);
+N('mjn',108.76,-7.25,'Majenang',['majenang','wanareja']);
+N('wng',109.13,-7.51,'Wangon',['wangon','jeruklegi']);
+N('ajb',109.07,-7.40,'Ajibarang',['ajibarang']);
+N('pwt',109.24,-7.42,'Purwokerto',['purwokerto','unsoed']);
+N('bny',109.29,-7.52,'Banyumas',['banyumas']);
+N('pbg',109.36,-7.39,'Purbalingga',['purbalingga','owabong']);
+N('smp',109.35,-7.62,'Sumpiuh',['sumpiuh']);
+N('gmb',109.51,-7.61,'Gombong',['gombong']);
+N('kbm',109.66,-7.68,'Kebumen',['kebumen','jatijajar','pantai ayah','karangbolong']);
+N('ktj',109.91,-7.72,'Kutoarjo',['kutoarjo']);
+N('prw',110.03,-7.71,'Purworejo',['purworejo']);
+N('wts',110.16,-7.86,'Wates',['wates','kulon progo','kulonprogo','glagah']);
+N('mgl',110.22,-7.47,'Magelang',['magelang']);
+N('brb',110.20,-7.61,'Borobudur',['borobudur']);
+N('jog',110.37,-7.80,'Jogja',['jogja','yogyakarta','yogya','jogjakarta','jogja kota','kota jogja','stasiun tugu','giwangan','terminal giwangan','jombor','terminal jombor','adisutjipto','bandara adisutjipto']);
+N('bnt',110.33,-8.00,'Kretek',['kretek']);
+N('wns',110.60,-7.96,'Gunung Kidul',['gunung kidul','gunungkidul','wonosari']);
+N('klt',110.60,-7.70,'Klaten',['klaten']);
+N('slo',110.82,-7.57,'Solo',['solo','surakarta']);
+N('twg',111.12,-7.66,'Tawangmangu',['tawangmangu','karanganyar','grojogan sewu']);
+N('wnb',110.92,-7.82,'Wonogiri',['wonogiri','gajah mungkur']);
+N('pct',111.10,-8.20,'Pacitan',['pacitan']);
+N('sra',111.03,-7.43,'Sragen',['sragen','sangiran']);
+N('byl',110.60,-7.53,'Boyolali',['boyolali']);
+N('ngw',111.45,-7.40,'Ngawi',['ngawi']);
+N('mdn',111.52,-7.63,'Madiun',['madiun']);
+N('njk',111.90,-7.60,'Nganjuk',['nganjuk']);
+N('kdr',112.02,-7.82,'Kediri',['kediri']);
+N('blt',112.17,-8.10,'Blitar',['blitar','bung karno']);
+N('jbg',112.23,-7.55,'Jombang',['jombang','tebuireng']);
+N('mjk',112.43,-7.47,'Mojokerto',['mojokerto','trowulan']);
+N('sda',112.72,-7.45,'Sidoarjo',['sidoarjo']);
+N('sby',112.75,-7.25,'Surabaya',['surabaya']);
+N('gsk',112.65,-7.16,'Gresik',['gresik','sunan giri','maulana malik ibrahim','sunan gresik']);
+N('lmg',112.33,-7.12,'Lamongan',['lamongan','sunan drajat','paciran']);
+N('tbn',112.05,-6.90,'Tuban',['tuban','sunan bonang']);
+N('mlg',112.63,-7.98,'Malang',['malang']);
+N('btu',112.53,-7.87,'Batu',['batu']);
+N('psr',112.90,-7.65,'Pasuruan',['pasuruan']);
+N('prb',113.22,-7.75,'Probolinggo',['probolinggo']);
+N('brm',112.95,-7.94,'Bromo',['bromo','cemoro lawang']);
+N('jmb',113.70,-8.17,'Jember',['jember']);
+N('stb',114.00,-7.71,'Situbondo',['situbondo']);
+N('bwi',114.37,-8.21,'Banyuwangi',['banyuwangi','ijen']);
+N('glm',114.44,-8.17,'Gilimanuk',['gilimanuk']);
+N('dps',115.22,-8.65,'Denpasar',['bali','denpasar']);
+N('ubd',115.26,-8.51,'Ubud',['ubud']);
+N('kta',115.17,-8.72,'Kuta',['kuta']);
+N('wsb',109.90,-7.36,'Wonosobo',['wonosobo']);
+N('dng',109.92,-7.20,'Dieng',['dieng']);
+N('bnj',109.70,-7.40,'Banjarnegara',['banjarnegara']);
+N('tmg',110.17,-7.32,'Temanggung',['temanggung']);
+N('sln',110.49,-7.33,'Salatiga',['salatiga','kopeng']);
+N('amb',110.41,-7.26,'Ambarawa',['ambarawa','museum kereta api']);
+N('bdn',110.34,-7.22,'Bandungan',['bandungan','gedong songo']);
+N('smg',110.42,-6.97,'Semarang',['semarang']);
+N('dmk',110.63,-6.89,'Demak',['demak','sunan kalijaga','kadilangu']);
+N('kds',110.84,-6.81,'Kudus',['kudus','sunan kudus','menara kudus']);
+N('mur',110.88,-6.62,'Muria',['muria','sunan muria']);
+N('jpr',110.67,-6.59,'Jepara',['jepara','karimunjawa']);
+N('pti',111.04,-6.75,'Pati',['pati']);
+N('rmb',111.34,-6.71,'Rembang',['rembang','lasem']);
+N('tgl',109.14,-6.87,'Tegal',['tegal']);
+N('slw',109.14,-6.98,'Slawi',['slawi']);
+N('guc',109.18,-7.20,'Guci',['guci']);
+N('brs',109.04,-6.87,'Brebes',['brebes']);
+N('bmy',109.03,-7.20,'Bumiayu',['bumiayu']);
+N('prp',109.00,-7.00,'Prupuk',['prupuk']);
+N('pml',109.38,-6.89,'Pemalang',['pemalang']);
+N('pkl',109.68,-6.89,'Pekalongan',['pekalongan']);
+N('btg',109.73,-6.91,'Batang',['batang']);
+N('los',108.82,-6.80,'Losari',['losari']);
+N('cbn',108.55,-6.72,'Cirebon',['cirebon']);
+N('kng',108.48,-6.98,'Kuningan',['kuningan','linggarjati']);
+N('mjl',108.23,-6.84,'Majalengka',['majalengka']);
+N('idm',108.32,-6.33,'Indramayu',['indramayu']);
+N('sbg',107.76,-6.57,'Subang',['subang','ciater']);
+N('cmp',107.45,-6.40,'Cikampek',['cikampek','purwakarta']);
+N('krw',107.30,-6.30,'Karawang',['karawang']);
+N('bks',107.00,-6.24,'Bekasi',['bekasi']);
+N('jkt',106.83,-6.20,'Jakarta',['jakarta','dki jakarta']);
+N('jk_monas',106.8272,-6.1754,'Monas',['monas','monumen nasional'],1);
+N('jk_museum',106.8218,-6.1763,'Museum Nasional',['museum nasional','museum gajah'],1);
+N('jk_istiqlal',106.8312,-6.1702,'Masjid Istiqlal',['istiqlal','masjid istiqlal'],1);
+N('jk_planet',106.8394,-6.1894,'Planetarium',['planetarium','taman ismail marzuki','tim cikini'],1);
+N('jk_kotatua',106.8133,-6.1352,'Kota Tua',['kota tua','museum fatahillah','fatahillah'],1);
+N('jk_ancol',106.8330,-6.1245,'Ancol',['ancol','dufan','dunia fantasi','atlantis ancol'],1);
+N('jk_tmii',106.8951,-6.3025,'TMII',['tmii','taman mini','taman mini indonesia indah'],1);
+N('jk_ragunan',106.8200,-6.3124,'Ragunan',['ragunan','kebun binatang ragunan'],1);
+N('jk_sunda',106.8100,-6.1270,'Sunda Kelapa',['sunda kelapa','pelabuhan sunda kelapa'],1);
+N('jk_gbk',106.8018,-6.2183,'GBK',['gbk','gelora bung karno','senayan'],1);
+var TOUR_ORDER=['jk_monas','jk_museum','jk_perpusnas','jk_istiqlal','jk_planet','jk_kotatua','jk_ancol','jk_ods','jk_unj','jk_cempaka','jk_lubang','jk_tmii','jk_ragunan'];
+var TOUR_PRIO=['jk_monas','jk_kotatua','jk_ods','jk_ancol','jk_lubang','jk_perpusnas','jk_unj','jk_cempaka','jk_tmii','jk_museum','jk_istiqlal','jk_ragunan','jk_planet'];
+function defaultTour(days){var n=Math.max(2,Math.min(8,days*2)),p=TOUR_PRIO.slice(0,n);return TOUR_ORDER.filter(function(id){return p.indexOf(id)>=0})}
+N('bgr',106.80,-6.60,'Bogor',['bogor']);
+N('pnc',106.95,-6.70,'Puncak',['puncak','cisarua','taman safari']);
+N('skb',106.93,-6.92,'Sukabumi',['sukabumi','pelabuhan ratu']);
+N('cjr',107.14,-6.82,'Cianjur',['cianjur']);
+N('bdg',107.61,-6.92,'Bandung',['bandung']);
+N('lmb',107.62,-6.81,'Lembang',['lembang']);
+N('ngr',107.88,-7.00,'Nagreg',['nagreg']);
+N('grt',107.91,-7.21,'Garut',['garut','papandayan','darajat']);
+N('tsk',108.22,-7.33,'Tasikmalaya',['tasikmalaya','tasik']);
+N('cms',108.35,-7.33,'Ciamis',['ciamis']);
+N('bjr',108.54,-7.37,'Banjar',['banjar']);
+N('kal',108.68,-7.65,'Kalipucang',['kalipucang','green canyon']);
+N('pgd',108.65,-7.69,'Pangandaran',['pangandaran','batu karas','batukaras']);
+// ---- Daerah dan wisata di Daerah Istimewa Yogyakarta (koordinat perkiraan dari OpenStreetMap/Wikipedia)
+N('yg_slm',110.3556,-7.7150,'Sleman',['sleman']);
+N('yg_kls',110.4667,-7.7667,'Kalasan',['kalasan']);
+N('yg_gdn',110.2900,-7.7760,'Godean',['godean']);
+N('yg_snt',110.2300,-7.8200,'Sentolo',['sentolo']);
+N('yg_yia',110.0589,-7.9006,'Bandara YIA',['bandara yia','yia','yogyakarta international airport','temon','bandara kulon progo']);
+N('yg_btl',110.3289,-7.8875,'Bantul',['bantul','kota bantul']);
+N('yg_pyg',110.4350,-7.8450,'Piyungan',['piyungan','berbah']);
+N('yg_ptk',110.4960,-7.8540,'Patuk',['patuk']);
+N('yg_ply',110.5400,-7.8830,'Playen',['playen']);
+N('jg_tugu',110.3671,-7.7828,'Tugu Jogja',['tugu jogja','tugu yogyakarta','tugu pal putih'],'jog');
+N('jg_bakpia',110.3585,-7.7968,'Bakpia Pathok',['bakpia','bakpia pathok','pathuk'],'jog');
+N('jg_malioboro',110.3658,-7.7928,'Malioboro',['malioboro','pasar beringharjo','beringharjo'],'jog');
+N('jg_vredeburg',110.3665,-7.8000,'Benteng Vredeburg',['vredeburg','benteng vredeburg','museum vredeburg'],'jog');
+N('jg_pintar',110.3676,-7.8007,'Taman Pintar',['taman pintar'],'jog');
+N('jg_keraton',110.3642,-7.8053,'Keraton Jogja',['keraton','kraton','keraton jogja','keraton yogyakarta'],'jog');
+N('jg_sari',110.3590,-7.8100,'Taman Sari',['taman sari','tamansari','water castle'],'jog');
+N('jg_alun',110.3636,-7.8125,'Alun-Alun Kidul',['alun alun kidul','alkid'],'jog');
+N('jg_kotagede',110.3978,-7.8286,'Kotagede',['kotagede','kota gede'],'jog');
+N('jg_gembira',110.3963,-7.8059,'Gembira Loka',['gembira loka','gembiraloka','kebun binatang jogja'],'jog');
+N('jg_monjali',110.3694,-7.7497,'Monjali',['monjali','monumen jogja kembali','monumen yogya kembali'],'jog');
+N('jg_boko',110.4893,-7.7705,'Ratu Boko',['ratu boko','candi ratu boko','keraton ratu boko'],'jog');
+N('jg_prambanan',110.4915,-7.7520,'Candi Prambanan',['prambanan','candi prambanan'],'jog');
+N('jg_heha',110.4776,-7.8440,'Heha Sky View',['heha sky view','heha'],'jog');
+N('jg_nglang',110.5495,-7.8415,'Nglanggeran',['nglanggeran','gunung api purba','embung nglanggeran'],'jog');
+N('jg_ullen',110.4208,-7.6090,'Ullen Sentalu',['ullen sentalu'],'jog');
+N('jg_kaliurang',110.4247,-7.6010,'Kaliurang',['kaliurang'],'jog');
+N('jg_lava',110.4440,-7.5890,'Lava Tour Merapi',['lava tour','lava tour merapi','merapi','kaliadem','jeep merapi'],'jog');
+N('jg_imogiri',110.3907,-7.9322,'Makam Imogiri',['imogiri','makam imogiri','makam raja imogiri'],'jog');
+N('jg_mangunan',110.4330,-7.9380,'Hutan Pinus Mangunan',['mangunan','hutan pinus','puncak becici','becici'],'jog');
+N('jg_gumuk',110.3290,-8.0165,'Gumuk Pasir',['gumuk pasir','parangkusumo','parangendog'],'jog');
+N('jg_parang',110.3318,-8.0254,'Pantai Parangtritis',['parangtritis','pantai parangtritis'],'jog');
+N('jg_depok',110.2835,-8.0170,'Pantai Depok',['pantai depok'],'jog');
+N('jg_pindul',110.6528,-7.9358,'Goa Pindul',['pindul','goa pindul','cave tubing'],'jog');
+N('jg_baron',110.5470,-8.1355,'Pantai Baron',['pantai baron','baron'],'jog');
+N('jg_drini',110.5925,-8.1410,'Pantai Drini',['pantai drini','drini'],'jog');
+N('jg_indra',110.6094,-8.1503,'Pantai Indrayanti',['indrayanti','pantai indrayanti'],'jog');
+N('jg_sundak',110.6330,-8.1580,'Pantai Sundak',['pantai sundak','sundak'],'jog');
+N('jg_kalibiru',110.1273,-7.7916,'Kalibiru',['kalibiru'],'jog');
+var JOG_ORDER=['jg_tugu','jg_bakpia','jg_malioboro','jg_vredeburg','jg_pintar','jg_keraton','jg_sari','jg_alun','jg_kotagede','jg_gembira','jg_boko','jg_prambanan','jg_heha','jg_nglang','jg_monjali','jg_ullen','jg_kaliurang','jg_lava','jg_imogiri','jg_mangunan','jg_gumuk','jg_parang','jg_depok','jg_pindul','jg_baron','jg_drini','jg_indra','jg_sundak','jg_kalibiru'];
+var JOG_PRIO=['jg_malioboro','jg_keraton','jg_sari','jg_prambanan','jg_parang','jg_tugu','jg_alun','jg_boko','jg_heha','jg_mangunan','jg_pindul','jg_indra','jg_kaliurang','jg_ullen','jg_lava','jg_kotagede','jg_pintar','jg_vredeburg','jg_gembira','jg_monjali','jg_depok','jg_baron','jg_nglang','jg_kalibiru','jg_imogiri','jg_bakpia','jg_sundak','jg_drini','jg_gumuk'];
+N('jk_perpusnas',106.8240,-6.1790,'Perpusnas',['perpusnas','perpustakaan nasional'],1);
+N('jk_ods',106.8395,-6.1250,'Ocean Dream Samudera',['ods','ocean dream samudera'],1);
+N('jk_unj',106.8794,-6.1946,'Universitas Negeri Jakarta',['unj','universitas negeri jakarta'],1);
+N('jk_lubang',106.9050,-6.2930,'Lubang Buaya',['lubang buaya','monumen pancasila sakti'],1);
+N('jk_cempaka',106.8800,-6.1710,'ITC Cempaka Mas',['itc cempaka mas','cempaka mas'],1);
+var TOUR_IDX=TOUR_ORDER.concat(JOG_ORDER);
+/* hotel tempat bus parkir dan rombongan menginap (referensi hotel yang lazim dipakai rombongan bus; koordinat perkiraan) */
+var HOTEL={
+ jkt:[['Arcadia Mangga Dua by Horison',106.8330,-6.1370],['Triniti Hotel Petojo',106.8165,-6.1675]],
+ jog:[['Hotel Santika Premiere Jogja',110.3745,-7.7829],['Royal Ambarrukmo Yogyakarta',110.4010,-7.7830]],
+ smg:[['Hotel Santika Premiere Semarang',110.4181,-6.9903],['Aryaduta Semarang',110.4207,-6.9795]],
+ slo:[['Alila Solo',110.8180,-7.5670],['Sahid Jaya Solo',110.8230,-7.5640]],
+ bdg:[['Grand Preanger Bandung',107.6080,-6.9205],['Savoy Homann Bandung',107.6101,-6.9215]],
+ cbn:[['Hotel Santika Cirebon',108.5550,-6.7145],['Grage Hotel Cirebon',108.5530,-6.7190]],
+ sby:[['Mercure Grand Mirama Surabaya',112.7370,-7.2840],['Hotel Santika Premiere Gubeng',112.7480,-7.2720]],
+ mlg:[['Hotel Santika Premiere Malang',112.6393,-7.9630],['The Singhasari Resort Batu',112.5240,-7.8800]],
+ dps:[['Santika Kuta Bali',115.1717,-8.7228],['Inna Grand Bali Beach Sanur',115.2630,-8.6920]],
+ pwt:[['Java Heritage Hotel Purwokerto',109.2430,-7.4340],['Aston Purwokerto',109.2480,-7.4180]]
+};
+/* rombongan Jogja yang tiba pagi transit di resto sebelum keliling; titik perkiraan */
+var TRANSIT={jog:[['Resto Ambarketawang (Gamping)',110.3330,-7.8030],['Resto Kopi Gamol (Balecatur, Gamping)',110.3100,-7.8120],['Pawon Simbok (Klaten)',110.5950,-7.7100]]};
+/* istirahat di perjalanan berangkat */
+var REST={jog:[['Rest Area SPBU Pertamina Kedungpring (Kemranjen)',109.2950,-7.6000],['Candisari Resto & Rest Area (Kebumen)',109.5750,-7.6350]]};
+var DINNER={jkt:[['Resto Pangeran (belakang SPBU Pejagan)',108.8850,-6.8700],['Resto Putri NN (Jl. Raya Pejagan, flyover Tol Pejagan)',108.8832,-6.8710]]};
+var ALLPOI=[];
+[[HOTEL,'#f5b942',1],[TRANSIT,'#ff7a59'],[REST,'#6bd0ff'],[DINNER,'#ff7a59']].forEach(function(g){Object.keys(g[0]).forEach(function(c){g[0][c].forEach(function(x){ALLPOI.push({n:x[0],lon:x[1],lat:x[2],c:g[1]})})})});
+var TOURS={jkt:{o:TOUR_ORDER,p:TOUR_PRIO,per:3,min:3,max:30},jog:{o:JOG_ORDER,p:JOG_PRIO,per:3,min:3,max:30}};
+function nnOrder(ids,c){var cur=NODE[c],out=[],rest=ids.slice();while(rest.length){var bi=0,bd=1e9;rest.forEach(function(id,i){var d=kmd(cur,NODE[id]);if(d<bd){bd=d;bi=i}});cur=NODE[rest[bi]];out.push(rest.splice(bi,1)[0])}return out}
+function defaultTourFor(c,days){var T=TOURS[c],n=Math.max(1,Math.min(T.p.length,days*3)),p=T.p.slice(0,n);return T.o?T.o.filter(function(id){return p.indexOf(id)>=0}):nnOrder(p,c)}
+var INFO={
+ jg_tugu:'Monumen ikonik Yogyakarta di sumbu filosofis Keraton–Tugu–Merapi; spot foto malam hari.',
+ jg_bakpia:'Kampung Pathuk, sentra oleh-oleh bakpia dekat Malioboro.',
+ jg_malioboro:'Jalan belanja utama sepanjang ±1 km: batik, kerajinan, kuliner lesehan, dan Pasar Beringharjo di ujung selatan.',
+ jg_vredeburg:'Benteng peninggalan Belanda abad ke-18 di ujung Malioboro, kini museum perjuangan.',
+ jg_pintar:'Wahana sains edukatif di sebelah Vredeburg, cocok untuk rombongan sekolah.',
+ jg_keraton:'Istana Kesultanan Yogyakarta: museum, abdi dalem, dan pertunjukan budaya.',
+ jg_sari:'Bekas taman dan pemandian istana abad ke-18, ada lorong bawah tanah Sumur Gumuling.',
+ jg_alun:'Alun-alun selatan keraton, terkenal dengan ritual masangin dan sepeda hias di malam hari.',
+ jg_kotagede:'Bekas ibu kota Mataram Islam, pusat kerajinan perak, pasar tradisional, dan makam raja.',
+ jg_gembira:'Kebun binatang di Jogja timur, cocok untuk wisata keluarga dan sekolah.',
+ jg_monjali:'Monumen Yogya Kembali, museum perjuangan tentang Serangan Umum 1 Maret 1949.',
+ jg_boko:'Situs istana di atas bukit, populer untuk melihat matahari terbenam.',
+ jg_prambanan:'Kompleks candi Hindu abad ke-9, Warisan Dunia UNESCO; ada pertunjukan sendratari Ramayana.',
+ jg_heha:'Spot pemandangan kota dari ketinggian di Patuk, ramai saat senja dan malam.',
+ jg_nglang:'Gunung Api Purba dan embung di desa wisata Nglanggeran, Gunung Kidul.',
+ jg_ullen:'Museum budaya dan seni Jawa di lereng Merapi, Kaliurang; kunjungan dengan pemandu.',
+ jg_kaliurang:'Kawasan sejuk di lereng Merapi dengan taman wisata, kuliner, dan jalur jeep.',
+ jg_lava:'Tur jip melihat dampak erupsi Merapi: bunker Kaliadem dan museum mini sisa hartaku.',
+ jg_imogiri:'Kompleks makam raja-raja Mataram di perbukitan Imogiri, Bantul.',
+ jg_mangunan:'Hutan pinus dan Puncak Becici di Dlingo, Bantul; terkenal untuk sunrise dan kabut pagi.',
+ jg_gumuk:'Gumuk pasir Parangkusumo, tempat sandboarding dan foto gurun mini.',
+ jg_parang:'Pantai selatan paling terkenal, dengan legenda Nyi Roro Kidul, delman, dan ATV.',
+ jg_depok:'Pantai dengan pelabuhan nelayan dan pasar ikan, pusat kuliner seafood.',
+ jg_pindul:'Wisata cave tubing menyusuri sungai bawah tanah di Gunung Kidul.',
+ jg_baron:'Pantai di Gunung Kidul dengan teluk berpasir dan deretan warung ikan bakar.',
+ jg_drini:'Pantai pasir putih di Gunung Kidul dengan pulau karang kecil.',
+ jg_indra:'Pantai pasir putih di Gunung Kidul yang populer untuk foto dan kafe pantai.',
+ jg_sundak:'Pantai berpasir putih di Gunung Kidul dengan tebing karang di kedua sisinya.',
+ jg_kalibiru:'Wisata hutan di perbukitan Kulon Progo dengan panggung foto menghadap Waduk Sermo.'
+};
+
+var TS=[
+['pw_baturraden',109.2300,-7.3070,'Lokawisata Baturraden','baturraden,baturaden,lokawisata baturraden','pwt','Wisata lereng Gunung Slamet: taman, kolam renang, dan udara sejuk.'],
+['pw_cipendok',109.1700,-7.3600,'Curug Cipendok','curug cipendok,cipendok','pwt','Air terjun tinggi di lereng Slamet, berjalan kaki dari area parkir.'],
+['pw_museumbri',109.2320,-7.4260,'Museum BRI','museum bri','pwt','Museum sejarah BRI, bank yang berawal dari Purwokerto pada 1895.'],
+['pw_pancuran',109.2306,-7.3040,'Pancuran Tujuh','pancuran tujuh,pancuran pitu','pwt','Pemandian air panas belerang dengan tujuh pancuran.'],
+['pw_kebunraya',109.2290,-7.3140,'Kebun Raya Baturraden','kebun raya baturraden','pwt','Kebun raya di kaki Gunung Slamet dengan koleksi tanaman dan jalur santai.'],
+['pw_alun',109.2340,-7.4256,'Alun-Alun Purwokerto','alun alun purwokerto','pwt','Pusat kota dengan jajanan malam di sekitar alun-alun.'],
+['sm_lawang',110.4101,-6.9840,'Lawang Sewu','lawang sewu','smg','Bekas kantor kereta api Belanda dengan ratusan pintu, ikon Semarang.'],
+['sm_kotalama',110.4283,-6.9677,'Kota Lama Semarang','kota lama,kota lama semarang,gereja blenduk','smg','Kawasan bangunan kolonial dengan Gereja Blenduk, cocok untuk jalan kaki dan foto.'],
+['sm_sampoo',110.4010,-7.0050,'Klenteng Sam Poo Kong','sam poo kong,klenteng sam poo kong,gedung batu','smg','Klenteng bersejarah peninggalan Laksamana Cheng Ho.'],
+['sm_simpang',110.4228,-6.9906,'Simpang Lima','simpang lima','smg','Alun-alun dan pusat kuliner serta belanja Semarang.'],
+['sm_majt',110.4517,-7.0063,'Masjid Agung Jawa Tengah','majt,masjid agung jawa tengah','smg','Masjid megah dengan payung raksasa dan menara pandang.'],
+['sm_kampung',110.4290,-7.0050,'Kampung Pelangi','kampung pelangi','smg','Perkampungan rumah warna-warni di lereng bukit.'],
+['sm_pecinan',110.4280,-6.9720,'Pecinan Gang Lombok','pecinan semarang,gang lombok','smg','Kawasan Pecinan dengan klenteng Tay Kak Sie dan jajanan lumpia.'],
+['sm_rawa',110.4400,-7.3050,'Rawa Pening','rawa pening','smg','Danau alami di Ambarawa dengan panorama perbukitan dan wisata perahu.'],
+['so_keraton',110.8280,-7.5780,'Keraton Surakarta','keraton surakarta,keraton solo','slo','Istana Kasunanan Surakarta dengan museum pusaka dan alun-alun.'],
+['so_mangku',110.8230,-7.5660,'Pura Mangkunegaran','mangkunegaran,pura mangkunegaran','slo','Istana Mangkunegaran dengan museum dan pendopo besar.'],
+['so_gede',110.8325,-7.5710,'Pasar Gede','pasar gede','slo','Pasar tradisional bergaya kolonial-Tionghoa, terkenal dengan dawet dan jajanan.'],
+['so_laweyan',110.8030,-7.5680,'Kampung Batik Laweyan','laweyan,kampung batik laweyan','slo','Sentra batik tertua di Solo, toko dan bengkel di rumah-rumah lama.'],
+['so_safari',110.8480,-7.5640,'Solo Safari','solo safari,taru jurug,jurug,solo zoo','slo','Kebun binatang di tepi Bengawan Solo (dulu Taman Satwa Taru Jurug).'],
+['so_klewer',110.8280,-7.5750,'Pasar Klewer','pasar klewer','slo','Pusat grosir batik dan tekstil di sebelah keraton.'],
+['so_sriwedari',110.8113,-7.5667,'Taman Sriwedari','sriwedari,taman sriwedari','slo','Taman kota bersejarah dengan gedung wayang orang.'],
+['bd_braga',107.6090,-6.9175,'Jalan Braga','braga,jalan braga','bdg','Jalan kolonial dengan kafe, toko lama, dan seniman jalanan.'],
+['bd_gedungsate',107.6186,-6.9025,'Gedung Sate','gedung sate','bdg','Ikon Bandung bergaya Indo-Eropa, ada museum dan menara pandang.'],
+['bd_tangkuban',107.6097,-6.7596,'Tangkuban Perahu','tangkuban perahu,tangkuban','bdg','Gunung berapi dengan kawah yang bisa dilihat dari bibir kawah.'],
+['bd_farm',107.6089,-6.8348,'Farmhouse Lembang','farm house,farmhouse,farmhouse lembang','bdg','Taman bergaya Eropa dengan peternakan mini dan spot foto.'],
+['bd_floating',107.6180,-6.8120,'Floating Market Lembang','floating market,floating market lembang','bdg','Pasar apung dengan kuliner Sunda di tepi danau buatan.'],
+['bd_kawah',107.4020,-7.1660,'Kawah Putih','kawah putih,ciwidey','bdg','Danau kawah putih kehijauan di Ciwidey.'],
+['bd_asiaafrika',107.6094,-6.9211,'Museum Asia Afrika','museum asia afrika,asia afrika,gedung merdeka','bdg','Gedung Merdeka, lokasi Konferensi Asia Afrika 1955.'],
+['bd_alun',107.6063,-6.9217,'Alun-Alun Bandung','alun alun bandung,masjid raya bandung','bdg','Alun-alun dengan Masjid Raya Bandung dan taman rumput.'],
+['bd_dago',107.6280,-6.8590,'Dago Pakar','dago,dago pakar,tebing keraton','bdg','Kawasan perbukitan Dago dengan kafe dan pemandangan kota.'],
+['bd_cihampelas',107.6020,-6.8960,'Cihampelas Walk','cihampelas,ciwalk,cihampelas walk','bdg','Mal terbuka dan sentra belanja jeans di Cihampelas.'],
+['bd_patenggang',107.3620,-7.1650,'Situ Patenggang','situ patenggang,patenggang,rancabali','bdg','Danau di tengah kebun teh Rancabali, dekat Kawah Putih.'],
+['bd_udjo',107.6540,-6.8970,'Saung Angklung Udjo','saung angklung udjo,angklung udjo,udjo','bdg','Pertunjukan angklung dan budaya Sunda yang interaktif.'],
+['bd_maribaya',107.6700,-6.8330,'Maribaya','maribaya,curug omas','bdg','Air terjun dan wisata alam di Lembang timur.'],
+['bd_transstudio',107.6360,-6.9250,'Trans Studio Bandung','trans studio,trans studio bandung','bdg','Taman hiburan indoor di Bandung.'],
+['cb_kasepuhan',108.5655,-6.7260,'Keraton Kasepuhan','kasepuhan,keraton kasepuhan','cbn','Keraton tertua di Cirebon dengan museum kereta Singa Barong.'],
+['cb_gunungjati',108.5390,-6.6420,'Makam Sunan Gunung Jati','sunan gunung jati,gunung jati,makam sunan gunung jati','cbn','Kompleks makam wali yang ramai peziarah.'],
+['cb_trusmi',108.5220,-6.7050,'Batik Trusmi','batik trusmi,trusmi','cbn','Sentra batik dan oleh-oleh khas Cirebon di Plered.'],
+['cb_kanoman',108.5675,-6.7190,'Keraton Kanoman','kanoman,keraton kanoman','cbn','Keraton dengan museum pusaka dan pasar tradisional di sekitarnya.'],
+['cb_sunyaragi',108.5400,-6.7290,'Gua Sunyaragi','sunyaragi,gua sunyaragi','cbn','Kompleks gua buatan bekas taman keraton.'],
+['sb_ampel',112.7425,-7.2305,'Masjid Sunan Ampel','sunan ampel,ampel,masjid sunan ampel','sby','Masjid dan makam wali di kawasan Ampel dengan pasar oleh-oleh khas Arab.'],
+['sb_pahlawan',112.7375,-7.2455,'Tugu Pahlawan','tugu pahlawan,museum sepuluh nopember,museum 10 november','sby','Monumen dan museum pertempuran 10 November 1945.'],
+['sb_sampoerna',112.7305,-7.2380,'House of Sampoerna','house of sampoerna,sampoerna','sby','Museum rokok di bangunan kolonial, ada bus tur gratis.'],
+['sb_jembatanmerah',112.7380,-7.2350,'Jembatan Merah','jembatan merah','sby','Jembatan bersejarah di kota tua Surabaya.'],
+['sb_suramadu',112.7787,-7.2050,'Jembatan Suramadu','suramadu,jembatan suramadu','sby','Jembatan penghubung Surabaya dan Madura.'],
+['sb_kenjeran',112.7950,-7.2440,'Pantai Kenjeran','kenjeran,pantai kenjeran,kenjeran park','sby','Pantai dengan klenteng Sanggar Agung dan sentra kuliner seafood.'],
+['sb_bungkul',112.7400,-7.2910,'Taman Bungkul','taman bungkul,bungkul','sby','Taman kota populer dengan area jajanan.'],
+['sb_kapalselam',112.7500,-7.2650,'Monumen Kapal Selam','monumen kapal selam,kapal selam','sby','Kapal selam KRI Pasopati yang dijadikan museum.'],
+['sb_zoo',112.7370,-7.2950,'Kebun Binatang Surabaya','kebun binatang surabaya,kbs','sby','Kebun binatang tua dengan koleksi satwa beragam.'],
+['ml_jatim',112.5300,-7.8890,'Jatim Park','jatim park,jatimpark,jatim park 1','mlg','Taman rekreasi edukasi keluarga di Batu.'],
+['ml_angkut',112.5210,-7.8850,'Museum Angkut','museum angkut','mlg','Museum transportasi dengan koleksi kendaraan dan zona dunia mini.'],
+['ml_bns',112.5330,-7.8870,'Batu Night Spectacular','batu night spectacular,bns','mlg','Taman hiburan malam dengan lampu warna-warni dan wahana.'],
+['ml_kampung',112.6381,-7.9831,'Kampung Warna-Warni Jodipan','jodipan,kampung warna warni,kampung tridi','mlg','Kampung rumah warna-warni di tepi Sungai Brantas.'],
+['ml_selecta',112.5260,-7.8190,'Selecta','selecta,taman selecta','mlg','Taman bunga dan kolam renang di udara sejuk Batu.'],
+['ml_kayutangan',112.6320,-7.9735,'Kayutangan Heritage','kayutangan,kajoetangan,kayutangan heritage','mlg','Koridor kota lama Malang dengan bangunan kolonial dan kafe.'],
+['ml_secret',112.5270,-7.8830,'Batu Secret Zoo','batu secret zoo,secret zoo,jatim park 2','mlg','Kebun binatang modern dengan wahana satwa interaktif.'],
+['ml_coban',112.4900,-7.8840,'Coban Rondo','coban rondo','mlg','Air terjun di lereng Gunung Kawi dengan taman dan labirin.'],
+['ml_alun',112.6340,-7.9770,'Alun-Alun Tugu Malang','alun alun malang,alun alun tugu,tugu malang','mlg','Alun-alun dan Tugu Malang di pusat kota.'],
+['ml_balekambang',112.5382,-8.3979,'Pantai Balekambang','balekambang,pantai balekambang','mlg','Pantai dengan pura di pulau kecil yang terhubung jembatan.'],
+['ml_tigawarna',112.6810,-8.4350,'Pantai Tiga Warna','tiga warna,pantai tiga warna,clungup','mlg','Pantai konservasi mangrove dan terumbu; perlu izin dan pemandu.'],
+['bl_tanahlot',115.1200,-8.6212,'Tanah Lot','tanah lot','dps','Pura di atas batu karang di laut, ramai saat matahari terbenam.'],
+['bl_uluwatu',115.0880,-8.8290,'Pura Uluwatu','uluwatu,pura uluwatu','dps','Pura di tebing laut dengan tari kecak saat senja.'],
+['bl_gwk',115.1670,-8.8100,'Garuda Wisnu Kencana','gwk,garuda wisnu kencana','dps','Taman budaya dengan patung Garuda Wisnu raksasa.'],
+['bl_kuta',115.1680,-8.7180,'Pantai Kuta','pantai kuta','dps','Pantai paling ramai di Bali, pusat belanja dan hiburan.'],
+['bl_monkey',115.2590,-8.5190,'Monkey Forest Ubud','monkey forest,monkey forest ubud','dps','Hutan suci dengan ratusan monyet dan pura.'],
+['bl_tegalalang',115.2790,-8.4310,'Tegalalang','tegalalang,tegallalang,rice terrace','dps','Sawah terasering ikonik di utara Ubud.'],
+['bl_tirta',115.3150,-8.4150,'Tirta Empul','tirta empul,tirta empul tampaksiring','dps','Pura pemandian suci dengan kolam pancuran.'],
+['bl_nusadua',115.2330,-8.8000,'Nusa Dua & Water Blow','nusa dua,water blow,pantai nusa dua','dps','Kawasan pantai resor dengan Water Blow dan pantai tenang.'],
+['bl_kintamani',115.3550,-8.2460,'Kintamani','kintamani,gunung batur,danau batur','dps','Pemandangan Gunung dan Danau Batur dari punggung kaldera.'],
+['bl_ulundanu',115.1670,-8.2750,'Ulun Danu Beratan','ulun danu,ulun danu beratan,bedugul,beratan','dps','Pura di tepi Danau Beratan, Bedugul.'],
+['bl_sukawati',115.2890,-8.5920,'Pasar Seni Sukawati','sukawati,pasar seni sukawati','dps','Pasar kerajinan dan oleh-oleh khas Bali.'],
+['bl_jimbaran',115.1620,-8.7900,'Pantai Jimbaran','jimbaran,pantai jimbaran','dps','Pantai dengan deretan kafe seafood bakar saat senja.'],
+['bl_sanur',115.2630,-8.6900,'Pantai Sanur','sanur,pantai sanur','dps','Pantai tenang untuk matahari terbit dan jalan santai.'],
+['bl_besakih',115.4510,-8.3740,'Pura Besakih','besakih,pura besakih','dps','Pura terbesar di Bali di lereng Gunung Agung.']
+];
+INFO.jk_perpusnas='Perpustakaan Nasional RI di Medan Merdeka Selatan, tujuan literasi untuk rombongan sekolah.';
+INFO.jk_ods='Ocean Dream Samudera di Ancol: akuarium, pertunjukan lumba-lumba dan edukasi laut.';
+INFO.jk_unj='Kampus Universitas Negeri Jakarta di Rawamangun, kunjungan kampus untuk pelajar.';
+INFO.jk_lubang='Monumen Pancasila Sakti di Lubang Buaya, museum peristiwa G30S.';
+INFO.jk_cempaka='ITC Cempaka Mas, pusat belanja grosir dan oleh-oleh.';
+/* lama singgah (menit) di tiap tempat, dari rundown tour pelajar; selain ini dianggap 120 menit */
+var DW={jk_monas:75,jk_kotatua:120,jk_museum:90,jk_perpusnas:120,jk_istiqlal:60,jk_planet:90,jk_ancol:240,jk_ods:105,jk_unj:60,jk_lubang:90,jk_cempaka:90,jk_tmii:180,jk_ragunan:150,jk_sunda:60,jk_gbk:60,
+ jg_tugu:30,jg_bakpia:45,jg_malioboro:90,jg_vredeburg:60,jg_pintar:90,jg_keraton:90,jg_sari:60,jg_alun:60,jg_prambanan:150,jg_boko:90,jg_parang:90,jg_lava:150,jg_pindul:150,jg_ullen:90,
+ ml_selecta:90,ml_jatim:150,ml_angkut:120,ml_bns:150,bl_tanahlot:90,bl_uluwatu:120,bl_kuta:90,bl_gwk:120,bl_sukawati:90,bd_braga:60,bd_gedungsate:60,bd_tangkuban:90,bd_farm:90,bd_floating:90,bd_kawah:90,
+ sm_lawang:90,sm_kotalama:90,sm_sampoo:60,sm_simpang:60,so_keraton:90,so_gede:60,cb_kasepuhan:60,cb_gunungjati:60,cb_trusmi:90,sb_ampel:60,sb_pahlawan:60,sb_sampoerna:90};
+TS.forEach(function(r){N(r[0],r[1],r[2],r[3],r[4].split(','),r[5]);INFO[r[0]]=r[6];(TOURS[r[5]]=TOURS[r[5]]||{p:[],per:3,min:3,max:30}).p.push(r[0])});
+// a = jalan biasa, t = tol, g = jalan pegunungan
+var EDGE_SRC='cil-bpd cil-tlp cil-nus cil-srd cil-kry cil-wng cil-sdr srd-kry kry-smp kry-bny bny-pwt smp-gmb gmb-kbm kbm-ktj ktj-prw prw-wts wts-yg_snt yg_snt-jog prw-mgl '
+ +'wng-ajb wng-pwt ajb-pwt ajb-bmy:g sdr-mjn sdr-kal sdr-bjr mjn-wng kal-pgd bjr-pgd bjr-cms cms-tsk tsk-grt:g grt-ngr ngr-bdg '
+ +'pwt-pbg pbg-bnj pwt-bnj bnj-wsb:g wsb-dng:g wsb-tmg tmg-mgl tmg-sln tmg-amb sln-amb amb-bdn:g amb-smg mgl-jog mgl-brb brb-jog '
+ +'smg-sln:t sln-byl:t byl-slo:t slo-klt klt-yg_kls yg_kls-jog jog-yg_btl yg_btl-bnt jog-yg_pyg yg_pyg-yg_ptk:g yg_ptk-yg_ply:g yg_ply-wns:g jog-yg_slm jog-yg_gdn wts-yg_yia wns-wnb:g wnb-pct:g slo-wnb slo-twg:g '
+ +'slo-sra:t sra-ngw:t ngw-mdn:t mdn-njk:t njk-jbg:t jbg-mjk:t mjk-sby:t sby-sda:t sda-psr:t psr-prb:t prb-stb stb-bwi prb-jmb jmb-bwi '
+ +'mlg-psr:t mjk-mlg:t mlg-btu mlg-brm:g prb-brm:g njk-kdr kdr-blt blt-mlg kdr-jbg mdn-pct:g sby-gsk gsk-lmg lmg-tbn tbn-rmb rmb-pti pti-kds '
+ +'kds-mur:g kds-jpr dmk-jpr smg-dmk dmk-kds bwi-glm glm-dps dps-ubd dps-kta '
+ +'bmy-prp prp-slw slw-tgl slw-guc:g prp-brs brs-tgl:t tgl-pml:t pml-pkl:t pkl-btg:t btg-smg:t brs-cbn:t brs-los los-cbn cbn-kng cbn-mjl kng-mjl '
+ +'cbn-idm idm-sbg sbg-cmp cbn-cmp:t cmp-krw:t krw-bks:t bks-jkt:t cmp-jkt:t cmp-bdg:t sbg-bdg mjl-bdg:g bdg-lmb bdg-cjr cjr-pnc:g pnc-bgr bgr-jkt:t bgr-skb skb-cjr cil-cl_gml cl_gml-cl_krk cl_krk-cl_kls cl_kls-cl_kes cl_gml-cl_kes cl_kes-cl_mos cl_mos-kry cl_mos-cl_sam cl_sam-kry cil-cl_kpt cil-cl_sel';
+EDGE_SRC.split(/\s+/).forEach(function(s){
+  var x=s.split(':'),ab=x[0].split('-'),a=ab[0],b=ab[1],t=x[1]||'a';
+  if(!NODE[a]||!NODE[b]){if(window.console)console.warn('jalan tak dikenal',s);return}
+  var km=kmd(NODE[a],NODE[b])*(t==='t'?1.1:(t==='g'?1.35:1.2));
+  ADJ[a].push({to:b,km:km,t:t});ADJ[b].push({to:a,km:km,t:t});
+  EDGE[a+'|'+b]={km:km,t:t};EDGE[b+'|'+a]={km:km,t:t};EDGES.push([a,b,t]);
+});
+function kmd(a,b){var la=a.lat!=null?a.lat:a[1],lb=b.lat!=null?b.lat:b[1],lo1=a.lon!=null?a.lon:a[0],lo2=b.lon!=null?b.lon:b[0];
+  return Math.hypot((lo2-lo1)*111.32*Math.cos((la+lb)/2*Math.PI/180),(lb-la)*110.57)}
+var MAJOR=['Purwokerto','Jogja','Semarang','Bandung','Jakarta','Cirebon','Surabaya','Malang','Denpasar','Solo'];
+var MACROS=[
+  {al:['wali songo jatim','walisongo jatim','wali 9 jatim'],multi:['tbn','lmg','gsk','sby']},
+  {al:['wali songo jateng','walisongo jateng','wali songo jawa tengah'],multi:['dmk','kds','mur']},
+  {al:['wali songo','walisongo','wali sembilan','wali 9'],multi:['cbn','dmk','kds','mur']}
+];
+var ALIASES=[];
+function norm(s){return ' '+String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()+' '}
+Object.keys(NODE).forEach(function(id){NODE[id].al.forEach(function(a){ALIASES.push({a:norm(a).trim(),p:id})})});
+MACROS.forEach(function(m){m.al.forEach(function(a){ALIASES.push({a:norm(a).trim(),p:m.multi})})});
+ALIASES.sort(function(x,y){return y.a.length-x.a.length});
+function findPlaces(txt){
+  var s=norm(txt),hits=[];
+  ALIASES.forEach(function(al){
+    var q=' '+al.a+' ',i=s.indexOf(q);
+    while(i>=0){hits.push({s:i+1,e:i+1+al.a.length,p:al.p});i=s.indexOf(q,i+1)}
+  });
+  var acc=[];
+  hits.forEach(function(h){if(!acc.some(function(x){return h.s<x.e&&x.s<h.e}))acc.push(h)});
+  acc.sort(function(x,y){return x.s-y.s});
+  var ids=[];
+  acc.forEach(function(h){(Array.isArray(h.p)?h.p:[h.p]).forEach(function(id){if(ids[ids.length-1]!==id)ids.push(id)})});
+  return ids;
+}
+function spd(t,sA,sT){return t==='t'?sT:(t==='g'?sA*.8:sA)}
+function sp(a,b,sA,sT){
+  var dist={},prev={},done={},id;
+  for(id in NODE)dist[id]=Infinity;
+  dist[a]=0;
+  for(;;){
+    var u=null,best=Infinity;
+    for(id in dist)if(!done[id]&&dist[id]<best){best=dist[id];u=id}
+    if(u===null||u===b)break;
+    done[u]=1;
+    ADJ[u].forEach(function(e){var w=dist[u]+e.km/spd(e.t,sA,sT);if(w<dist[e.to]){dist[e.to]=w;prev[e.to]=u}});
+  }
+  if(dist[b]===Infinity)return null;
+  var path=[b];while(path[0]!==a)path.unshift(prev[path[0]]);
+  return path;
+}
+function mkLeg(ids,sA,sT){
+  var pts=[],cumT=[0],segs=[],km=0,T=0;
+  ids.forEach(function(id,i){
+    var n=NODE[id];pts.push([n.lon,n.lat,n.name]);
+    if(i){var e=EDGE[ids[i-1]+'|'+id],v=spd(e.t,sA,sT),h=e.km/v;T+=h;km+=e.km;cumT.push(T);segs.push(v)}
+  });
+  return {ids:ids,pts:pts,cumT:cumT,segs:segs,T:T,km:km};
+}
+function buildRoute(pickup,dest,sA,sT,days){
+  var dAll=findPlaces(dest).filter(function(id){return id!=='cil'});
+  if(!dAll.length)return null;
+  var spotsIn=[],main=[];
+  dAll.forEach(function(id){
+    if(NODE[id].spot){if(spotsIn.indexOf(id)<0)spotsIn.push(id);id=NODE[id].par}
+    if(main[main.length-1]!==id)main.push(id);
+  });
+  var pk=findPlaces(pickup).filter(function(id){return id!=='cil'}).map(function(id){return NODE[id].spot?NODE[id].par:id}).filter(function(id,i,a){return i===0||a[i-1]!==id});
+  var ids0=['cil'],prev='cil',i,path;
+  for(i=0;i<pk.length;i++){
+    if(pk[i]===prev)continue;
+    path=sp(prev,pk[i],sA,sT);if(!path)return null;
+    ids0=ids0.concat(path.slice(1));prev=pk[i];
+  }
+  var pick=ids0.length>1?mkLeg(ids0,sA,sT):null,pickName=NODE[prev].name;
+  var ids=[prev],p2=prev;
+  for(i=0;i<main.length;i++){
+    if(main[i]===p2)continue;
+    path=sp(p2,main[i],sA,sT);if(!path)return null;
+    ids=ids.concat(path.slice(1));p2=main[i];
+  }
+  if(ids.length<2)return null;
+  var back=sp(p2,'cil',sA,sT);if(!back)return null;
+  var out=mkLeg(ids,sA,sT),bk=mkLeg(back,sA*1.15,sT*1.12),tour=null;
+  if(TOURS[p2]){
+    var sl=spotsIn.filter(function(id){return NODE[id].par===p2}),def=!sl.length;
+    if(def)sl=defaultTourFor(p2,days||4);
+    tour=mkTour(p2,sl,def);
+  }
+  return {pick:pick,pickName:pickName,out:out,back:bk,tour:tour,mid:main.slice(0,-1),dest:NODE[p2].name,
+    stops:pk.concat(main).filter(function(id,j,a){return j===0||a[j-1]!==id}).map(function(id){return NODE[id].name}),
+    backSame:ids.join()===back.slice().reverse().join()};
+}
+var RC={};
+function speeds(){return {a:+S.settings.speedA>0?+S.settings.speedA:33,t:+S.settings.speedT>0?+S.settings.speedT:52}}
+function mkTour(p2,sl,def){
+  var tp=[[NODE[p2].lon,NODE[p2].lat,NODE[p2].name]],kms=[];
+  sl.forEach(function(id,j){var n=NODE[id];kms.push(kmd(tp[j],n)*1.4);tp.push([n.lon,n.lat,n.name])});
+  return {ids:sl,pts:tp,names:sl.map(function(id){return NODE[id].name}),kms:kms,city:p2,def:def,cut:0};
+}
+/* satu hari maksimal 3 tempat wisata: jumlah hari wisata dihitung dari jendela 07:30-19:00 antara tiba di tujuan dan mulai pulang */
+function fitTour(r,t){
+  if(!r||!r.tour||!t.start||!t.end)return r;
+  var w=tripWin(t),To=r.out.T*36e5,Tb=r.back.T*36e5,D=w.ret-w.dep,H=36e5;
+  if(D<=0)return r;
+  if(D<1.1*(To+Tb)){var k=D/(1.1*(To+Tb));To*=k;Tb*=k}
+  var a=w.dep+To,b=w.ret-Tb,W=0,d=new Date(a),day;d.setHours(0,0,0,0);
+  for(day=d.getTime();day<b;day+=864e5)if(Math.min(b,day+19*H)-Math.max(a,day+7.5*H)>6e5)W++;
+  var cap=3*Math.max(1,W),T=r.tour;
+  if(T.ids.length<=cap)return r;
+  var ids=T.def?defaultTourFor(T.city,Math.ceil(cap/3)):T.ids.slice();
+  ids=ids.slice(0,cap);
+  var r2=Object.assign({},r);r2.tour=mkTour(T.city,ids,T.def);r2.tour.cut=T.ids.length-ids.length;
+  return r2;
+}
+function routeOf(t){
+  var sp2=speeds(),days=(t.start&&t.end&&toDay(t.end)>=toDay(t.start))?toDay(t.end)-toDay(t.start)+1:4,ck=(t.pickup||'')+'\u0001'+(t.destination||'')+'\u0001'+sp2.a+'/'+sp2.t+'/'+days+'/'+(t.startTime||'')+(t.endTime||'')+(t.end||'')+(t.start||'');
+  if(Object.prototype.hasOwnProperty.call(RC,ck))return RC[ck];
+  if(Object.keys(RC).length>400)RC={};
+  return RC[ck]=fitTour(buildRoute(t.pickup,t.destination,sp2.a,sp2.t,days),t);
+}
+function fmtDur(h){var m=Math.round(h*60);return m<60?m+' mnt':Math.floor(m/60)+' jam '+pad(m%60)+' mnt'}
+function viaList(r,max){
+  var skip={};r.stops.forEach(function(n){skip[n]=1});
+  var names=r.out.pts.slice(1,-1).map(function(p){return p[2]}).filter(function(n,i,a){return !skip[n]&&a.indexOf(n)===i});
+  if(!names.length)return 'langsung';
+  return names.length>max?names.slice(0,max).join(', ')+' dan '+(names.length-max)+' kota lain':names.join(', ');
+}
+function routeHint(){
+  var h=$('#f-route-hint');if(!h)return;
+  var dest=$('#f-dest').value.trim();
+  if(!dest){h.textContent='Rute di tab Tracking dipilih otomatis dari kolom Penjemputan dan Tujuan.';return}
+  var r=routeOf({pickup:$('#f-pickup').value,destination:dest,start:$('#f-start').value,end:$('#f-end').value,startTime:$('#f-stime').value,endTime:$('#f-etime').value});
+  if(!r){h.textContent='Tujuan belum dikenali, jadi order ini belum muncul di tab Tracking. Tulis nama kota atau tempat wisatanya, mis. Bandung, Borobudur, atau Demak.';return}
+  h.textContent='Rute otomatis: '+(r.pick?'pool Cilacap → '+r.pickName+' (jemput) → ':'Cilacap → ')+r.dest+' · lewat '+viaList(r,8)+' · ±'+Math.round(r.out.km)+' km · ±'+fmtDur(r.out.T)+' sekali jalan dari titik jemput.'
+    +(r.pick?' Bus berangkat dari pool ±'+fmtDur(r.pick.T+.5)+' sebelum jam berangkat (menuju '+r.pickName+').':'')
+    +(r.tour?' Di '+r.dest+' diatur keliling: '+r.tour.names.join(', ')+'.'+(r.tour.cut?' ('+r.tour.cut+' tempat dipangkas karena maksimal 3 wisata per hari.)':''):'');
+}
+$('#f-dest').addEventListener('input',routeHint);
+$('#f-pickup').addEventListener('input',routeHint);
+function hueOf(t){return HUES[hash(t.id)%HUES.length]}
+
+/* jam: selalu mengikuti jam asli perangkat */
+function simNow(){return Date.now()}
+function dayMs(d){var p=parts(d);return new Date(p.y,p.m,p.d).getTime()}
+function tripWin(t){
+  var st=hasTimes(t)?tmin(t.startTime):360,et=hasTimes(t)?tmin(t.endTime):1200;
+  return {dep:dayMs(toDay(t.start))+st*60000,ret:dayMs(toDay(t.end))+et*60000,assumed:!hasTimes(t)};
+}
+function tripState(t,now){
+  var r=routeOf(t);if(!r)return {r:null};
+  var w=tripWin(t),To=r.out.T*36e5,Tb=r.back.T*36e5,D=w.ret-w.dep,comp=false;
+  if(D<=0)return {r:r,bad:true,t:t};
+  if(D<1.1*(To+Tb)){var k=D/(1.1*(To+Tb));To*=k;Tb*=k;comp=true}
+  var Tp=r.pick?r.pick.T*36e5:0,wait=r.pick?18e5:0,pickEnd=w.dep-wait,pickStart=pickEnd-Tp;
+  var outEnd=w.dep+To,backStart=w.ret-Tb,ph,f=0,tr=null;
+  if(now<pickStart)ph='belum';
+  else if(now<pickEnd){ph='jemput';f=(now-pickStart)/Tp}
+  else if(now<w.dep)ph='menunggu';
+  else if(now<outEnd){ph='pergi';f=(now-w.dep)/To}
+  else if(now<backStart){f=1;if(r.tour){ph='wisata';tr=tourAt(r,t,outEnd,backStart,now)}else ph='tujuan'}
+  else if(now<w.ret){ph='pulang';f=(now-backStart)/Tb}
+  else ph='selesai';
+  return applyStop({t:t,r:r,w:w,To:To,Tb:Tb,comp:comp,ph:ph,f:f,outEnd:outEnd,backStart:backStart,pickStart:pickStart,pickEnd:pickEnd,tr:tr,now:now,gb:backStart});
+}
+/* keliling destinasi di Jakarta: tiap hari aktif 08:00-20:00, destinasi dibagi rata ke jendela hari itu */
+var TC={};
+function tourSlots(r,t,a,b){
+  var key=t.id+'|'+a+'|'+b+'|'+r.tour.ids.join();
+  if(TC[key])return TC[key];
+  if(Object.keys(TC).length>80)TC={};
+  var H=36e5,wins=[],d=new Date(a),day,n=r.tour.ids.length,i,j,city=r.tour.city;
+  d.setHours(0,0,0,0);
+  for(day=d.getTime();day<b;day+=864e5){var s0=Math.max(a,day+7.5*H),e0=Math.min(b,day+19*H);if(e0-s0>6e5)wins.push({s:s0,e:e0})}
+  if(!wins.length)wins=[{s:a,e:Math.max(b,a+6e5)}];
+  var W=wins.length,HT=HOTEL[city],hot=W>1&&HT?HT[hash(t.id)%HT.length]:null,hp=hot?[hot[1],hot[2],hot[0]]:null,TR=TRANSIT[city],gap=wins[0].s-a,
+      tra=new Date(a).getHours()<9&&gap>=18e5?(TR?TR[hash(t.id+'t')%TR.length]:1):null,
+      base=Math.floor(n/W),extra=n%W,cnt=wins.map(function(){return base}),
+      ord=wins.map(function(x,k){return k}).sort(function(x,y){return (wins[y].e-wins[y].s)-(wins[x].e-wins[x].s)});
+  for(j=0;j<extra;j++)cnt[ord[j]]++;
+  var slots=[],cur=r.tour.pts[0],k=0,atH=false;
+  function mvOf(from,to){var km=kmd(from,to)*1.4;return km<.5?0:Math.max(km/22*H,18e5)}
+  function push(s,mv,e,to,kind,id,lunch){var km=kmd(cur,to)*1.4;slots.push({s:s,mv:mv,e:e,km:km,spd:mv?km/(mv/H):0,from:cur,to:to,kind:kind,id:id,name:to[2],lunch:!!lunch});cur=to}
+  if(tra){var tt=tra===1?[cur[0],cur[1],'kota tujuan (sarapan dan bersih diri)']:[tra[1],tra[2],tra[0]];push(a,mvOf(cur,tt),wins[0].s,tt,'transit')}
+  else if(hp&&gap>6*H){push(a,mvOf(cur,hp),wins[0].s,hp,'hotel');atH=true}
+  for(j=0;j<W;j++){
+    var w=wins[j],ids=r.tour.ids.slice(k,k+cnt[j]),needH=hp&&j<W-1&&(ids.length>0||!atH),seq=[],prev=cur,sm=0,dw=0;k+=cnt[j];
+    ids.forEach(function(id){var nd=NODE[id],mv=mvOf(prev,nd),dm=(DW[id]||120)*6e4;seq.push({id:id,nd:nd,mv:mv,dm:dm});prev=nd;sm+=mv;dw+=dm});
+    var hm=needH?mvOf(prev,hp):0,t0=w.s,ly=-1,tm=t0,lx=H;
+    seq.forEach(function(q,x){tm+=q.mv;if(ly<0&&tm<13*H+d0(tm)&&tm+q.dm>12*H+d0(tm)){ly=x}tm+=q.dm});
+    function d0(x){var z=new Date(x);z.setHours(0,0,0,0);return z.getTime()}
+    var avail=w.e-w.s-sm-hm,need=dw+(ly>=0?lx:0),f=need>avail?Math.max(.25,avail/need):1;
+    tm=t0;
+    seq.forEach(function(q,x){var dm=(q.dm+(x===ly?lx:0))*f;push(tm,q.mv,tm+q.mv+dm,[q.nd.lon,q.nd.lat,q.nd.name],'spot',q.id,x===ly);tm+=q.mv+dm;atH=false});
+    if(needH){push(ids.length?tm:w.s,hm,wins[j+1]?wins[j+1].s:b,hp,'hotel');atH=true}
+  }
+  return TC[key]=slots;
+}
+function tourAt(r,t,a,b,now){
+  var sl=tourSlots(r,t,a,b),g=-1,i,P0=r.tour.pts[0];
+  for(i=0;i<sl.length;i++)if(now>=sl[i].s)g=i;
+  if(g<0)return {k:-1,moving:false,lon:P0[0],lat:P0[1],sl:sl};
+  var x=sl[g],since=now-x.s;
+  if(since<x.mv){var u=since/x.mv;return {k:g,moving:true,lon:x.from[0]+(x.to[0]-x.from[0])*u,lat:x.from[1]+(x.to[1]-x.from[1])*u,x:x,sl:sl}}
+  return {k:g,moving:false,lon:x.to[0],lat:x.to[1],x:x,sl:sl};
+}
+/* tiap unit pulang di jam acak (deterministik) yang tidak melewati batas sewa (jam pulang order); berangkat tetap rombongan */
+function unitOf(s,code){
+  if(!s.w||!code||s.bad)return s;
+  var free=Math.max(0,s.backStart-s.outEnd),sl=rng(hash(s.t.id+'|'+code+'|plg'))()*Math.min(free*.8,5*36e5),
+      bs=s.backStart-sl,ret=bs+s.Tb,n=s.now,u=Object.assign({},s,{backStart:bs,w:{dep:s.w.dep,ret:ret,assumed:s.w.assumed},lim:s.w.ret});
+  if(s.ph==='wisata'||s.ph==='tujuan'||s.ph==='pulang'){
+    if(n>=ret){u.ph='selesai';u.f=1}
+    else if(n>=bs){u.ph='pulang';u.f=(n-bs)/s.Tb}
+  }
+  return applyStop(u);
+}
+/* bus tidak jalan terus: berhenti sebentar di rest area, dan makan malam bila perjalanan melewati sekitar 18:00-19:30.
+   Waktu berhenti sudah termasuk dalam jadwal, jadi jam tiba tidak berubah; bus hanya sedikit lebih kencang di sela perhentian. */
+var STP={};
+function phiOf(leg,P,lon,lat){
+  var best=1e9,bg=0,i;
+  for(i=1;i<leg.pts.length;i++){
+    var a=leg.pts[i-1],b=leg.pts[i],dx=b[0]-a[0],dy=b[1]-a[1],L2=dx*dx+dy*dy||1e-9,u=Math.max(0,Math.min(1,((lon-a[0])*dx+(lat-a[1])*dy)/L2)),d=Math.hypot(lon-(a[0]+dx*u),lat-(a[1]+dy*u));
+    if(d<best){best=d;bg=(leg.cumT[i-1]+(leg.cumT[i]-leg.cumT[i-1])*u)/leg.T}
+  }
+  if(best>.35)return null;
+  var lo=0,hi=1,m;for(i=0;i<30;i++){m=(lo+hi)/2;if(gOf(P,m)<bg)lo=m;else hi=m}
+  return Math.max(.04,Math.min(.96,(lo+hi)/2));
+}
+/* perhentian bernama di perjalanan berangkat: Jogja istirahat di Candisari, Jakarta makan malam di resto langganan */
+function namedStops(s,m){
+  var o=/\|o$/.test(m.key),bk=/\|b$/.test(m.key);if(!o&&!bk)return [];
+  var c=s.r.dest==='Jogja'?'jog':s.r.dest==='Jakarta'?'jkt':null,h=hash(s.t.id),out=[];
+  function add(q,d,dn,lbl){var f=phiOf(m.leg,profile(m.key),q[1],q[2]);if(f!=null)out.push({phi:f,d:d,dn:dn,name:q[0],lbl:lbl})}
+  if(o&&c==='jog')add(REST.jog[h%REST.jog.length],(25+h%11)*6e4,false);
+  if(o&&c==='jkt')add(DINNER.jkt[h%DINNER.jkt.length],60*6e4,true);
+  if(bk&&c==='jkt')add(['Pusat Oleh-oleh Cikampek',107.4580,-6.4100],(105+h%16)*6e4,true,'Belanja oleh-oleh dan ISHOMA');
+  return out;
+}
+function stopLbl(x){
+  if(x.lbl)return x.lbl;
+  if(!x.dn)return 'Berhenti istirahat';
+  var d=new Date(x.s),h=d.getHours()+d.getMinutes()/60;
+  return h<10.5?'Berhenti sarapan':h<15.5?'Berhenti makan siang dan ISHOMA':h>=17&&h<22?'Berhenti makan malam':'Berhenti makan';
+}
+function stopsFor(key,ls,le,ex){
+  var ck=key+'|'+ls+'|'+le;if(STP[ck])return STP[ck];
+  if(Object.keys(STP).length>200)STP={};
+  var D=le-ls,r=rng(hash(key+'|stop')),H=36e5,st=ex.slice(),cand=[],i,tot=0,hasD=ex.some(function(x){return x.dn});
+  if(D>=H){
+    var n=Math.min(6,Math.floor(D/(2.4*H))+(r()<.5?1:0));
+    for(i=0;i<n;i++){var ph=.1+.8*(i+.2+.6*r())/n;if(!ex.some(function(x){return Math.abs(x.phi-ph)<.07}))st.push({phi:ph,d:(8+r()*17)*6e4,dn:false})}
+    var d0=new Date(ls);d0.setHours(0,0,0,0);
+    for(var day=d0.getTime();day<le;day+=864e5){
+      var ds=day+(18+r()*1.25)*H,dd=(55+r()*10)*6e4,l2=day+(11.75+r())*H,ld=(55+r()*20)*6e4;
+      if(!hasD&&ds>ls+30*6e4&&ds+dd<le-30*6e4)cand.push({ds:ds,d:dd,dn:true});
+      if(l2>ls+30*6e4&&l2+ld<le-30*6e4)cand.push({ds:l2,d:ld,dn:true,lunch:1});
+    }
+  }
+  var sum=function(a){return a.reduce(function(n,x){return n+x.d},0)},M=D-sum(st)-sum(cand);
+  cand.forEach(function(c){
+    var phi=(c.ds-ls)/D,k;
+    for(k=0;k<4;k++){var S=sum(st.filter(function(x){return x.phi<phi}));phi=Math.max(.03,Math.min(.97,(c.ds-ls-S)/M))}
+    if(c.lunch&&st.some(function(x){return x.name&&x.dn&&Math.abs(x.phi-phi)*M<2.2*H}))return;
+    st=st.filter(function(x){return x.name||Math.abs(x.phi-phi)*M>1.5*H});
+    c.phi=phi;st.push(c);
+  });
+  st.sort(function(a,b){return a.phi-b.phi});
+  tot=sum(st);M=D-tot;var acc=0;
+  st.forEach(function(x){x.s=ls+x.phi*M+acc;x.e=x.s+x.d;acc+=x.d});
+  return STP[ck]={st:st,tot:tot};
+}
+function warp(key,ls,le,now,ex){
+  var o=stopsFor(key,ls,le,ex),done=0,stop=null,ed=1e9,M=(le-ls)-o.tot;
+  o.st.forEach(function(x){
+    if(now>=x.e)done+=x.e-x.s;else if(now>=x.s){done+=now-x.s;stop=x}
+    ed=Math.min(ed,Math.abs(now-x.s),Math.abs(now-x.e));
+  });
+  return {f:Math.max(0,Math.min(1,(now-ls-done)/M)),stop:stop,ed:ed,k:(le-ls)/M};
+}
+function applyStop(s){
+  var m=mover(s);s.stop=null;s.ed=null;s.wk=1;
+  if(m){var w=warp(m.key,m.ls,m.le,s.now,namedStops(s,m));s.f=w.f;s.stop=w.stop;s.ed=w.ed;s.wk=w.k}
+  return s;
+}
+function mover(s){
+  if(s.ph==='jemput')return {leg:s.r.pick,key:s.t.id+'|j',ls:s.pickStart,le:s.pickEnd};
+  if(s.ph==='pergi')return {leg:s.r.out,key:s.t.id+'|o',ls:s.w.dep,le:s.outEnd};
+  if(s.ph==='pulang')return {leg:s.r.back,key:s.t.id+'|b',ls:s.backStart,le:s.w.ret};
+  return null;
+}
+function isMoving(s){return (!!mover(s)&&!s.stop)||(s.ph==='wisata'&&!!s.tr&&s.tr.moving)}
+function pointAt(leg,f){
+  var L=Math.min(Math.max(f,0),1)*leg.T,i=1;
+  while(i<leg.pts.length-1&&leg.cumT[i]<L)i++;
+  var a=leg.pts[i-1],b=leg.pts[i],seg=(leg.cumT[i]-leg.cumT[i-1])||1,u=(L-leg.cumT[i-1])/seg;
+  return {lon:a[0]+(b[0]-a[0])*u,lat:a[1]+(b[1]-a[1])*u,i:i-1,spd:leg.segs[i-1]||0};
+}
+
+/* kecepatan real time: bus kadang ngebut, kadang melambat atau tersendat.
+   Profil kecepatan tiap perjalanan dibuat deterministik dari id order, jadi sama di semua perangkat. */
+function rng(seed){var a=seed>>>0;return function(){a=(a+0x6D2B79F5)>>>0;var t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+var PROF={};
+function profile(key){
+  if(PROF[key])return PROF[key];
+  if(Object.keys(PROF).length>300)PROF={};
+  var r=rng(hash(key)),i,ks=[3,7,13,29,53],am=[.12,.10,.08,.06,.05],sins=[],dips=[],ups=[];
+  ks.forEach(function(k,j){sins.push({k:k,a:am[j]*(.7+.6*r()),p:r()*6.2832})});
+  for(i=2+Math.floor(r()*3);i>0;i--)dips.push({c:.08+r()*.84,s:.006+r()*.02,d:.45+r()*.35});
+  for(i=1+Math.floor(r()*2);i>0;i--)ups.push({c:.1+r()*.8,s:.03+r()*.04,d:.18});
+  var P={N:600,cum:[0]};
+  P.w=function(f){
+    var v=1;
+    sins.forEach(function(q){v+=q.a*Math.sin(6.2832*q.k*f+q.p)});
+    dips.forEach(function(q){var x=(f-q.c)/q.s;v-=q.d*Math.exp(-x*x)});
+    ups.forEach(function(q){var x=(f-q.c)/q.s;v+=q.d*Math.exp(-x*x)});
+    return Math.max(.15,v);
+  };
+  for(i=0;i<P.N;i++)P.cum.push(P.cum[i]+P.w((i+.5)/P.N)/P.N);
+  P.W=P.cum[P.N];
+  return PROF[key]=P;
+}
+function gOf(P,f){var x=Math.min(Math.max(f,0),1)*P.N,i=Math.min(Math.floor(x),P.N-1);return (P.cum[i]+(P.cum[i+1]-P.cum[i])*(x-i))/P.W}
+function dgdf(P,f){return P.w(Math.min(Math.max(f,0),1))/P.W}
+function profKey(s){var m=mover(s);return m?m.key:s.t.id}
+function vn(ms,seed,per){
+  var x=ms/per,i=Math.floor(x),u=x-i;u=u*u*(3-2*u);
+  return rng(hash(seed+'|'+per+'|'+i))()*(1-u)+rng(hash(seed+'|'+per+'|'+(i+1)))()*u;
+}
+/* naik turun kecepatan terhadap waktu: gelombang lalu lintas (bersama satu rombongan) + gaya nyetir tiap unit */
+function jit(ms,seed,common){
+  var own=.7+.6*vn(ms,seed,16000),
+      flow=.6+.6*vn(ms,common,70000),
+      slow=.8+.4*vn(ms,common,280000),
+      j=vn(ms,common,230000),jam=j<.14?.22+.78*(j/.14):1,
+      tw=.96+.08*vn(ms,seed,5000);
+  return own*flow*slow*jam*tw*1.15;
+}
+function speedAt(t,ms,seed){
+  seed=seed||t.id;
+  var st=tripState(t,ms);
+  if(!st.r||st.bad)return 0;
+  var cd=seed.indexOf(t.id+'|')===0?seed.slice(t.id.length+1):null;if(cd)st=unitOf(st,cd);
+  var m=mover(st);
+  if(m&&st.stop)return 0;
+  if(m){
+    var P=profile(m.key),p=pointAt(m.leg,gOf(P,st.f)),ramp=Math.max(.12,Math.min(1,(ms-m.ls)/12e4,(m.le-ms)/12e4,st.ed==null?1:st.ed/12e4));
+    return Math.min(105,p.spd*dgdf(P,st.f)*jit(ms,seed,t.id)*ramp*(st.wk||1));
+  }
+  if(st.ph==='wisata'&&st.tr&&st.tr.moving){
+    var x=st.tr.x,rp=Math.max(.15,Math.min(1,(ms-x.s)/6e4,(x.s+x.mv-ms)/6e4));
+    return Math.min(60,x.spd*jit(ms,seed,t.id)/1.15*rp);
+  }
+  return 0;
+}
+function trendOf(t,now,seed){
+  var d=speedAt(t,now,seed)-speedAt(t,now-8000,seed);
+  return d>1.5?{a:'▲',t:'Mempercepat',c:'up'}:(d<-1.5?{a:'▼',t:'Melambat',c:'down'}:{a:'●',t:'Stabil',c:'flat'});
+}
+function flowOf(rel){return rel<.6?'Lalu lintas padat, merayap':(rel<.88?'Agak pelan':(rel>1.18?'Jalan lancar, laju kencang':'Jalan lancar'))}
+function relNow(s,now,uid){
+  var m=mover(s);
+  return (m?dgdf(profile(m.key),s.f):1)*jit(now,uid,s.t.id)/1.15;
+}
+function stPos(s){
+  var r=s.r,m=mover(s);
+  if(s.ph==='selesai'){var c0=NODE.cil;return {lon:c0.lon,lat:c0.lat,i:0,spd:0}}
+  if(m){return pointAt(m.leg,gOf(profile(m.key),s.f))}
+  if(s.ph==='wisata'&&s.tr)return {lon:s.tr.lon,lat:s.tr.lat,i:0,spd:0};
+  if(s.ph==='menunggu'){var q=r.pick.pts[r.pick.pts.length-1];return {lon:q[0],lat:q[1],i:0,spd:0}}
+  if(s.ph==='belum'){var c=NODE.cil;return {lon:c.lon,lat:c.lat,i:0,spd:0}}
+  var p=r.out.pts[r.out.pts.length-1];return {lon:p[0],lat:p[1],i:r.out.pts.length-2,spd:0};
+}
+function fmtAt(ms,now){
+  var d=new Date(ms),n=new Date(now),t=pad(d.getHours())+':'+pad(d.getMinutes());
+  return d.toDateString()===n.toDateString()?t:d.getDate()+' '+MON3[d.getMonth()]+' '+t;
+}
+function fmtClock(ms){var d=new Date(ms);return DAYN[d.getDay()]+', '+d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear()+' · '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds())}
+function xy(p){var lo=p.lon!=null?p.lon:p[0],la=p.lat!=null?p.lat:p[1];return [(lo-105)*100,(-5.5-la)*100]}
+function poly(arr,close){return arr.map(function(p,i){var q=xy(p);return (i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)}).join('')+(close?'Z':'')}
+function codesLabel(t){var c=t.buses||[];return !c.length?'tanpa unit':(c.length<=2?c.join(', '):c[0]+' +'+(c.length-1))}
+var JAVA=[[105.25,-6.75],[105.6,-6.45],[105.9,-6.05],[106.0,-5.92],[106.45,-6.0],[106.8,-6.08],[107.4,-5.95],[107.8,-6.2],[108.3,-6.28],[108.55,-6.7],[109.15,-6.85],[109.7,-6.85],[109.95,-6.9],[110.42,-6.93],[110.55,-6.88],[110.65,-6.65],[110.8,-6.45],[111.05,-6.5],[111.35,-6.7],[112.05,-6.88],[112.35,-6.88],[112.65,-7.15],[112.8,-7.2],[112.85,-7.5],[112.9,-7.65],[113.2,-7.72],[113.9,-7.7],[114.4,-8.12],[114.45,-8.4],[114.4,-8.7],[113.6,-8.4],[113.2,-8.3],[112.7,-8.4],[112.2,-8.3],[111.6,-8.3],[111.1,-8.2],[110.9,-8.1],[110.6,-8.15],[110.3,-8.03],[110.0,-7.95],[109.8,-7.85],[109.4,-7.75],[109.15,-7.7],[109.1,-7.78],[108.8,-7.7],[108.65,-7.75],[108.2,-7.75],[108.0,-7.75],[107.65,-7.7],[107.2,-7.45],[106.65,-7.3],[106.4,-6.95],[105.8,-6.9],[105.25,-6.85]];
+var MADURA=[[112.85,-7.05],[113.5,-6.88],[114.1,-6.95],[113.7,-7.15],[113.0,-7.2]];
+var BALI=[[114.43,-8.15],[114.9,-8.13],[115.4,-8.2],[115.7,-8.4],[115.65,-8.7],[115.2,-8.85],[114.8,-8.75],[114.5,-8.45]];
+
+function phaseLabel(s){if(s.stop&&mover(s))return stopLbl(s.stop);if(s.ph==='wisata'&&s.tr&&s.tr.x&&!s.tr.moving){if(s.tr.x.kind==='hotel')return 'Parkir di hotel';if(s.tr.x.kind==='transit')return 'Transit di resto'}return {selesai:'Sudah tiba di Cilacap',belum:'Belum berangkat',jemput:'Menuju titik jemput',menunggu:'Menunggu di titik jemput',pergi:'Menuju tujuan',tujuan:'Di tujuan',wisata:'Keliling destinasi',pulang:'Pulang ke Cilacap'}[s.ph]}
+function sparkHtml(t,now,uid){
+  var pts=[],i,v;
+  for(i=60;i>=0;i--){v=speedAt(t,now-i*10000,uid);pts.push(((60-i)*2).toFixed(1)+','+(34-Math.min(v,90)/90*30).toFixed(1))}
+  return '<svg class="spark" viewBox="0 0 120 36" preserveAspectRatio="none" role="img" aria-label="Kecepatan 10 menit terakhir"><line class="base" x1="0" y1="34" x2="120" y2="34"/><polyline points="'+pts.join(' ')+'"/></svg>'
+    +'<div class="hint" style="display:flex;justify-content:space-between"><span>10 menit lalu</span><span>sekarang</span></div>';
+}
+function whereTxt(s,now){
+  var r=s.r,m=mover(s);
+  if(m&&s.stop){var q0=pointAt(m.leg,gOf(profile(m.key),s.f));return stopLbl(s.stop)+(s.stop.name?' di '+esc(s.stop.name):' di dekat '+esc(m.leg.pts[q0.i][2]))+' · lanjut jalan '+fmtAt(s.stop.e,now)}
+  if(s.ph==='selesai')return 'Sudah kembali ke pool Cilacap '+fmtAt(s.w.ret,now)+' · batas sewa '+fmtAt(s.lim,now);
+  if(m){
+    var p=pointAt(m.leg,gOf(profile(m.key),s.f)),nm=function(i){return esc(m.leg.pts[i][2])};
+    var tail=s.ph==='jemput'?'tiba di titik jemput ('+esc(r.pickName)+') '+fmtAt(s.pickEnd,now)+', berangkat '+fmtAt(s.w.dep,now):(s.ph==='pergi'?'tiba '+esc(r.dest)+' '+fmtAt(s.outEnd,now):'tiba di Cilacap '+fmtAt(s.w.ret,now));
+    return 'Melewati '+nm(p.i)+', menuju '+nm(p.i+1)+' · '+tail;
+  }
+  if(s.ph==='menunggu')return 'Menunggu di '+esc(r.pickName)+' · berangkat ke tujuan '+fmtAt(s.w.dep,now);
+  if(s.ph==='wisata'){
+    var tr=s.tr,n=r.tour.ids.length,x=tr.x,sl=tr.sl,no=function(i){var c=0,j;for(j=0;j<=i;j++)if(sl[j].kind==='spot')c++;return c};
+    if(tr.k<0)return 'Tiba di '+esc(r.dest)+' · jadwal berikutnya '+fmtAt(sl[0].s,now);
+    if(tr.moving)return x.kind==='hotel'?'Menuju hotel '+esc(x.name)+' untuk menginap':x.kind==='transit'?'Menuju '+esc(x.name)+' untuk transit':'Menuju '+esc(x.name)+' ('+no(tr.k)+'/'+n+')';
+    var nx=sl[tr.k+1];
+    if(x.kind==='hotel')return 'Parkir dan menginap di '+esc(x.name)+(nx?' · lanjut keliling '+fmtAt(nx.s,now):'');
+    if(x.kind==='transit')return 'Transit di '+esc(x.name)+(nx?' · mulai keliling '+fmtAt(nx.s,now):'');
+    return 'Di '+esc(x.name)+' ('+no(tr.k)+'/'+n+')'+(x.lunch?' · termasuk ISHOMA':'')+(nx?' · berikutnya '+(nx.kind==='hotel'?'ke hotel ':esc(nx.name)+' ')+fmtAt(nx.s,now):' · mulai pulang '+fmtAt(s.backStart,now));
+  }
+  if(s.ph==='tujuan')return 'Parkir di '+esc(r.dest)+' · mulai pulang '+fmtAt(s.backStart,now);
+  if(r.pick)return 'Berangkat dari pool '+fmtAt(s.pickStart,now)+' menuju '+esc(r.pickName)+' · berangkat dari penjemputan '+fmtAt(s.w.dep,now);
+  return 'Berangkat '+fmtAt(s.w.dep,now)+' dari Cilacap';
+}
+function cardHtml(s,now,selId){
+  var t=s.t,r=s.r,codes=t.buses||[],moving=isMoving(s),pct=0,spdTxt='';
+  if(moving){
+    var lead=codes[0]?t.id+'|'+codes[0]:t.id,v=Math.round(speedAt(t,now,lead)),tr=trendOf(t,now,lead);
+    spdTxt='<span class="spd-s"><b class="mono">'+v+'</b> km/jam <span class="tr '+tr.c+'">'+tr.a+' '+tr.t+'</span></span>';
+  }
+  pct=Math.max(0,Math.min(100,Math.round((now-s.pickStart)/(s.w.ret-s.pickStart)*100)));
+  return '<article class="tcard'+(t.id===selId?' sel':'')+'" style="--h:'+hueOf(t)+'" data-trk="sel" data-id="'+esc(t.id)+'">'
+   +'<h3>'+esc(t.customer)+'<span class="st '+(s.ph==='belum'?'':'pasti')+'">'+phaseLabel(s)+'</span>'+(t.status==='tentatif'?'<span class="st tentatif">Tentatif</span>':'')+'</h3>'
+   +'<p class="route">Cilacap → '+esc(r.stops.join(' → '))+' · ±'+Math.round((r.pick?r.pick.km:0)+r.out.km)+' km sekali jalan</p>'
+   +(s.ph==='belum'?'':'<div class="prog" role="progressbar" aria-valuenow="'+pct+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+pct+'%"></i></div>')
+   +(spdTxt?'<p>'+spdTxt+'</p>':'')
+   +'<p class="route">'+whereTxt(s,now)+'</p><div class="chips-sm">'+codes.map(function(c){return '<span class="code">'+esc(c)+'</span>'}).join('')+'</div></article>';
+}
+function busByCode(c){return S.buses.find(function(b){return b.code===c})}
+function panelHtml(s,now,style){
+  var t=s.t,r=s.r,moving=isMoving(s),codes=t.buses||[];
+  var cur=codes.indexOf(S.selBus)>=0?S.selBus:(codes.find(function(c){var b=busByCode(c);return b&&b.photo})||codes[0]||null);
+  var cb=cur?busByCode(cur):null,uid=cur?t.id+'|'+cur:t.id;
+  s=cur?unitOf(s,cur):s;moving=isMoving(s);
+  var h='<div class="mappanel" style="--h:'+hueOf(t)+';'+style+'">'
+   +'<div class="pn-photo">'+(cb&&cb.photo?'<img decoding="sync" alt="Foto '+esc(cur)+'" src="'+cb.photo+'">':'<span>'+(cur?esc(cur)+': belum ada foto. Atur di tab Armada.':'Belum ada unit')+'</span>')+'</div>'
+   +'<div class="pn-h"><div><b>'+esc(t.customer)+'</b><div class="chips-sm" style="margin-top:4px"><span class="st '+(s.ph==='belum'?'':'pasti')+'">'+phaseLabel(s)+'</span>'+(t.status==='tentatif'?'<span class="st tentatif">Tentatif</span>':'')+'</div></div>'
+   +'<button type="button" class="btn sm ghost" data-trk="close" aria-label="Tutup keterangan">✕</button></div>';
+  if(moving){
+    var v=Math.round(speedAt(t,now,uid)),tr=trendOf(t,now,uid),rel=relNow(s,now,uid);
+    h+='<div class="spd"><span class="big mono">'+v+'</span><span>km/jam</span><span class="tr '+tr.c+'">'+tr.a+' '+tr.t+'</span></div><p class="hint">'+flowOf(rel)+'</p>'+sparkHtml(t,now,uid);
+  }else if(s.ph!=='belum')h+='<div class="spd"><span class="big mono">0</span><span>km/jam · '+(s.ph==='menunggu'?'menunggu penumpang':(s.stop?'berhenti sebentar':'parkir'))+'</span></div>';
+  h+='<p>'+whereTxt(s,now)+'</p>';
+  if(codes.length){
+    h+='<div><div class="hint">Unit'+(moving?' dan kecepatannya (km/jam)':'')+'</div><div class="chips-sm" style="margin-top:4px">'
+      +codes.map(function(c){return '<button type="button" class="code'+(c===cur?' on':'')+'" data-trk="unit" data-code="'+esc(c)+'">'+esc(c)+(moving?' · '+Math.round(speedAt(t,now,t.id+'|'+c)):'')+'</button>'}).join('')+'</div></div>';
+  }
+  h+='<dl class="tdet"><dt>Rute</dt><dd>Cilacap → '+esc(r.stops.join(' → '))+' · ±'+Math.round(r.out.km)+' km</dd>'
+   +'<dt>Lewat</dt><dd>'+esc(viaList(r,40))+'</dd>'
+   +(r.backSame?'':'<dt>Pulang lewat</dt><dd>'+esc(r.back.pts.slice(1,-1).map(function(p){return p[2]}).filter(function(n,i,a){return a.indexOf(n)===i}).join(', ')||'langsung')+'</dd>')
+   +'<dt>Harga sewa</dt><dd>'+rupiah(priceOf(t))+'</dd><dt>Jemput</dt><dd>'+esc(t.pickup||'—')+'</dd><dt>Tujuan</dt><dd>'+esc(t.destination||'—')+'</dd>'
+   +(t.phone?'<dt>Telepon</dt><dd>'+esc(t.phone)+'</dd>':'')
+   +(t.seatBig&&SEAT[t.seatBig]&&+t.needBig>0?'<dt>Seat</dt><dd>'+esc(SEAT[t.seatBig])+'</dd>':'')
+   +(cb?'<dt>Odometer '+esc(cur)+' berangkat</dt><dd>'+fmtKm(odoAt(cur,s.pickStart-1))+'</dd><dt>Odometer sekarang</dt><dd>'+fmtKm(odoAt(cur,now))+'</dd><dt>Odometer saat pulang</dt><dd>'+fmtKm(odoAt(cur,s.pickStart-1)+tripKm(s))+'</dd>':'')
+   +(r.pick?'<dt>Berangkat dari pool</dt><dd>'+fmtAt(s.pickStart,now)+'</dd><dt>Tiba di jemput</dt><dd>'+esc(r.pickName)+' · '+fmtAt(s.pickEnd,now)+'</dd>':'')
+   +(r.tour?'<dt>Destinasi</dt><dd>'+esc(r.tour.names.join(' → '))+'</dd>':'')
+   +(infoOf(s)?'<dt>Tentang</dt><dd>'+esc(infoOf(s))+'</dd>':'')
+   +'<dt>'+(r.pick?'Berangkat dari jemput':'Berangkat')+'</dt><dd>'+fmtAt(s.w.dep,now)+'</dd><dt>Tiba di tujuan</dt><dd>'+fmtAt(s.outEnd,now)+'</dd>'
+   +'<dt>Mulai pulang</dt><dd>'+fmtAt(s.backStart,now)+'</dd><dt>Tiba kembali</dt><dd>'+fmtAt(s.w.ret,now)+'</dd><dt>Batas sewa</dt><dd>'+fmtAt(s.lim||s.w.ret,now)+'</dd>'
+   +(s.w.assumed?'<dt>Catatan</dt><dd>Jam belum diisi di order, dipakai asumsi 06:00 sampai 20:00.</dd>':'')
+   +(s.comp?'<dt>Catatan</dt><dd>Durasi order lebih pendek dari waktu tempuh normal, jadi perjalanan dipadatkan.</dd>':'')
+   +'</dl></div>';
+  return h;
+}
+
+function mapSvg(active,selS,now,W,poolN){
+  var fit=[];
+  if(S.mapView!=='all'){
+    var src2=selS?[selS]:active;
+    src2.forEach(function(s){fit=fit.concat(s.ph==='wisata'&&s.r.tour?s.r.tour.pts:[].concat(s.r.pick?s.r.pick.pts:[],s.r.out.pts,s.r.back.pts))});
+  }
+  var x0,y0,x1,y1;
+  if(fit.length){
+    x0=1e9;y0=1e9;x1=-1e9;y1=-1e9;
+    fit.forEach(function(p){var q=xy(p);x0=Math.min(x0,q[0]);x1=Math.max(x1,q[0]);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1])});
+  }else{x0=20;x1=1080;y0=20;y1=350}
+  var w=x1-x0,h=y1-y0,px=Math.max(w*.14,16)+110*(w/W),py=Math.max(h*.2,16);
+  x0-=px;x1+=px;y0-=py;y1+=py;w=x1-x0;h=y1-y0;
+  if(w<50){var cx=(x0+x1)/2;x0=cx-25;w=50}
+  var R=W<560?1:2.1,cx2=x0+w/2,cy2=y0+h/2;
+  if(w/h<R){w=h*R}else{h=w/R}
+  x0=cx2-w/2;y0=cy2-h/2;
+  if(S.view){w=S.view.w;h=w/R;x0=S.view.cx-w/2;y0=S.view.cy-h/2}
+  S.cur={cx:x0+w/2,cy:y0+h/2,w:w,R:R};
+  var k=w/W,Hpx=W*h/w,sw=function(n){return (n*k).toFixed(2)},pos={};
+  var s='<svg viewBox="'+x0.toFixed(1)+' '+y0.toFixed(1)+' '+w.toFixed(1)+' '+h.toFixed(1)+'" role="img" aria-label="Peta skema posisi bus">';
+  s+='<rect class="m-sea" data-trk="clear" x="'+x0.toFixed(1)+'" y="'+y0.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'"/>';
+  [JAVA,MADURA,BALI].forEach(function(a){s+='<path class="m-land" data-trk="clear" d="'+poly(a,1)+'"/>'});
+  EDGES.forEach(function(e){s+='<path class="m-route'+(e[2]==='t'?' m-toll':'')+'" d="'+poly([NODE[e[0]],NODE[e[1]]])+'"/>'});
+  var onRoute={};
+  active.forEach(function(a){
+    var hot=selS&&selS.t.id===a.t.id?' selr':'';
+    if(a.r.pick)s+='<path class="m-route hot pick'+hot+'" style="--h:'+hueOf(a.t)+'" d="'+poly(a.r.pick.pts)+'"/>';
+    s+='<path class="m-route hot'+hot+'" style="--h:'+hueOf(a.t)+'" d="'+poly(a.r.out.pts)+'"/>';
+    if(a.r.tour)s+='<path class="m-route hot tour'+hot+'" style="--h:'+hueOf(a.t)+'" d="'+poly(a.r.tour.pts)+'"/>';
+    if(!a.r.backSame)s+='<path class="m-route hot back'+hot+'" style="--h:'+hueOf(a.t)+'" d="'+poly(a.r.back.pts)+'"/>';
+    a.r.out.pts.concat(a.r.back.pts,a.r.pick?a.r.pick.pts:[],a.r.tour?a.r.tour.pts:[]).forEach(function(p){onRoute[p[2]]=1});
+  });
+  Object.keys(NODE).forEach(function(id){
+    var n=NODE[id];if(id==='cil')return;
+    var major=MAJOR.indexOf(n.name)>=0,lbl=n.spot?((w<=160&&!!onRoute[n.name])||w<=60):(major||w<=160||(w<=520&&onRoute[n.name]));
+    var q=xy(n),dy=n.spot?((hash(id)%3)-1)*11*k:0;
+    if(n.spot&&!onRoute[n.name]&&w>160)return;
+    s+='<circle class="m-city'+(n.spot?' m-spot':'')+'" cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="'+sw(n.spot?1.8:(major?3.2:2))+'"/>';
+    if(lbl)s+='<text class="m-lbl" x="'+(q[0]+5*k).toFixed(1)+'" y="'+(q[1]-4*k+dy).toFixed(1)+'" style="font-size:'+sw(11)+'px;stroke-width:'+sw(3)+'px">'+esc(n.name)+'</text>';
+  });
+  var pq=xy(NODE.cil);
+  s+='<rect class="m-pool" x="'+(pq[0]-5*k).toFixed(1)+'" y="'+(pq[1]-5*k).toFixed(1)+'" width="'+sw(10)+'" height="'+sw(10)+'" rx="'+sw(2)+'"/>'
+    +'<text class="m-lbl" x="'+(pq[0]+9*k).toFixed(1)+'" y="'+(pq[1]+14*k).toFixed(1)+'" style="font-size:'+sw(11)+'px;stroke-width:'+sw(3)+'px">Pool Cilacap'+(poolN!=null?' · '+poolN+' unit':'')+'</text>';
+  if(w<=160)ALLPOI.forEach(function(p){
+    var q=xy({lon:p.lon,lat:p.lat});
+    s+='<rect x="'+(q[0]-4*k).toFixed(3)+'" y="'+(q[1]-4*k).toFixed(3)+'" width="'+sw(8)+'" height="'+sw(8)+'" rx="'+sw(2)+'" fill="'+p.c+'" stroke="#000" stroke-width="'+sw(1)+'"/>'
+     +(w<=60?'<text class="m-bt" x="'+(q[0]+7*k).toFixed(3)+'" y="'+(q[1]+3*k).toFixed(3)+'" style="font-size:'+sw(9)+'px;stroke-width:'+sw(2.5)+'px">'+esc(p.n)+'</text>':'');
+  });
+  var seen={};
+  active.forEach(function(a){
+    var codes=a.t.buses||[],isSel=selS&&selS.t.id===a.t.id,cells={},ord=[],
+      us=(codes.length?codes.slice(0,10):[null]).map(function(c){return {u:c?unitOf(a,c):a,c:c}}).filter(function(x){return x.u.ph!=='selesai'});
+    us.forEach(function(x){var q=xy(stPos(x.u)),key=Math.round(q[0]/(10*k))+':'+Math.round(q[1]/(10*k));if(!cells[key]){cells[key]={q:q,us:[]};ord.push(key)}cells[key].us.push(x)});
+    ord.forEach(function(key,ci){
+      var C=cells[key],q=C.q,n=C.us.length,mv=isMoving(C.us[0].u),dup=seen[key]||0,cn=C.us.map(function(x){return x.c}).filter(Boolean);seen[key]=dup+1;
+      if(ci===0)pos[a.t.id]={x:(q[0]-x0)/w*W,y:(q[1]-y0)/h*Hpx};
+      s+='<g class="m-bus'+(!mv?' park':'')+(a.t.status==='tentatif'?' tent':'')+'" data-trk="sel" data-id="'+esc(a.t.id)+'" style="--h:'+hueOf(a.t)+'">';
+      for(var j=n-1;j>=0;j--){
+        var ox=(q[0]-j*6*k).toFixed(3),oy=(q[1]+j*4*k).toFixed(3);
+        if(j===0&&isSel)s+='<rect class="ring" x="'+(ox-15*k).toFixed(3)+'" y="'+(oy-11*k).toFixed(3)+'" width="'+sw(30)+'" height="'+sw(22)+'" rx="'+sw(6)+'"/>';
+        s+='<g transform="translate('+ox+' '+oy+') scale('+k.toFixed(4)+')"><rect class="bb" x="-11" y="-7" width="22" height="12" rx="3"/>'
+          +'<rect class="bw" x="-8.5" y="-5" width="4" height="4" rx=".8"/><rect class="bw" x="-3" y="-5" width="4" height="4" rx=".8"/><rect class="bw" x="2.5" y="-5" width="4" height="4" rx=".8"/><rect class="bw" x="7.5" y="-5" width="2.5" height="6" rx=".8"/>'
+          +'<circle class="bt" cx="-6" cy="5.5" r="2.5"/><circle class="bt" cx="6" cy="5.5" r="2.5"/></g>';
+      }
+      s+='<circle class="hit" cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="'+sw(12)+'"/>'
+        +'<text class="m-bt" x="'+(q[0]+15*k).toFixed(1)+'" y="'+(q[1]+(4+dup*12)*k).toFixed(1)+'" style="font-size:'+sw(10)+'px;stroke-width:'+sw(3)+'px">'
+        +esc(!cn.length?'tanpa unit':(cn.length<=2?cn.join(', '):cn[0]+' +'+(cn.length-1)))+(mv?' · '+Math.round(speedAt(a.t,now,cn.length?a.t.id+'|'+cn[0]:a.t.id))+' km/j':'')+'</text></g>';
+    });
+  });
+  return {svg:s+'</svg>',pos:pos,H:Hpx};
+}
+function panelStyle(mp,s,W){
+  if(W<560)return 'left:8px;right:8px;bottom:8px;max-height:'+Math.round(mp.H*.7)+'px';
+  var pt=mp.pos[s.t.id],pw=Math.min(310,W-16),mx=pt?pt.x:W*.55,my=pt?pt.y:40;
+  var left=mx+22+pw<=W-8?mx+22:mx-22-pw;left=Math.max(8,left);
+  var top=Math.max(8,Math.min(my-30,mp.H-300));
+  return 'left:'+Math.round(left)+'px;top:'+Math.round(top)+'px;width:'+Math.round(pw)+'px;max-height:'+Math.round(mp.H-top-8)+'px';
+}
+
+function dynHtml(){
+  var now=simNow(),W=($('#view')&&$('#view').clientWidth)||360;
+  var all=[],noRoute=[];
+  S.trips.forEach(function(t){
+    if(t.status==='batal'||t.status==='selesai')return;
+    var st=tripState(t,now);
+    if(!st.r){var w=tripWin(t);if(w.dep<=now&&now<=w.ret)noRoute.push(t);return}
+    if(!st.bad)all.push(st);
+  });
+  var order={pergi:0,pulang:1,jemput:2,menunggu:2,wisata:3,tujuan:3};
+  var active=all.filter(function(s){return order[s.ph]!=null}).sort(function(a,b){return order[a.ph]-order[b.ph]||a.w.dep-b.w.dep});
+  var soon=all.filter(function(s){return s.ph==='belum'&&s.pickStart-now<=864e5}).sort(function(a,b){return a.pickStart-b.pickStart});
+  var selS=S.sel?active.concat(soon).find(function(s){return s.t.id===S.sel})||null:null;
+  var busy={};active.forEach(function(s){(s.t.buses||[]).forEach(function(c2){if(unitOf(s,c2).ph!=='selesai')busy[c2]=1})});
+  var pool=S.buses.filter(function(b){return b.status!=='bengkel'&&!busy[b.code]});
+  var shop=S.buses.filter(function(b){return b.status==='bengkel'});
+  var h='<div class="clockbox"><span class="mono">'+esc(fmtClock(now))+'</span><span class="pill ok">Waktu setempat</span></div>';
+  var mp=mapSvg(active,selS,now,W,pool.length);LAST={active:active,selS:selS,pool:pool.length};
+  var zv=Math.max(0,Math.min(100,Math.round(100*Math.log(FULLW/S.cur.w)/Math.log(FULLW/MINW))));
+  h+='<div class="mapbox" id="trkMap">'+mp.svg+'<button type="button" class="btn sm mapctl" data-trk="view">'+(S.mapView==='all'?'Fokus ke bus':'Lihat seluruh peta')+'</button><div class="mapzoom"><button type="button" data-trk="zin" aria-label="Perbesar">+</button><div class="zbox"><input class="zs" type="range" min="0" max="100" value="'+zv+'" aria-label="Zoom peta"></div><button type="button" data-trk="zout" aria-label="Perkecil">−</button></div>'
+    +(selS?panelHtml(selS,now,panelStyle(mp,selS,W)):'')+'</div>';
+  h+='<p class="hint">Posisi dan kecepatan dihitung dari jadwal order, bukan GPS asli. Klik bus di peta untuk melihat keterangannya. Geser peta dengan drag dan atur zoom dengan slider. Tampilan peta bergaya citra satelit (ilustrasi), bukan foto satelit asli. Jalur dipilih otomatis dari jaringan jalan utama (perkiraan), jadi tidak seakurat peta jalan.</p>';
+  if(!active.length){
+    h+='<div class="empty"><strong>Tidak ada bus yang sedang jalan</strong><span>Pada jam ini semua unit ada di pool. Bus muncul di peta saat berangkat dari pool menuju titik jemput order yang sudah diplot.</span></div>';
+  }else{
+    h+='<div class="sec-h">Sedang jalan · '+active.length+' order</div><div class="tgrid">'+active.map(function(s){return cardHtml(s,now,S.sel)}).join('')+'</div>';
+  }
+  if(soon.length)h+='<div class="sec-h">Berangkat 24 jam ke depan</div><div class="tgrid">'+soon.map(function(s){return cardHtml(s,now,S.sel)}).join('')+'</div>';
+  if(noRoute.length)h+='<p class="note">Order ini sedang berjalan tapi tujuannya belum dikenali, jadi tidak muncul di peta: '+noRoute.map(function(t){return esc(t.customer)}).join(', ')+'. Tulis nama kota atau tempat wisata di kolom Tujuan.</p>';
+  h+='<div class="sec-h">Unit di pool Cilacap · '+pool.length+'</div><div class="chips-sm">'+(pool.length?pool.map(function(b){return '<span class="code">'+esc(b.code)+'</span>'}).join(''):'<span class="hint">Semua unit sedang jalan.</span>')+'</div>';
+  if(shop.length)h+='<div class="sec-h">Di bengkel</div><div class="chips-sm">'+shop.map(function(b){return '<span class="code">'+esc(b.code)+'</span>'}).join('')+'</div>';
+  return h;
+}
+function viewTrack(){
+  var sp2=speeds();
+  return '<div class="trk"><div class="trk" id="trkDyn">'+dynHtml()+'</div>'
+   +'<details class="rtbl"><summary>Kecepatan rata-rata bus</summary><div class="tw"><table><tbody>'
+   +'<tr><td>Jalan biasa</td><td><input class="sp" type="number" min="10" max="100" step="1" data-key="speedA" value="'+sp2.a+'" aria-label="Kecepatan rata-rata jalan biasa"> km/jam</td></tr>'
+   +'<tr><td>Jalan tol</td><td><input class="sp" type="number" min="10" max="120" step="1" data-key="speedT" value="'+sp2.t+'" aria-label="Kecepatan rata-rata jalan tol"> km/jam</td></tr>'
+   +'</tbody></table></div><p class="hint">Dipakai untuk menghitung waktu tempuh dan memilih jalur tercepat. Di peta, kecepatan bus naik turun di sekitar angka ini (macet, lancar, melambat, mempercepat). Jalan pegunungan otomatis 20% lebih lambat. Angka awal adalah perkiraan, koreksi sesuai pengalaman di lapangan.</p></details></div>';
+}
+/* ---------- harga sewa & pendapatan ----------
+   Tarif per big bus dari pemilik: Cilacap-Jakarta atau Semarang PP (1 hari) Rp8 jt, kalau inap Rp6 jt per hari; Cilacap-Jogja PP Rp6,5 jt, inap Rp5,5 jt per hari.
+   Lebih dekat dari itu dikurangi sebanding jarak rute (batas bawah Rp4 jt); lebih jauh dari Semarang/Jakarta dipakai tarif yang sama. Medium bus = 80% tarif big bus. */
+var KM_JOG=195,KM_SMG=293,MED_RATIO=.8,P_PP=[6500000,8000000],P_INAP=[5500000,6000000],P_MIN=4000000;
+function bigRate(km,inap){
+  var q=inap?P_INAP:P_PP,v=q[0]+(Math.min(km,KM_SMG)-KM_JOG)/(KM_SMG-KM_JOG)*(q[1]-q[0]);
+  return Math.max(P_MIN,Math.round(v/50000)*50000);
+}
+function rupiah(n){return 'Rp'+Math.round(n||0).toLocaleString('id-ID')}
+function estimate(t){
+  if(!t.destination||!t.start)return null;
+  var r=routeOf(t),km=r?(r.pick?r.pick.km:0)+r.out.km:300,s=toDay(t.start),e=t.end?toDay(t.end):s,days=Math.max(1,e-s+1),inap=days>1,
+      big=bigRate(km,inap),med=Math.round(big*MED_RATIO/50000)*50000,nb=+t.needBig||0,nm=+t.needMed||0;
+  return {total:(nb*big+nm*med)*(inap?days:1),days:days,inap:inap,km:km,big:big,med:med,nb:nb,nm:nm,guess:!r};
+}
+function priceOf(t){if(t.priceManual&&+t.price>=0)return +t.price;var e=estimate(t);return e?e.total:0}
+function priceLine(t){return t.status==='batal'?'':'<p class="route">Sewa: <b>'+rupiah(priceOf(t))+'</b>'+(t.priceManual?'':' (estimasi)')+'</p>'}
+function priceSync(){
+  var el=$('#f-price');if(!el||!F)return;
+  var e=estimate({pickup:$('#f-pickup').value,destination:$('#f-dest').value.trim(),start:$('#f-start').value,end:$('#f-end').value,needBig:+$('#f-big').value||0,needMed:+$('#f-med').value||0});
+  if(!F.pm)el.value=e?e.total:'';
+  $('#f-price-hint').textContent=!e?'Isi tujuan dan tanggal untuk melihat estimasi harga.':'Estimasi '+rupiah(e.total)+' = '+[e.nb?e.nb+' big × '+rupiah(e.big):'',e.nm?e.nm+' medium × '+rupiah(e.med):''].filter(Boolean).join(' + ')
+    +(e.inap?' per hari × '+e.days+' hari (inap)':' (pulang pergi 1 hari)')+' · jarak ±'+Math.round(e.km)+' km'+(e.guess?' (tujuan tidak dikenali, dipakai jarak menengah)':'')
+    +'. Sudah termasuk BBM dan driver; belum termasuk tol, parkir, tiket wisata, ferry, dan tip kru.'
+    +(F.pm&&+el.value!==e.total?' Kolom harga sudah diubah manual.':'');
+}
+$('#f-price').addEventListener('input',function(){F.pm=true;priceSync()});
+$('#f-price-auto').addEventListener('click',function(){F.pm=false;priceSync()});
+['#f-start','#f-end'].forEach(function(s){$(s).addEventListener('change',priceSync)});
+['#f-big','#f-med','#f-pickup','#f-dest'].forEach(function(s){$(s).addEventListener('input',priceSync)});
+(function(){var dl=document.createElement('datalist');dl.id='dl-dest';dl.innerHTML=Object.keys(NODE).filter(function(id){return id!=='cil'}).map(function(id){return '<option value="'+esc(NODE[id].name)+'">'}).join('');document.body.appendChild(dl)})();
+document.addEventListener('change',function(ev){if(ev.target.id==='revyear'){S.revYear=+ev.target.value;render()}});
+function viewRevenue(){
+  var rows=S.trips.filter(function(t){return !t.example&&t.status!=='batal'&&t.start}).map(function(t){var p=parts(toDay(t.start));return {t:t,y:p.y,m:p.m,v:priceOf(t),ok:t.status==='pasti'||t.status==='selesai'}}),
+      ok=rows.filter(function(x){return x.ok}),pot=rows.filter(function(x){return !x.ok}),py=parts(TODAY),y=S.revYear||py.y,ys=[py.y];
+  rows.forEach(function(x){if(ys.indexOf(x.y)<0)ys.push(x.y)});ys.sort();
+  var sum=function(a){return a.reduce(function(n,x){return n+x.v},0)},card=function(a,b,c){return '<div class="revc"><span>'+a+'</span><b>'+rupiah(b)+'</b><span>'+c+'</span></div>'},
+      yr=ok.filter(function(x){return x.y===y}),mon=ok.filter(function(x){return x.y===py.y&&x.m===py.m}),
+      byM=MONTHS.map(function(_,i){var a=yr.filter(function(x){return x.m===i});return {n:sum(a),c:a.length}}),mx=Math.max.apply(null,byM.map(function(b){return b.n}).concat(1)),
+      list=rows.filter(function(x){return x.y===y}).sort(function(a,b){return toDay(b.t.start)-toDay(a.t.start)});
+  return '<div class="trk"><div class="revgrid">'+card('Total pendapatan',sum(ok),ok.length+' order terkonfirmasi/selesai')+card('Pendapatan '+y,sum(yr),yr.length+' order')
+   +card('Bulan ini',sum(mon),MONTHS[py.m]+' '+py.y)+card('Potensi (tentatif)',sum(pot),pot.length+' order belum pasti')+'</div>'
+   +'<div class="revbox"><div class="revtop"><b>Pendapatan per bulan</b><select id="revyear" aria-label="Tahun">'+ys.map(function(k){return '<option'+(k===y?' selected':'')+'>'+k+'</option>'}).join('')+'</select></div>'
+   +byM.map(function(b,i){return '<div class="revrow"><span>'+MON3[i]+'</span><div class="revbar"><i style="width:'+Math.round(b.n/mx*100)+'%"></i></div><span>'+rupiah(b.n)+(b.c?' · '+b.c+' order':'')+'</span></div>'}).join('')+'</div>'
+   +'<div class="revbox"><b>Rincian order '+y+'</b>'+(list.length?'<div class="rtbl" style="border:0;padding:0"><div class="tw"><table><tbody>'
+   +list.map(function(x){var t=x.t;return '<tr><td>'+esc(fmtRange(t))+'</td><td>'+esc(t.customer)+'<br><span class="hint">'+esc((t.pickup||'—')+' → '+(t.destination||'—'))+'</span></td><td><span class="st '+esc(t.status)+'">'+esc(STATUS[t.status]||t.status)+'</span></td><td style="text-align:right;white-space:nowrap">'+rupiah(x.v)+(t.priceManual?'':'<br><span class="hint">estimasi</span>')+'</td></tr>'}).join('')
+   +'</tbody></table></div></div>':'<p class="hint">Belum ada order di tahun ini.</p>')+'</div>'
+   +'<details class="rtbl"><summary>Dasar tarif estimasi (per big bus)</summary><div class="tw"><table><tbody><tr><td>Cilacap–Jogja</td><td>PP '+rupiah(6500000)+'</td><td>Inap '+rupiah(5500000)+' / hari</td></tr><tr><td>Cilacap–Semarang / Jakarta</td><td>PP '+rupiah(8000000)+'</td><td>Inap '+rupiah(6000000)+' / hari</td></tr><tr><td colspan="3">Lebih dekat dikurangi sebanding jarak (minimal '+rupiah(P_MIN)+'); lebih jauh memakai tarif Semarang/Jakarta. Medium bus 80% dari tarif big bus.</td></tr></tbody></table></div>'
+   +'<p class="hint">Pendapatan dihitung dari order berstatus Terkonfirmasi dan Selesai, dicatat di bulan tanggal berangkat. Order Tentatif ditampilkan sebagai potensi, order Dibatalkan tidak dihitung. Order lama yang belum punya harga memakai estimasi tarif di atas (tarif per bus: pulang pergi 1 hari, atau per hari kalau inap; sudah termasuk BBM dan driver). Harga di setiap order bisa diubah manual.</p></details></div>';
+}
+/* odometer = odometer awal (Armada) + jarak semua order bus itu: jemput dari pool, berangkat, keliling destinasi, dan pulang */
+function legKm(leg,g){
+  var L=Math.min(Math.max(g,0),1)*leg.T,km=0,i;
+  for(i=1;i<leg.pts.length;i++){var a=leg.cumT[i-1],b=leg.cumT[i];if(L>=b)km+=(b-a)*leg.segs[i-1];else{if(L>a)km+=(L-a)*leg.segs[i-1];break}}
+  return km;
+}
+function tourKm(s){return tourSlots(s.r,s.t,s.outEnd,s.gb||s.backStart).reduce(function(n,x){return n+x.km},0)}
+function tripKm(s){var r=s.r;return (r.pick?r.pick.km:0)+r.out.km+(r.tour?tourKm(s):0)+r.back.km}
+function infoOf(s){
+  var x=s.ph==='wisata'&&s.tr&&!s.tr.moving&&s.tr.x;if(!x)return '';
+  return x.kind==='spot'?(INFO[x.id]||''):x.kind==='hotel'?'Bus parkir dan kru beristirahat di hotel; lanjut keliling besok pagi.':'Rombongan transit untuk sarapan dan bersih-bersih sebelum keliling.';
+}
+function coveredKm(s){
+  var r=s.r,pk=r.pick?r.pick.km:0,tt=r.tour?tourKm(s):0,m=mover(s),c=0,i;
+  if(s.ph==='belum')return 0;
+  if(s.ph==='menunggu')return pk;
+  if(s.ph==='tujuan')return pk+r.out.km;
+  if(s.ph==='jemput'&&m)return legKm(m.leg,gOf(profile(m.key),s.f));
+  if(s.ph==='pergi'&&m)return pk+legKm(m.leg,gOf(profile(m.key),s.f));
+  if(s.ph==='pulang'&&m)return pk+r.out.km+tt+legKm(m.leg,gOf(profile(m.key),s.f));
+  if(s.ph==='wisata'){
+    var tr=s.tr,k=tr?tr.k:-1;
+    for(i=0;i<k;i++)c+=tr.sl[i].km;
+    if(k>=0)c+=tr.moving?tr.x.km*Math.max(0,Math.min(1,(s.now-tr.x.s)/tr.x.mv)):tr.x.km;
+    return pk+r.out.km+c;
+  }
+  return pk+r.out.km+tt+r.back.km;
+}
+function odoAt(code,ms){
+  var b=busByCode(code),o=b?kmBase(b):0;
+  S.trips.forEach(function(t){
+    if(t.status==='batal'||t.example||!t.start||(t.buses||[]).indexOf(code)<0)return;
+    var st=tripState(t,ms);if(!st.r||st.bad)return;
+    o+=coveredKm(unitOf(st,code));
+  });
+  return o;
+}
+/* order Terkonfirmasi otomatis jadi Selesai begitu jam pulang (batas sewa) lewat */
+var AF={};
+function autoFinish(){
+  if(!store||!(S.ready.buses&&S.ready.trips))return;
+  var now=Date.now();
+  S.trips.forEach(function(t){
+    if(t.status!=='pasti'||!t.start||!t.end){delete AF[t.id];return}
+    if(AF[t.id]||now<tripWin(t).ret)return;
+    AF[t.id]=1;var d=Object.assign({},t);delete d.id;d.status='selesai';d.autoDone=true;
+    try{store.put('trips',t.id,d).catch(function(){AF[t.id]=0})}catch(e){AF[t.id]=0}
+  });
+}
+setInterval(autoFinish,30000);
+/* ---------- rundown / program perjalanan, disusun otomatis dari simulasi jadwal ---------- */
+function hhmm(ms){var d=new Date(ms);return pad(d.getHours())+'.'+pad(d.getMinutes())}
+function nightsOf(t){
+  var r=routeOf(t),days=Math.max(1,toDay(t.end)-toDay(t.start)+1);
+  if(r&&r.tour){var s=tripState(t,tripWin(t).dep),n=tourSlots(r,t,s.outEnd,s.gb||s.backStart).filter(function(x){return x.kind==='hotel'}).length;if(n)return n}
+  return Math.max(0,days-1);
+}
+function rdEvents(t){
+  var s=tripState(t,tripWin(t).dep);if(!s.r||s.bad)return null;
+  var r=s.r,ev=[],H=36e5,M=6e4,U=function(ms,tx,b){ev.push({ms:ms,tx:tx,b:!!b,i:ev.length})};
+  function stops(m){
+    var o=stopsFor(m.key,m.ls,m.le,namedStops(s,m)),P=profile(m.key);
+    o.st.forEach(function(x){var q=pointAt(m.leg,gOf(P,x.phi));U(x.s,stopLbl(x)+(x.name?' di '+x.name:' di dekat '+m.leg.pts[q.i][2]));U(x.e,'Melanjutkan perjalanan')});
+  }
+  if(r.pick){U(s.pickStart,'Bus berangkat dari pool Cilacap menuju '+r.pickName);U(s.pickEnd,'Tiba di titik jemput ('+r.pickName+')')}
+  U(s.w.dep,'Rombongan berangkat menuju '+r.dest,1);
+  stops({leg:r.out,key:t.id+'|o',ls:s.w.dep,le:s.outEnd});
+  U(s.outEnd,'Tiba di '+r.dest,1);
+  if(r.tour){
+    var sl=tourSlots(r,t,s.outEnd,s.gb||s.backStart);
+    sl.forEach(function(x,i){
+      var arr=x.s+x.mv,nx=sl[i+1],h0=new Date(arr).getHours();
+      if(x.kind==='transit'){if(x.mv)U(x.s,'Menuju '+x.name+' untuk transit, sarapan, dan bersih-bersih');U(arr,'Tiba di '+x.name+', transit',1)}
+      else if(x.kind==='hotel'){
+        U(x.s,'Menuju hotel '+x.name);U(arr,'Tiba di '+x.name+', check in dan istirahat',1);
+        if(h0<20)U(arr+45*M,'Makan malam prasmanan di hotel');
+        if(nx){U(nx.s-75*M,'Makan pagi prasmanan di hotel');U(nx.s-20*M,'Check out dan bersiap melanjutkan wisata')}
+      }else{
+        if(x.mv)U(x.s,'Menuju '+x.name);
+        U(arr,'Tiba di '+x.name+(x.lunch?', ISHOMA dilanjutkan wisata':''),1);
+      }
+    });
+  }
+  U(s.backStart,'Rombongan pulang menuju Cilacap',1);
+  stops({leg:r.back,key:t.id+'|b',ls:s.backStart,le:s.w.ret});
+  U(s.w.ret,'Diperkirakan tiba di tempat penjemputan ('+(r.pickName||'Cilacap')+')',1);
+  ev.sort(function(a,b){return a.ms-b.ms||a.i-b.i});
+  return ev;
+}
+function dayKey(ms){var d=new Date(ms);return toDay(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()))}
+function rdHtml(t){
+  var ev=rdEvents(t);if(!ev)return '<p>Rundown belum bisa dibuat: tujuan belum dikenali atau jam pulang sebelum jam berangkat.</p>';
+  var d0=toDay(t.start),days=Math.max(1,toDay(t.end)-d0+1),h='',cur=-1,r=routeOf(t);
+  ev.forEach(function(e){
+    var n=Math.max(1,dayKey(e.ms)-d0+1);
+    if(n!==cur){if(cur>0)h+='</tbody></table>';cur=n;var dd=toDay(toStr(d0+n-1)),p=parts(d0+n-1);h+='<div class="rdh">Hari '+n+' ('+DAYN[p.w]+', '+p.d+' '+MONTHS[p.m]+' '+p.y+')</div><table class="rdt"><tbody>'}
+    h+='<tr'+(e.b?' class="b"':'')+'><td>Pk. '+hhmm(e.ms)+' WIB</td><td>'+esc(e.tx)+'</td></tr>';
+  });
+  h+='</tbody></table>';
+  return '<div class="nt">PROGRAM PERJALANAN</div><div class="nt" style="margin-top:0">'+esc(String(t.customer||'').toUpperCase())+'</div>'
+    +'<div class="nm">'+esc((t.pickup||'Cilacap')+' – '+(t.destination||''))+' · '+(nightsOf(t)>0?'INAP '+nightsOf(t)+' MALAM':'PULANG PERGI')+'</div>'+h
+    +'<p style="margin-top:12px"><b>Nb:</b></p><ol><li>Program bisa berubah menyesuaikan situasi dan kondisi.</li><li>Sholat, waktu, dan tempat menyesuaikan.</li><li>Jam makan, istirahat, dan lama di tiap tempat disusun dari simulasi jadwal Arsyi Trans dan rundown paket yang sudah berjalan, bukan jadwal pasti.</li></ol>';
+}
+/* ---------- nota sewa bus ---------- */
+function terbilang(n){
+  var s=['','satu','dua','tiga','empat','lima','enam','tujuh','delapan','sembilan','sepuluh','sebelas'];
+  function f(n){
+    if(n<12)return s[n];
+    if(n<20)return f(n-10)+' belas';
+    if(n<100)return f(Math.floor(n/10))+' puluh'+(n%10?' '+f(n%10):'');
+    if(n<200)return 'seratus'+(n%100?' '+f(n%100):'');
+    if(n<1e3)return f(Math.floor(n/100))+' ratus'+(n%100?' '+f(n%100):'');
+    if(n<2e3)return 'seribu'+(n%1e3?' '+f(n%1e3):'');
+    if(n<1e6)return f(Math.floor(n/1e3))+' ribu'+(n%1e3?' '+f(n%1e3):'');
+    if(n<1e9)return f(Math.floor(n/1e6))+' juta'+(n%1e6?' '+f(n%1e6):'');
+    return f(Math.floor(n/1e9))+' miliar'+(n%1e9?' '+f(n%1e9):'');
+  }
+  var t=n>0?f(Math.round(n)):'nol';return t.charAt(0).toUpperCase()+t.slice(1)+' rupiah';
+}
+var NMODE='nota',NOTA=null,NOTA_TERMS=['Harga sudah termasuk BBM, driver dan kernet; belum termasuk tol, parkir, tiket wisata, penyeberangan, dan tip kru.','Untuk perjalanan menginap, makan dan penginapan kru ditanggung penyewa.','Masa sewa berakhir pada jam pulang yang tertera; kelebihan waktu dikenai biaya overtime sesuai kesepakatan.','Sisa pembayaran dilunasi paling lambat sebelum bus berangkat.','Pembatalan sepihak oleh penyewa menyebabkan uang muka tidak dapat dikembalikan.','Jumlah penumpang tidak melebihi kapasitas seat; penyewa bertanggung jawab atas kerusakan atau kehilangan akibat kelalaian rombongan.'];
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function longDay(s){var p=parts(toDay(s));return DAYN[new Date(p.y,p.m,p.d).getDay()]+', '+p.d+' '+MONTHS[p.m]+' '+p.y}
+function notaHtml(t){
+  var u=$('#n-usaha').value.trim()||'Arsyi Trans',al=$('#n-alamat').value.trim(),tl=$('#n-telp').value.trim(),rk=$('#n-rek').value.trim(),dp=Math.max(0,+$('#n-dp').value||0),
+      terms=$('#n-terms').value.split('\n').map(function(x){return x.trim()}).filter(Boolean),
+      r=routeOf(t),e=estimate(t),total=priceOf(t),days=Math.max(1,toDay(t.end)-toDay(t.start)+1),sisa=Math.max(0,total-dp),now=new Date(),
+      no='NS/'+t.start.slice(0,4)+t.start.slice(5,7)+'/'+(1000+hash(String(t.id))%9000),
+      units=(t.buses||[]).map(function(c){var b=busByCode(c);return esc(c)+(b&&(b.model||b.seats)?' ('+esc([b.model,b.seats?b.seats+' kursi':''].filter(Boolean).join(', '))+')':'')}).join('<br>'),
+      need=[+t.needBig>0?t.needBig+' big bus'+(t.seatBig&&SEAT[t.seatBig]?' ('+SEAT[t.seatBig]+')':''):'',+t.needMed>0?t.needMed+' medium bus':''].filter(Boolean).join(', ')||'—',
+      kv=function(a,b){return '<tr><td>'+a+'</td><td>'+b+'</td></tr>'},rows='';
+  if(!t.priceManual&&e&&(e.nb||e.nm)){
+    if(e.nb)rows+='<tr><td>Sewa big bus pariwisata'+(e.inap?' (menginap)':' (pulang pergi)')+'</td><td class="r">'+e.nb+'</td><td class="r">'+(e.inap?e.days:1)+'</td><td class="r">'+rupiah(e.big)+'</td><td class="r">'+rupiah(e.nb*e.big*(e.inap?e.days:1))+'</td></tr>';
+    if(e.nm)rows+='<tr><td>Sewa medium bus pariwisata'+(e.inap?' (menginap)':' (pulang pergi)')+'</td><td class="r">'+e.nm+'</td><td class="r">'+(e.inap?e.days:1)+'</td><td class="r">'+rupiah(e.med)+'</td><td class="r">'+rupiah(e.nm*e.med*(e.inap?e.days:1))+'</td></tr>';
+  }else rows='<tr><td>Sewa bus pariwisata (harga kesepakatan)</td><td class="r">'+((+t.needBig||0)+(+t.needMed||0)||'—')+'</td><td class="r">'+days+'</td><td class="r">—</td><td class="r">'+rupiah(total)+'</td></tr>';
+  return '<div class="nh"><div><h1>'+esc(u.toUpperCase())+'</h1><small>Persewaan Bus Pariwisata</small>'+(al?'<small>'+esc(al)+'</small>':'')+(tl?'<small>Telp/WA: '+esc(tl)+'</small>':'')+'</div>'
+   +'<div style="text-align:right"><small>No. Nota</small><b>'+no+'</b><small>Tanggal terbit</small><b>'+now.getDate()+' '+MONTHS[now.getMonth()]+' '+now.getFullYear()+'</b></div></div>'
+   +'<div class="nt">NOTA SEWA BUS PARIWISATA</div><div class="nm">'+(t.status==='tentatif'?'Pesanan belum dikonfirmasi':t.status==='batal'?'Pesanan dibatalkan':'Pesanan terkonfirmasi')+'</div>'
+   +'<table class="kv"><tbody>'+kv('Penyewa',esc(t.customer))+(t.phone?kv('Telepon / WA',esc(t.phone)):'')
+   +kv('Berangkat',esc(longDay(t.start))+(t.startTime?' · pukul '+esc(t.startTime)+' WIB':''))+kv('Pulang (batas sewa)',esc(longDay(t.end))+(t.endTime?' · pukul '+esc(t.endTime)+' WIB':''))+kv('Lama sewa',days+' hari'+(nightsOf(t)>0?' ('+nightsOf(t)+' malam di penginapan)':' (pulang pergi)'))
+   +kv('Titik penjemputan',esc(t.pickup||'Cilacap'))+kv('Tujuan',esc(t.destination||'—'))
+   +(r&&r.tour?kv('Rencana wisata',esc(r.tour.names.join(' → '))):'')+kv('Kebutuhan armada',esc(need))+(units?kv('Unit bertugas',units):'')+'</tbody></table>'
+   +'<table><thead><tr><th>Keterangan</th><th class="r">Unit</th><th class="r">Hari</th><th class="r">Tarif</th><th class="r">Jumlah</th></tr></thead><tbody>'+rows
+   +'<tr class="tot"><td colspan="4" class="r">Total</td><td class="r">'+rupiah(total)+'</td></tr>'
+   +(dp?'<tr><td colspan="4" class="r">Uang muka (DP)</td><td class="r">'+rupiah(dp)+'</td></tr>':'')
+   +'<tr class="tot"><td colspan="4" class="r">'+(dp?'Sisa pembayaran':'Yang harus dibayar')+'</td><td class="r">'+rupiah(sisa)+'</td></tr></tbody></table>'
+   +'<p><i>Terbilang: '+esc(terbilang(sisa))+'</i></p>'+(rk?'<p>Pembayaran ke: <b>'+esc(rk)+'</b></p>':'')
+   +(t.note?'<p>Catatan: '+esc(t.note)+'</p>':'')
+   +(terms.length?'<b>Syarat dan ketentuan</b><ol>'+terms.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ol>':'')
+   +'<div class="sig"><div>Penyewa<i></i>( '+esc(t.customer)+' )</div><div>Hormat kami,<br>'+esc(u)+'<i></i>( ................ )</div></div>';
+}
+function notaRender(){if(NOTA)$('#nota-doc').innerHTML=NMODE==='run'?rdHtml(NOTA):notaHtml(NOTA)}
+function openNota(t,mode){
+  NOTA=t;NMODE=mode||'nota';$('#sn-title').textContent=NMODE==='run'?'Rundown perjalanan':'Nota sewa bus';$('.nota-edit').hidden=NMODE==='run';
+  var pr={};try{pr=JSON.parse(lsGet('nota-prof')||'{}')}catch(e){}
+  $('#n-usaha').value=pr.u||'Arsyi Trans';$('#n-alamat').value=pr.a||'Cilacap, Jawa Tengah';$('#n-telp').value=pr.t||'';$('#n-rek').value=pr.r||'';
+  $('#n-terms').value=pr.k||NOTA_TERMS.join('\n');$('#n-dp').value=lsGet('nota-dp-'+t.id)||'';
+  notaRender();
+  $('#scrim').hidden=false;$('#sheet-nota').hidden=false;document.body.classList.add('lock');
+}
+function closeNota(){$('#sheet-nota').hidden=true;NOTA=null;if(!OPEN){$('#scrim').hidden=true;document.body.classList.remove('lock')}}
+function formTrip(){
+  var nb=Math.max(0,+$('#f-big').value||0),cs=[];if(F&&F.sel)F.sel.forEach(function(k){cs.push(k)});
+  return {id:F&&F.id||'draft',customer:$('#f-customer').value.trim(),phone:$('#f-phone').value.trim(),start:$('#f-start').value,end:$('#f-end').value,startTime:$('#f-stime').value,endTime:$('#f-etime').value,
+    pickup:$('#f-pickup').value.trim(),destination:$('#f-dest').value.trim(),needBig:nb,needMed:Math.max(0,+$('#f-med').value||0),seatBig:nb>0?$('#f-seat').value:'',buses:cs.sort(),
+    status:$('#f-status').value,note:$('#f-note').value.trim(),price:Math.max(0,+$('#f-price').value||0),priceManual:!!(F&&F.pm&&$('#f-price').value!=='')};
+}
+$('#f-nota').addEventListener('click',function(){
+  var t=formTrip();
+  if(!t.customer||!t.start||!t.end||toDay(t.end)<toDay(t.start)){$('#f-error').textContent='Isi nama customer dan tanggal berangkat/pulang dulu untuk menerbitkan nota.';return}
+  $('#f-error').textContent='';openNota(t);
+});
+$('#f-rundown').addEventListener('click',function(){
+  var t=formTrip();
+  if(!t.customer||!t.start||!t.end||toDay(t.end)<toDay(t.start)||!t.destination){$('#f-error').textContent='Isi customer, tujuan, dan tanggal berangkat/pulang dulu untuk membuat rundown.';return}
+  if(!routeOf(t)){$('#f-error').textContent='Tujuan belum dikenali, jadi rundown belum bisa dibuat.';return}
+  $('#f-error').textContent='';openNota(t,'run');
+});
+$('#nota-close').addEventListener('click',closeNota);
+var DL=null;
+try{if(window.claude&&window.claude.use)window.claude.use('downloads').then(function(d){DL=d},function(){})}catch(e){}
+var DOC_CSS='body{font:13px/1.45 Arial,Helvetica,sans-serif;color:#111;margin:0;padding:24px;background:#fff}.nota h1{font-size:18px;margin:0;letter-spacing:.04em}.nota .nh{display:flex;justify-content:space-between;gap:12px;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:12px}.nota .nh small{display:block;color:#444}.nota .nt{text-align:center;font-weight:700;font-size:15px;margin:6px 0 2px;letter-spacing:.06em}.nota .nm{text-align:center;color:#444;margin-bottom:12px}.nota table{width:100%;border-collapse:collapse;margin:8px 0}.nota th,.nota td{border:1px solid #999;padding:5px 7px;text-align:left;vertical-align:top}.nota th{background:#eee}.nota td.r,.nota th.r{text-align:right;white-space:nowrap}.nota .kv td:first-child{width:34%;font-weight:600;background:#f6f6f6}.nota .tot td{font-weight:700}.nota ol{margin:4px 0 0 18px;padding:0}.nota .sig{display:flex;justify-content:space-around;margin-top:18px;text-align:center}.nota .sig div{min-width:170px}.nota .sig i{display:block;height:64px}.nota .rdt td{border:0;padding:1px 6px 1px 0}.nota .rdt td:first-child{white-space:nowrap;width:84px}.nota .rdh{font-weight:700;text-decoration:underline;margin:12px 0 4px}.nota .rdt tr.b td{font-weight:700}@page{margin:14mm}';
+$('#nota-print').addEventListener('click',function(){
+  if(!NOTA)return;
+  var run=NMODE==='run',nm=(run?'rundown-':'nota-')+(String(NOTA.customer||'order').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'order')+'-'+(NOTA.start||'')+'.html',
+      html='<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(run?'Rundown perjalanan':'Nota sewa bus')+'</title><style>'+DOC_CSS+'</style></head><body><div class="nota">'+$('#nota-doc').innerHTML+'</div></body></html>';
+  if(DL){DL.save({filename:nm,data:html}).then(function(){toast('File tersimpan. Buka lalu cetak atau simpan sebagai PDF dari browser.')}).catch(function(e){if(!e||e.code!=='declined')toast('Gagal menyimpan file',true)});return}
+  try{var u=URL.createObjectURL(new Blob([html],{type:'text/html'})),a=document.createElement('a');a.href=u;a.download=nm;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000);toast('File diunduh. Buka lalu cetak atau simpan sebagai PDF dari browser.')}catch(e){toast('Gagal menyimpan file',true)}
+});
+$('#nota-copy').addEventListener('click',function(){
+  var tx=$('#nota-doc').innerText;
+  try{navigator.clipboard.writeText(tx).then(function(){toast('Nota disalin')},function(){toast('Gagal menyalin')})}catch(e){toast('Gagal menyalin')}
+});
+['#n-usaha','#n-alamat','#n-telp','#n-rek','#n-terms','#n-dp'].forEach(function(s){$(s).addEventListener('input',function(){
+  lsSet('nota-prof',JSON.stringify({u:$('#n-usaha').value,a:$('#n-alamat').value,t:$('#n-telp').value,r:$('#n-rek').value,k:$('#n-terms').value}));
+  if(NOTA)lsSet('nota-dp-'+NOTA.id,$('#n-dp').value);notaRender();
+})});
+var FULLW=1100,MINW=30,LAST=null,SAT=null,SATK='',SQ=0,MP=null,MOVED=false,M=document.createElement('canvas');
+var PAL=[[30,62,26],[56,92,38],[104,112,60],[150,128,92]];
+function nz(x,y){
+  var xi=Math.floor(x),yi=Math.floor(y),u=x-xi,v=y-yi,h=function(a,b){var n=Math.imul(a,374761393)+Math.imul(b,668265263);n=Math.imul(n^n>>>13,1274126177);return((n^n>>>16)>>>0)/4294967296};
+  u=u*u*(3-2*u);v=v*v*(3-2*v);
+  return h(xi,yi)*(1-u)*(1-v)+h(xi+1,yi)*u*(1-v)+h(xi,yi+1)*(1-u)*v+h(xi+1,yi+1)*u*v;
+}
+function fbm(x,y,o){var s=0,a=.5,f=1;for(var i=0;i<o;i++){s+=a*nz(x*f,y*f);f*=2.03;a*=.5}return s/(1-Math.pow(.5,o))*.5+.0}
+/* citra satelit buatan: laut, daratan berelief, awan; digambar ulang sesuai area yang terlihat */
+function drawSat(){
+  var mb=$('#trkMap'),c=S.cur;if(!SAT||!mb||!c)return;
+  var cw=Math.max(200,Math.round(mb.clientWidth*.55)),ch=Math.round(cw/c.R),sc=cw/c.w,x0=c.cx-c.w/2,y0=c.cy-c.w/c.R/2,u=1/sc,
+      oc=Math.max(3,Math.min(7,Math.floor(Math.log(10/u)/Math.LN2)+1));
+  SAT.width=cw;SAT.height=ch;M.width=cw;M.height=ch;
+  var m=M.getContext('2d');m.setTransform(sc,0,0,sc,-x0*sc,-y0*sc);m.filter='blur(6px)';m.fillStyle='#fff';
+  [JAVA,MADURA,BALI].forEach(function(a){m.beginPath();a.forEach(function(p,i){var q=xy(p);if(i)m.lineTo(q[0],q[1]);else m.moveTo(q[0],q[1])});m.closePath();m.fill()});
+  var md=m.getImageData(0,0,cw,ch).data,g2=SAT.getContext('2d'),im=g2.createImageData(cw,ch),o=im.data,py,px,k=0;
+  for(py=0;py<ch;py++)for(px=0;px<cw;px++,k+=4){
+    var wx=x0+px*u,wy=y0+py*u,a=md[k+3]/255,r,g,b,cl=Math.max(0,Math.min(.5,(fbm(wx*.006+9,wy*.006,3)-.5)*4+.1));
+    if(a+(fbm(wx*.25,wy*.25,3)-.5)*.5<.5){
+      var sh=Math.min(1,a*2.2),wv=fbm(wx*.3,wy*.3,2);
+      r=8+sh*40+wv*14;g=44+sh*95+wv*18;b=70+sh*85+wv*18;
+    }else{
+      var e=fbm(wx*.05,wy*.05,oc),e2=fbm((wx+u)*.05,(wy+u)*.05,oc),t=Math.max(0,Math.min(1,(e-.32)/.4))*3,i=Math.min(2,t|0),f=t-i,
+          ds=Math.max(.6,Math.min(1.4,1+(e-e2)/(u*.05)*.18)),v=fbm(wx*.02+50,wy*.02,2);
+      r=(PAL[i][0]+(PAL[i+1][0]-PAL[i][0])*f)*ds*(.85+v*.3);g=(PAL[i][1]+(PAL[i+1][1]-PAL[i][1])*f)*ds*(.9+v*.2);b=(PAL[i][2]+(PAL[i+1][2]-PAL[i][2])*f)*ds;
+    }
+    o[k]=r+(255-r)*cl;o[k+1]=g+(255-g)*cl;o[k+2]=b+(255-b)*cl;o[k+3]=255;
+  }
+  g2.putImageData(im,0,0);SAT.style.transform='';
+}
+function queueSat(){if(SQ)return;SQ=requestAnimationFrame(function(){SQ=0;drawSat()})}
+function mountSat(){
+  var mb=$('#trkMap'),ov=mb&&$('#trkMap>svg');if(!ov)return;
+  if(!SAT){SAT=document.createElement('canvas');SAT.className='sat'}
+  if(SAT.parentNode!==mb){mb.insertBefore(SAT,mb.firstChild);SATK=''}
+  var kk=ov.getAttribute('viewBox')+'|'+mb.clientWidth;
+  if(kk!==SATK){SATK=kk;queueSat()}
+}
+function refreshDyn(){
+  var el=$('#trkDyn');if(!el)return;
+  var pn=$('.mappanel',el),st=pn?pn.scrollTop:0,mb=$('#trkMap',el),t=document.createElement('div');
+  t.innerHTML=dynHtml();
+  var nm=$('#trkMap',t);
+  if(mb&&nm&&SAT&&SAT.parentNode===mb){
+    var kids=Array.prototype.slice.call(t.children),i=kids.indexOf(nm);
+    Array.prototype.slice.call(mb.children).forEach(function(n){if(n!==SAT)mb.removeChild(n)});
+    while(nm.firstChild)mb.appendChild(nm.firstChild);
+    while(el.firstChild&&el.firstChild!==mb)el.removeChild(el.firstChild);
+    while(mb.nextSibling)el.removeChild(mb.nextSibling);
+    kids.slice(0,i).forEach(function(n){el.insertBefore(n,mb)});
+    kids.slice(i+1).forEach(function(n){el.appendChild(n)});
+  }else el.innerHTML=t.innerHTML;
+  mountSat();
+  var np=$('.mappanel',el);if(np&&st)np.scrollTop=st;
+}
+function zoomTo(w){
+  var c=S.cur;if(!c||!LAST)return;
+  S.view={cx:c.cx,cy:c.cy,w:Math.max(MINW,Math.min(FULLW,w))};
+  var old=$('#trkMap>svg'),W=($('#view')&&$('#view').clientWidth)||360,d=document.createElement('div');if(!old)return;
+  d.innerHTML=mapSvg(LAST.active,LAST.selS,simNow(),W,LAST.pool).svg;old.replaceWith(d.firstChild);
+  var z=$('.zs');if(z)z.value=Math.round(100*Math.log(FULLW/S.view.w)/Math.log(FULLW/MINW));
+  mountSat();
+}
+document.addEventListener('input',function(ev){var el=ev.target;if(el.classList&&el.classList.contains('zs'))zoomTo(FULLW*Math.pow(MINW/FULLW,el.value/100))});
+document.addEventListener('wheel',function(ev){if(ev.target.closest&&ev.target.closest('#trkMap>svg')&&S.cur){ev.preventDefault();zoomTo(S.cur.w*(ev.deltaY>0?1.2:1/1.2))}},{passive:false});
+document.addEventListener('pointerdown',function(ev){
+  MOVED=false;var sv=ev.target.closest&&ev.target.closest('#trkMap>svg');
+  if(!sv||ev.button||!S.cur)return;
+  MP={x:ev.clientX,y:ev.clientY,cx:S.cur.cx,cy:S.cur.cy,w:S.cur.w,pw:sv.getBoundingClientRect().width,on:false};
+});
+document.addEventListener('pointermove',function(ev){
+  if(!MP)return;var dx=ev.clientX-MP.x,dy=ev.clientY-MP.y;
+  if(!MP.on){if(Math.abs(dx)+Math.abs(dy)<5)return;MP.on=true;MOVED=true}
+  var u=MP.w/MP.pw,R=S.cur.R,cx=Math.max(-100,Math.min(1200,MP.cx-dx*u)),cy=Math.max(-100,Math.min(500,MP.cy-dy*u)),sv=$('#trkMap>svg');
+  S.view={cx:cx,cy:cy,w:MP.w};
+  if(sv)sv.setAttribute('viewBox',(cx-MP.w/2).toFixed(1)+' '+(cy-MP.w/R/2).toFixed(1)+' '+MP.w.toFixed(1)+' '+(MP.w/R).toFixed(1));
+  if(SAT)SAT.style.transform='translate('+dx+'px,'+dy+'px)';
+});
+['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){var on=MP&&MP.on;MP=null;if(on)refreshDyn()})});
+document.addEventListener('click',function(ev){if(MOVED){ev.stopPropagation();MOVED=false}},true);
+document.addEventListener('click',function(ev){
+  var el=ev.target.closest('[data-trk]');if(!el)return;
+  var a=el.dataset.trk,card=el.classList.contains('tcard');
+  if(a==='unit'){S.selBus=el.dataset.code;refreshDyn();return}
+  if(a==='zin'||a==='zout'){zoomTo(S.cur.w*(a==='zin'?.6:1/.6));return}
+  if(a==='sel'){S.sel=S.sel===el.dataset.id&&!card?null:el.dataset.id;if(card)S.view=null}
+  else if(a==='close'||a==='clear')S.sel=null;
+  else if(a==='view'){S.mapView=S.mapView==='all'?'auto':'all';S.view=null}
+  refreshDyn();
+  if(a==='sel'&&card){var m=$('#trkMap');if(m&&m.scrollIntoView)m.scrollIntoView({behavior:'smooth',block:'nearest'})}
+});
+document.addEventListener('change',function(ev){
+  var el=ev.target;if(!el.classList||!el.classList.contains('sp'))return;
+  var v=parseFloat(el.value);
+  if(!(v>=10&&v<=120)){toast('Kecepatan harus antara 10 dan 120 km/jam.',true);render();return}
+  var ns={};ns[el.dataset.key]=v;
+  S.settings=Object.assign({},S.settings,ns);
+  store.put('settings','app',Object.assign({},S.settings,{gapHours:S.gap}))
+    .then(function(){toast('Kecepatan disimpan')})
+    .catch(function(e){toast('Gagal menyimpan: '+(e&&(e.message||e.code)||'coba lagi'),true)});
+  refreshDyn();
+});
+var pressed=false;
+document.addEventListener('pointerdown',function(){pressed=true},true);
+['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){setTimeout(function(){pressed=false},80)},true)});
+setInterval(function(){if(S.tab==='tracking'&&!document.hidden&&!pressed&&S.ready.buses&&S.ready.trips)refreshDyn()},1000);
+
+/* ---------- events ---------- */
+document.addEventListener('click',function(ev){
+  var el=ev.target.closest('[data-act],[data-close],#btn-new-order,#scrim');
+  var act=el&&el.dataset?el.dataset.act:null;
+  if(S.confirmKey&&act!=='del-order-yes'&&act!=='del-bus-yes'){S.confirmKey=null;queueRender()}
+  if(!el)return;
+  if(el.id==='scrim'||el.hasAttribute('data-close')){closeSheet();return}
+  if(el.id==='btn-new-order'){openOrder(null);return}
+  var d=el.dataset;
+  switch(act){
+    case 'prev':S.month.m--;if(S.month.m<0){S.month.m=11;S.month.y--}render();break;
+    case 'next':S.month.m++;if(S.month.m>11){S.month.m=0;S.month.y++}render();break;
+    case 'today':S.month={y:parts(TODAY).y,m:parts(TODAY).m};render();break;
+    case 'nota':{var tn=S.trips.find(function(x){return x.id===d.id});if(tn)openNota(tn);break}
+    case 'rundown':{var tr2=S.trips.find(function(x){return x.id===d.id});if(tr2)openNota(tr2,'run');break}
+    case 'bar':case 'edit-order':openOrder(d.id);break;
+    case 'new-order':openOrder(null);break;
+    case 'cell':{
+      var bus=S.buses.find(function(b){return b.code===d.bus});
+      if(bus&&bus.status==='bengkel'){toast(bus.code+' sedang di bengkel.',true);break}
+      openOrder(null,{start:toStr(+d.d),bus:d.bus});break;
+    }
+    case 'del-order':S.confirmKey='order:'+d.id;render();break;
+    case 'del-order-yes':deleteOrder(d.id);break;
+    case 'edit-bus':openBus(d.code);break;
+    case 'new-bus':openBus(null);break;
+    case 'del-bus':S.confirmKey='bus:'+d.code;render();break;
+    case 'del-bus-yes':deleteBus(d.code);break;
+    case 'seed-fleet':seedFleet();break;
+  }
+});
+$('#plot').addEventListener('click',function(ev){
+  var c=ev.target.closest('.chip');if(!c||c.disabled)return;
+  var code=c.dataset.code;
+  if(F.sel.has(code))F.sel.delete(code);else F.sel.add(code);
+  $('#f-error').textContent='';renderPlot();
+});
+$('#auto-fill').addEventListener('click',autoFill);
+$('#clear-sel').addEventListener('click',function(){F.sel.clear();$('#f-error').textContent='';renderPlot()});
+$('#f-big').addEventListener('input',syncNeed);
+$('#f-med').addEventListener('input',renderPlot);
+['#f-stime','#f-etime'].forEach(function(s){$(s).addEventListener('input',function(){renderPlot();routeHint()})});
+$('#f-start').addEventListener('change',function(){
+  var s=$('#f-start').value,e=$('#f-end').value;
+  if(s&&(!e||toDay(e)<toDay(s)))$('#f-end').value=s;
+  renderPlot();
+});
+$('#f-end').addEventListener('change',function(){renderPlot();routeHint()});
+$('#order-form').addEventListener('submit',function(ev){ev.preventDefault();saveOrder()});
+$('#b-photo').addEventListener('change',function(ev){
+  var f=ev.target.files&&ev.target.files[0];if(!f||!B)return;
+  readPhoto(f).then(function(u){B.photo=u;paintPhoto();$('#b-error').textContent=''}).catch(function(e){$('#b-error').textContent='Foto gagal dipakai: '+e.message+'.'});
+  ev.target.value='';
+});
+$('#b-photo-del').addEventListener('click',function(){if(B){B.photo=null;paintPhoto()}});
+$('#bus-form').addEventListener('submit',function(ev){ev.preventDefault();saveBus()});
+$('#del-order').addEventListener('click',function(){
+  var btn=$('#del-order');
+  if(!F||!F.id)return;
+  if(!F.confirmDel){F.confirmDel=true;btn.textContent='Yakin hapus? Klik lagi';btn.classList.add('armed');return}
+  deleteOrder(F.id);
+});
+document.addEventListener('input',function(ev){
+  if(ev.target.id==='q'){S.filter.q=ev.target.value;$('#orderList').innerHTML=ordersListHtml()}
+});
+document.addEventListener('change',function(ev){
+  if(ev.target.id==='fstatus'){S.filter.status=ev.target.value;$('#orderList').innerHTML=ordersListHtml()}
+});
+document.addEventListener('change',function(ev){
+  if(ev.target.id!=='gap')return;
+  var g=parseFloat(ev.target.value);
+  if(!(g>=0&&g<=24)){toast('Jeda stut harus antara 0 dan 24 jam.',true);render();return}
+  S.gap=g;
+  store.put('settings','app',Object.assign({},S.settings,{gapHours:g})).then(function(){toast('Jeda stut disimpan')}).catch(function(e){toast('Gagal menyimpan: '+(e&&(e.message||e.code)||'coba lagi'),true)});
+  render();
+});
+document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&OPEN)closeSheet()});
+function syncTab(){var h=location.hash.replace('#','');S.tab=['jadwal','tracking','order','armada','pendapatan'].indexOf(h)>=0?h:'jadwal';S.confirmKey=null;render()}
+window.addEventListener('hashchange',syncTab);
+
+/* ---------- boot ---------- */
+async function boot(){
+  syncTab();
+  var db=null,cfg=window.__SB||{};
+  var sbOk=cfg.url&&cfg.key&&cfg.url.indexOf('__SUPABASE')<0&&window.supabase&&window.supabase.createClient;
+  if(!sbOk){try{if(window.claude&&window.claude.use)db=await window.claude.use('db')}catch(e){db=null}}
+  store=sbOk?makeSbStore(cfg):db?makeDbStore(db):makeLocalStore();
+  S.mode=store.mode;
+  var slow=setTimeout(function(){if(!(S.ready.buses&&S.ready.trips)){S.slow=true;render()}},10000);
+  store.start(
+    function(b){S.buses=b.sort(busSort);S.ready.buses=true;clearTimeout(slow);S.slow=false;onData()},
+    function(t){S.trips=t;S.ready.trips=true;onData()},
+    function(rows){var a=rows.find(function(r){return r.id==='app'});if(a){S.settings=Object.assign({},a);delete S.settings.id;if(+a.gapHours>=0)S.gap=+a.gapHours}onData()},
+    function(e){S.error=e;render()}
+  );
+  render();
+}
+boot();
+})();
+</script>
+
+
+</body></html>
