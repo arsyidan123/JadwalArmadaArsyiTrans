@@ -354,6 +354,40 @@ button.code{cursor:pointer;font:inherit}
   fieldset{grid-template-columns:minmax(0,1fr)}
   .month h2{min-width:120px}
 }
+
+.fleetbox{display:flex;flex-direction:column;gap:10px}
+.fleet-h{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.fgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.fgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:600px){.fgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}}
+.bcard{display:flex;flex-direction:column;gap:6px;text-align:left;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;overflow:hidden;min-width:0}
+.bcard:hover{border-color:var(--accent)}
+.bimg{aspect-ratio:16/9;width:100%;background:color-mix(in srgb,var(--fg) 8%,var(--surface));display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;overflow:hidden}
+.bimg img{width:100%;height:100%;object-fit:cover;display:block}
+.bcap{display:flex;flex-direction:column;gap:4px;padding:0 10px 10px}
+.bcap b{font-family:var(--font-mono);font-size:14px}
+.bst{align-self:flex-start;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bst.k-trip{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.bst.k-check{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.bst.k-siap{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.bst.k-bengkel{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+#sheet-busdet{z-index:55;width:min(560px,100%)}
+.bd-photo{aspect-ratio:16/9;width:100%;border-radius:10px;overflow:hidden;background:color-mix(in srgb,var(--fg) 8%,var(--surface));display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.bd-photo img{width:100%;height:100%;object-fit:cover}
+.bd-status{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.bd-status.k-trip{background:var(--accent-soft);border-color:transparent}
+.bd-status.k-check{background:var(--warn-soft);border-color:transparent}
+.bd-status.k-siap{background:var(--ok-soft);border-color:transparent}
+.bd-status.k-bengkel{background:var(--bad-soft);border-color:transparent}
+.bd-status b{font-size:15px}
+.jobs{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.jobs li{display:flex;flex-direction:column;gap:3px;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.jobs li.run{border-color:var(--warn)}
+.jobs li.done{opacity:.65}
+.jobs small{color:var(--muted)}
+.locleg{display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--muted)}
+.locleg i{display:inline-block;width:10px;height:10px;border-radius:50%;border:1px solid #000;margin-right:5px;vertical-align:-1px}
+.locleg i.dm{border-radius:2px;transform:rotate(45deg)}
 @media (prefers-reduced-motion:no-preference){
   .chip,.btn,.bar{transition:background-color .12s,border-color .12s,filter .12s}
 }
@@ -371,7 +405,6 @@ button.code{cursor:pointer;font:inherit}
     <a href="#jadwal" data-tab="jadwal">Jadwal</a>
     <a href="#tracking" data-tab="tracking">Tracking</a>
     <a href="#order" data-tab="order">Order</a>
-    <a href="#armada" data-tab="armada">Armada</a>
     <a href="#pendapatan" data-tab="pendapatan">Pendapatan</a>
   </nav>
   <div id="banner"></div>
@@ -397,7 +430,7 @@ button.code{cursor:pointer;font:inherit}
         <div class="fld"><label for="f-etime">Jam pulang (tiba kembali)</label><input id="f-etime" type="time"></div>
         <p class="hint" id="f-days" style="grid-column:1/-1"></p>
         <p class="hint" style="grid-column:1/-1">Isi kedua jam supaya stut dihitung per jam. Tanpa jam, stut hanya dihitung per tanggal.</p>
-        <div class="fld"><label for="f-pickup">Titik penjemputan</label><input id="f-pickup" type="text" placeholder="mis. Halaman sekolah, Majenang"></div>
+        <div class="fld"><label for="f-pickup">Titik penjemputan</label><input id="f-pickup" type="text" list="dl-pick" placeholder="mis. SMA Negeri 1 Majenang atau nama biro"></div>
         <div class="fld"><label for="f-dest">Tujuan</label><input id="f-dest" type="text" list="dl-dest" placeholder="mis. Yogyakarta"></div>
         <p class="hint" id="f-route-hint" style="grid-column:1/-1"></p>
       </fieldset>
@@ -425,7 +458,7 @@ button.code{cursor:pointer;font:inherit}
     </div>
     <div class="sheet-foot">
       <button type="button" class="btn danger" id="del-order" hidden>Hapus order</button>
-      <button type="button" class="btn" id="f-rundown">Rundown</button><button type="button" class="btn" id="f-nota">Terbitkan nota</button>
+      <button type="button" class="btn" id="f-nota">Terbitkan nota</button>
       <span class="grow"></span>
       <button type="button" class="btn" data-close>Batal</button>
       <button type="submit" class="btn primary">Simpan order</button>
@@ -477,6 +510,11 @@ button.code{cursor:pointer;font:inherit}
   </form>
 </aside>
 
+<aside class="sheet" id="sheet-busdet" role="dialog" aria-modal="true" aria-labelledby="bd-title" hidden>
+  <div class="sheet-head"><h2 id="bd-title">Unit</h2><button type="button" class="btn ghost sm" data-close>Tutup</button></div>
+  <div class="sheet-body" id="bd-body"></div>
+  <div class="sheet-foot"><button type="button" class="btn danger" id="bd-del">Hapus unit</button><span class="grow"></span><button type="button" class="btn primary" id="bd-edit">Ubah data &amp; foto</button></div>
+</aside>
 <div id="toast" role="status" hidden></div>
 
 <script>
@@ -663,7 +701,6 @@ function render(){
   }
   if(S.tab==='tracking'){v.innerHTML=viewTrack();mountSat()}
   else if(S.tab==='order')v.innerHTML=viewOrders();
-  else if(S.tab==='armada')v.innerHTML=viewFleet();
   else if(S.tab==='pendapatan')v.innerHTML=viewRevenue();
   else v.innerHTML=viewJadwal();
 }
@@ -758,40 +795,20 @@ function orderItem(t){
   return '<article class="item"><div class="when"><b>'+esc(fmtRange(t))+'</b><span>'+days+' hari · '+parts(s).y+'</span>'+timeLine+'</div>'
   +'<div class="main"><h3>'+esc(t.customer)+'<span class="st '+esc(t.status)+'">'+esc(STATUS[t.status]||t.status)+'</span>'+(t.example?'<span class="st">contoh</span>':'')+'</h3>'
   +'<p class="route">'+esc(t.pickup||'—')+' → '+esc(t.destination||'—')+(t.phone?' · '+esc(t.phone):'')+'</p>'+seat+priceLine(t)+'<div class="chips-sm">'+chips+'</div></div>'
-  +'<div class="acts"><button class="btn sm" data-act="rundown" data-id="'+esc(t.id)+'">Rundown</button><button class="btn sm" data-act="nota" data-id="'+esc(t.id)+'">Nota</button><button class="btn sm" data-act="edit-order" data-id="'+esc(t.id)+'">Ubah</button><button class="btn sm danger'+(armed?' armed':'')+'" data-act="'+(armed?'del-order-yes':'del-order')+'" data-id="'+esc(t.id)+'">'+(armed?'Yakin hapus?':'Hapus')+'</button></div></article>';
+  +'<div class="acts"><button class="btn sm" data-act="nota" data-id="'+esc(t.id)+'">Nota</button><button class="btn sm" data-act="edit-order" data-id="'+esc(t.id)+'">Ubah</button><button class="btn sm danger'+(armed?' armed':'')+'" data-act="'+(armed?'del-order-yes':'del-order')+'" data-id="'+esc(t.id)+'">'+(armed?'Yakin hapus?':'Hapus')+'</button></div></article>';
 }
 
 /* ---------- tab Armada ---------- */
 function emptyFleet(){
   return '<div class="empty"><strong>Armada belum ada</strong><span>Muat daftar awal: 10 big bus (AT-001 sampai AT-010, Jetbus 5 SHD, Hino RM 280) dan 2 medium bus. Kodenya bisa kamu ubah lagi.</span><button class="btn primary" data-act="seed-fleet">Muat armada awal</button><button class="btn" data-act="new-bus">Tambah unit manual</button></div>';
 }
-function viewFleet(){
-  if(!S.buses.length)return emptyFleet();
-  var html='<div style="display:flex;justify-content:flex-end"><button class="btn primary" data-act="new-bus">+ Tambah unit</button></div>';
-  ['big','medium'].forEach(function(type){
-    var list=S.buses.filter(function(b){return b.type===type});
-    html+='<section class="fleet"><h3>'+TYPE[type]+'<span>'+list.length+' unit</span></h3>';
-    html+=list.length?list.map(busRow).join(''):'<div class="frow"><span class="hint">Belum ada unit.</span></div>';
-    html+='</section>';
-  });
-  return html;
-}
-function busRow(b){
-  var cur=S.trips.find(function(t){return t.status!=='batal'&&(t.buses||[]).indexOf(b.code)>=0&&toDay(t.start)<=TODAY&&TODAY<=toDay(t.end)});
-  var state=b.status==='bengkel'?'<span class="pill bad">Bengkel</span>':cur?'<span class="pill">Jalan · '+esc(cur.customer)+'</span>':'<span class="pill ok">Siap</span>';
-  var armed=S.confirmKey==='bus:'+b.code;
-  return '<div class="frow"><span class="plate">'+esc(b.code)+'</span><div>'+(b.photo?'<img class="thumb" alt="" src="'+b.photo+'" style="float:left">':'')+'<b>'+esc(b.model||'—')+'</b><small>'+esc(b.chassis||'Sasis belum diisi')+' · Odometer '+fmtKm(odoAt(b.code,Date.now()))+(b.note?' · '+esc(b.note):'')+'</small></div>'
-  +'<span class="f-seat">'+(b.seats?esc(b.seats)+' kursi':'—')+'</span><span class="f-state">'+state+'</span>'
-  +'<div class="acts"><button class="btn sm" data-act="edit-bus" data-code="'+esc(b.code)+'">Ubah</button><button class="btn sm danger'+(armed?' armed':'')+'" data-act="'+(armed?'del-bus-yes':'del-bus')+'" data-code="'+esc(b.code)+'">'+(armed?'Yakin hapus?':'Hapus')+'</button></div></div>';
-}
-
 /* ---------- panel order ---------- */
 function showSheet(sel){
   $('#scrim').hidden=false;$(sel).hidden=false;document.body.classList.add('lock');OPEN=sel;
   setTimeout(function(){var f=$(sel).querySelector('input,select,textarea');if(f)f.focus()},40);
 }
 function closeSheet(){
-  $('#sheet-order').hidden=true;$('#sheet-bus').hidden=true;$('#sheet-nota').hidden=true;$('#scrim').hidden=true;
+  $('#sheet-order').hidden=true;$('#sheet-bus').hidden=true;$('#sheet-busdet').hidden=true;S.detBus=null;S.detDel=false;$('#sheet-nota').hidden=true;$('#scrim').hidden=true;
   document.body.classList.remove('lock');OPEN=null;F=null;B=null;
 }
 function candFromForm(){return {start:$('#f-start').value,end:$('#f-end').value,startTime:$('#f-stime').value,endTime:$('#f-etime').value}}
@@ -1351,15 +1368,21 @@ function buildRoute(pickup,dest,sA,sT,days){
     if(NODE[id].spot){if(spotsIn.indexOf(id)<0)spotsIn.push(id);id=NODE[id].par}
     if(main[main.length-1]!==id)main.push(id);
   });
-  var pk=findPlaces(pickup).filter(function(id){return id!=='cil'}).map(function(id){return NODE[id].spot?NODE[id].par:id}).filter(function(id,i,a){return i===0||a[i-1]!==id});
+  var LH=null,lc=findLoc(pickup);
+  if(lc){LH=useLoc(lc);if(!LH.anchor)LH=null}
+  var pk=LH?[]:findPlaces(pickup).filter(function(id){return id!=='cil'}).map(function(id){return NODE[id].spot?NODE[id].par:id}).filter(function(id,i,a){return i===0||a[i-1]!==id});
   var ids0=['cil'],prev='cil',i,path;
   for(i=0;i<pk.length;i++){
     if(pk[i]===prev)continue;
     path=sp(prev,pk[i],sA,sT);if(!path)return null;
     ids0=ids0.concat(path.slice(1));prev=pk[i];
   }
-  var pick=ids0.length>1?mkLeg(ids0,sA,sT):null,pickName=NODE[prev].name;
-  var ids=[prev],p2=prev;
+  if(LH){
+    if(LH.anchor!==prev){path=sp(prev,LH.anchor,sA,sT);if(!path)return null;ids0=ids0.concat(path.slice(1));prev=LH.anchor}
+    ids0.push(LH.id);
+  }
+  var pick=ids0.length>1?mkLeg(ids0,sA,sT):null,pickName=LH?LH.name:NODE[prev].name;
+  var ids=LH?[LH.id,prev]:[prev],p2=prev;
   for(i=0;i<main.length;i++){
     if(main[i]===p2)continue;
     path=sp(p2,main[i],sA,sT);if(!path)return null;
@@ -1373,9 +1396,45 @@ function buildRoute(pickup,dest,sA,sT,days){
     if(def)sl=defaultTourFor(p2,days||4);
     tour=mkTour(p2,sl,def);
   }
-  return {pick:pick,pickName:pickName,out:out,back:bk,tour:tour,mid:main.slice(0,-1),dest:NODE[p2].name,
+  return {pick:pick,pickName:pickName,pickLoc:LH?lc:null,out:out,back:bk,tour:tour,mid:main.slice(0,-1),dest:NODE[p2].name,
     stops:pk.concat(main).filter(function(id,j,a){return j===0||a[j-1]!==id}).map(function(id){return NODE[id].name}),
     backSame:ids.join()===back.slice().reverse().join()};
+}
+var LOCS_RAW=[["SMA Negeri 1 Adipala","SMA",109.1779,-7.6413,"Adipala","N"],["SMA Negeri 1 Bantarsari","SMA",108.8835,-7.5268,"Bantarsari","N"],["SMA Negeri 1 Binangun","SMA",109.2795,-7.6721,"Binangun","N"],["SMA Kristen Cilacap","SMA",109.01595,-7.72938,"Cilacap Selatan","S"],["SMA Negeri 1 Cilacap","SMA",109.0051,-7.7142,"Cilacap Selatan","N"],["SMA Yos Sudarso Cilacap","SMA",109.0099,-7.7338,"Cilacap Selatan","S"],["SMA AL Irsyad Cilacap","SMA",109.0021,-7.7232,"Cilacap Tengah","S"],["SMA Muhammadiyah 1 Cilacap","SMA",109.0313,-7.7081,"Cilacap Tengah","S"],["SMA Negeri 3 Cilacap","SMA",109.0325,-7.7066,"Cilacap Tengah","N"],["SMA Sri Mukti Cilacap","SMA",109.0219,-7.7083,"Cilacap Tengah","S"],["SMA Negeri 2 Cilacap","SMA",109.0362,-7.6866,"Cilacap Utara","N"],["SMA Raden Fatah Cimanggu","SMA",108.8626,-7.366,"Cimanggu","S"],["SMA Diponegoro Cipari","SMA",108.7601,-7.4326,"Cipari","S"],["SMA Islam Darul Ulum Cipari","SMA",108.7375,-7.4148,"Cipari","S"],["SMA Negeri 1 Cipari","SMA",108.7439,-7.428,"Cipari","N"],["SMA Negeri 1 Dayeuhluhur","SMA",108.6084,-7.2585,"Dayeuhluhur","N"],["SMA PGRI 4 Gandrungmangu","SMA",108.8171,-7.5263,"Gandrungmangu","S"],["SMA Ya Bakii 2 Gandrungmangu","SMA",108.8539,-7.5217,"Gandrungmangu","S"],["SMA Negeri 1 Jeruklegi","SMA",109.0213,-7.6262,"Jeruklegi","N"],["SMA Negeri 1 Kampung Laut","SMA",108.8274,-7.6864,"Kampung Laut","N"],["SMA Jendral Ahmad Yani Karangpucung","SMA",108.9015,-7.4111,"Karangpucung","S"],["SMA A. Yani Kawunganten","SMA",108.9195,-7.5897,"Kawunganten","S"],["SMA Muhammadiyah Kedungreja","SMA",108.784,-7.5099,"Kedungreja","S"],["SMA Negeri 1 Kedungreja","SMA",108.75249,-7.50075,"Kedungreja","N"],["SMA Nusantara Kesugihan","SMA",109.1082,-7.6128,"Kesugihan","S"],["SMA Ya Bakii 1 Kesugihan","SMA",109.1225,-7.6167,"Kesugihan","S"],["SMA Islam Buana Kroya","SMA",109.2467,-7.6304,"Kroya","S"],["SMA Negeri 1 Kroya","SMA",109.2418,-7.6345,"Kroya","N"],["SMA Negeri 2 Kroya","SMA",109.2588,-7.6049,"Kroya","N"],["SMA Muhammadiyah 1 Majenang","SMA",108.7619,-7.2984,"Majenang","S"],["SMA Negeri 1 Majenang","SMA",108.7462,-7.3013,"Majenang","N"],["SMA Purnama Majenang","SMA",108.7479,-7.2994,"Majenang","S"],["SMA Yos Sudarso Majenang","SMA",108.77017,-7.30172,"Majenang","S"],["SMA Negeri 1 Maos","SMA",109.147,-7.6147,"Maos","N"],["SMA Negeri 1 Patimuan","SMA",108.7524,-7.6161,"Patimuan","N"],["SMA Diponegoro Sampang","SMA",109.2017,-7.5742,"Sampang","S"],["SMA Negeri 1 Sampang","SMA",109.1847,-7.5649,"Sampang","N"],["SMA AL Hidayah Sidareja","SMA",108.77093,-7.48205,"Sidareja","S"],["SMA Kristen Sidareja","SMA",108.7957,-7.4859,"Sidareja","S"],["SMA Muhammadiyah Sidareja","SMA",108.81097,-7.48697,"Sidareja","S"],["SMA Nasional Sidareja","SMA",108.7587,-7.4702,"Sidareja","S"],["SMA Negeri 1 Sidareja","SMA",108.8089,-7.4738,"Sidareja","N"],["SMK Manggala Tama Binangun","SMK",109.2947,-7.6715,"Binangun","S"],["SMK Negeri 1 Binangun","SMK",109.2573,-7.675,"Binangun","N"],["SMK Bina Bhakti Cilacap","SMK",109.0121,-7.7326,"Cilacap Selatan","S"],["SMK Migas Muhammadiyah Cilacap","SMK",109.03389,-7.70726,"Cilacap Selatan","S"],["SMK Negeri 1 Cilacap","SMK",109.01858,-7.7281,"Cilacap Selatan","N"],["SMK Negeri 2 Cilacap","SMK",109.0177,-7.727,"Cilacap Selatan","N"],["SMK Dr. Soetomo Cilacap","SMK",109.021,-7.7148,"Cilacap Tengah","S"],["SMK Sri Mukti Cilacap","SMK",109.0127,-7.723,"Cilacap Tengah","S"],["SMK Tamansiswa Cilacap","SMK",109.0193,-7.7453,"Cilacap Tengah","S"],["SMK Ype Cilacap","SMK",109.0155,-7.7265,"Cilacap Tengah","S"],["SMK Makmur 1 Cilacap","SMK",109.0407,-7.6829,"Cilacap Utara","S"],["SMK Muhammadiyah 1 Cilacap","SMK",109.0266,-7.6776,"Cilacap Utara","S"],["SMK Wijaya Kusuma Cilacap","SMK",109.0533,-7.6662,"Cilacap Utara","S"],["SMK K.H. Ahmad Dahlan Cimanggu","SMK",108.87288,-7.29691,"Cimanggu","S"],["SMK Komputama Pesahangan","SMK",108.8386,-7.26216,"Cimanggu","S"],["SMK Muhammadiyah Cimanggu","SMK",108.8401,-7.3543,"Cimanggu","S"],["SMK Ypia Cimanggu","SMK",108.8424,-7.3036,"Cimanggu","S"],["SMK Diponegoro Cipari","SMK",108.8084,-7.3781,"Cipari","S"],["SMK Fatahillah Cipari","SMK",108.7669,-7.4385,"Cipari","S"],["SMK PGRI Dayeuhluhur","SMK",108.6034,-7.2603,"Dayeuhluhur","S"],["SMK AL Hikmah Gandrungmangu","SMK",108.8478,-7.5203,"Gandrungmangu","S"],["SMK Boedi Oetomo 2 Gandrungmangu","SMK",108.8482,-7.5169,"Gandrungmangu","S"],["SMK Komputama Jeruklegi","SMK",109.03023,-7.56362,"Jeruklegi","S"],["SMK Yos Sudarso Jeruklegi","SMK",109.0216,-7.6265,"Jeruklegi","S"],["SMK Darussalam Karangpucung","SMK",108.8901,-7.3963,"Karangpucung","S"],["SMK Muhammadiyah Karangpucung","SMK",108.9011,-7.414,"Karangpucung","S"],["SMK Negeri Karangpucung","SMK",108.8719,-7.3806,"Karangpucung","N"],["SMK Sriwijaya Karangpucung","SMK",108.8864,-7.44,"Karangpucung","S"],["SMK Islam Ar Royyanna Kawunganten","SMK",108.905,-7.6207,"Kawunganten","S"],["SMK Negeri 1 Kawunganten","SMK",108.93,-7.604,"Kawunganten","N"],["SMK Nusa Taruna 2 Kawunganten","SMK",108.9726,-7.5905,"Kawunganten","S"],["SMK Tarbiyatul Islam Kawunganten","SMK",108.9165,-7.568,"Kawunganten","S"],["SMK Yos Sudarso Kawunganten","SMK",108.9146,-7.5867,"Kawunganten","S"],["SMK Lppm Ri 2 Kedungreja","SMK",108.7544,-7.5038,"Kedungreja","S"],["SMK Maarif NU Kedungreja","SMK",108.776,-7.5249,"Kedungreja","S"],["SMK AL Munawwarah Cilacap","SMK",109.1144,-7.6605,"Kesugihan","S"],["SMK AL Mu`allim Kesugihan","SMK",109.1152,-7.6259,"Kesugihan","S"],["SMK Pelayaran Samudera Cilacap","SMK",109.0837,-7.664,"Kesugihan","S"],["SMK Ma`arif 1 Kroya","SMK",109.2459,-7.6296,"Kroya","S"],["SMK Muhammadiyah Kroya","SMK",109.2528,-7.613,"Kroya","S"],["SMK Tamtama Kroya","SMK",109.2487,-7.6221,"Kroya","S"],["SMK Ype Kroya","SMK",109.2539,-7.6344,"Kroya","S"],["SMK Alma Ata Majenang","SMK",108.7827,-7.3216,"Majenang","S"],["SMK Diponegoro Majenang","SMK",108.74414,-7.30324,"Majenang","S"],["SMK Farmasi Majenang","SMK",108.7694,-7.2957,"Majenang","S"],["SMK Komputama Majenang","SMK",108.7667,-7.3011,"Majenang","S"],["SMK Muhammadiyah Majenang","SMK",108.7763,-7.2999,"Majenang","S"],["SMK Yos Sudarso Majenang","SMK",108.7507,-7.3333,"Majenang","S"],["SMK Boedi Oetomo 3 Maos","SMK",109.1546,-7.5878,"Maos","S"],["SMK Karya Mandiri Nusawungu","SMK",109.3585,-7.7058,"Nusawungu","S"],["SMK Negeri Nusawungu","SMK",109.3618,-7.6642,"Nusawungu","N"],["SMK Muhammadiyah Sampang","SMK",109.2352,-7.5889,"Sampang","S"],["SMK Ype Sampang","SMK",109.1996,-7.5638,"Sampang","S"],["SMK 18 Lppm Ri Sidareja","SMK",108.8032,-7.4854,"Sidareja","S"],["SMK Amirul Muminin Sidareja","SMK",108.7497,-7.4718,"Sidareja","S"],["SMK Darul Ulum Sidareja","SMK",108.7706,-7.4821,"Sidareja","S"],["SMK Nasional Sidareja","SMK",108.7936,-7.4666,"Sidareja","S"],["SMK Tamtama 1 Sidareja","SMK",108.7978,-7.4874,"Sidareja","S"],["SMK Tamtama 2 Sidareja","SMK",108.802,-7.4853,"Sidareja","S"],["SMK Yos Soedarso Sidareja","SMK",108.7974,-7.4884,"Sidareja","S"],["SMK Gagas Wanareja","SMK",108.6457,-7.2836,"Wanareja","S"],["SMK Karya Tunas Nusantara Wanareja","SMK",108.64216,-7.33155,"Wanareja","S"],["SMK Negeri 1 Wanareja","SMK",108.6824,-7.3389,"Wanareja","N"],["SMK Tunas Bangsa Wanareja","SMK",108.69188,-7.33866,"Wanareja","S"],["SMP Kristen Adipala","SMP",109.1657,-7.6618,"Adipala","S"],["SMP Muhammadiyah Adipala","SMP",109.1385,-7.6649,"Adipala","S"],["SMP Negeri 1 Adipala","SMP",109.1569,-7.6776,"Adipala","N"],["SMP Negeri 2 Adipala","SMP",109.1787,-7.6741,"Adipala","N"],["SMP Pemda Adipala","SMP",109.1575,-7.6602,"Adipala","S"],["SMP Negeri 1 Bantarsari","SMP",108.926,-7.5074,"Bantarsari","N"],["SMP Negeri 2 Bantarsari","SMP",108.8853,-7.5349,"Bantarsari","N"],["SMP Negeri 3 Bantarsari","SMP",108.8868,-7.5152,"Bantarsari","N"],["SMP Negeri Satu Atap 1 Bantarsari","SMP",108.8978,-7.4958,"Bantarsari","N"],["SMP PGRI 23 Bantarsari","SMP",108.8698,-7.5393,"Bantarsari","S"],["SMP 10 Nopember Binangun","SMP",109.3038,-7.6937,"Binangun","S"],["SMP Negeri 1 Binangun","SMP",109.2603,-7.6512,"Binangun","N"],["SMP Negeri 2 Binangun","SMP",109.2584,-7.6611,"Binangun","N"],["SMP Negeri 3 Binangun","SMP",109.2891,-7.6586,"Binangun","N"],["SMP PGRI 25 Binangun","SMP",109.2747,-7.6534,"Binangun","S"],["SMP Ypi Binangun","SMP",109.2828,-7.6589,"Binangun","S"],["SMP Advent Cilacap","SMP",109.01521,-7.73278,"Cilacap Selatan","S"],["SMP Bahari Cilacap","SMP",109.005,-7.73388,"Cilacap Selatan","S"],["SMP Kristen Cilacap","SMP",109.00346,-7.73253,"Cilacap Selatan","S"],["SMP Muhammadiyah 1 Cilacap","SMP",109.00743,-7.72103,"Cilacap Selatan","S"],["SMP Negeri 1 Cilacap","SMP",109.0089,-7.7384,"Cilacap Selatan","N"],["SMP Negeri 3 Cilacap","SMP",109.00151,-7.7284,"Cilacap Selatan","N"],["SMP Negeri 8 Cilacap","SMP",109.01099,-7.72795,"Cilacap Selatan","N"],["SMP Pius Cilacap","SMP",109.0099,-7.7361,"Cilacap Selatan","S"],["SMP Purnama 1 Cilacap","SMP",109.01729,-7.72394,"Cilacap Selatan","S"],["SMP Taman Hidayah Cilacap","SMP",109.01197,-7.7329,"Cilacap Selatan","S"],["SMP Ype Cilacap","SMP",109.0161,-7.72662,"Cilacap Selatan","S"],["SMP AL Manaar Kutawaru Cilacap","SMP",109.012,-7.7122,"Cilacap Tengah","S"],["SMP Boedi Oetomo Cilacap","SMP",109.0089,-7.6869,"Cilacap Tengah","S"],["SMP Islam AL Azhar 15 Cilacap","SMP",109.0175,-7.7137,"Cilacap Tengah","S"],["SMP Islam AL Irsyad Cilacap","SMP",109.0137,-7.7117,"Cilacap Tengah","S"],["SMP Maria Immaculata Cilacap","SMP",109.0007,-7.7039,"Cilacap Tengah","S"],["SMP Negeri 2 Cilacap","SMP",109.0232,-7.6986,"Cilacap Tengah","N"],["SMP Negeri 4 Cilacap","SMP",109.022,-7.7137,"Cilacap Tengah","N"],["SMP Negeri 6 Cilacap","SMP",109.0269,-7.7075,"Cilacap Tengah","N"],["SMP Negeri 9 Cilacap","SMP",109.0189,-7.7011,"Cilacap Tengah","N"],["SMP Purnama 2 Cilacap","SMP",109.0029,-7.718,"Cilacap Tengah","S"],["SMP Tamansiswa Cilacap","SMP",109.008,-7.7403,"Cilacap Tengah","S"],["SMP Islam Cilacap","SMP",109.0326,-7.6989,"Cilacap Utara","S"],["SMP Makmur 1 Cilacap","SMP",109.0418,-7.6848,"Cilacap Utara","S"],["SMP Muhammadiyah 2 Cilacap","SMP",109.0168,-7.6859,"Cilacap Utara","S"],["SMP Negeri 5 Cilacap","SMP",109.037,-7.6859,"Cilacap Utara","N"],["SMP Negeri 7 Cilacap","SMP",109.0577,-7.674,"Cilacap Utara","N"],["SMP PGRI 1 Cilacap","SMP",109.0356,-7.6862,"Cilacap Utara","S"],["SMP Darussalam Cimanggu","SMP",108.8104,-7.3436,"Cimanggu","S"],["SMP Diponegoro Cimanggu","SMP",108.842,-7.2995,"Cimanggu","S"],["SMP Maarif NU Cimanggu","SMP",108.8501,-7.3274,"Cimanggu","S"],["SMP Muhammadiyah Cimanggu","SMP",108.8819,-7.3546,"Cimanggu","S"],["SMP Negeri 1 Cimanggu","SMP",108.83213,-7.34125,"Cimanggu","N"],["SMP Negeri 2 Cimanggu","SMP",108.8367,-7.2743,"Cimanggu","N"],["SMP Negeri 4 Satu Atap Cimanggu","SMP",108.8863,-7.2841,"Cimanggu","N"],["SMP Negeri Satu Atap 1 Cimanggu","SMP",108.908,-7.3095,"Cimanggu","N"],["SMP PGRI 18 Cimanggu","SMP",108.8496,-7.3188,"Cimanggu","S"],["SMP Raden Fatah Cimanggu","SMP",108.8735,-7.3659,"Cimanggu","S"],["SMP AL Islam Cipari","SMP",108.7657,-7.4437,"Cipari","S"],["SMP Harapan Cipari","SMP",108.7623,-7.4093,"Cipari","S"],["SMP Islam Caruy","SMP",108.7812,-7.3744,"Cipari","S"],["SMP Negeri 1 Cipari","SMP",108.7446,-7.4289,"Cipari","N"],["SMP Negeri 2 Cipari","SMP",108.7794,-7.3818,"Cipari","N"],["SMP Negeri 3 Satap Cipari","SMP",108.7458,-7.4181,"Cipari","N"],["SMP Negeri 4 Cipari","SMP",108.7862,-7.3858,"Cipari","N"],["SMP NU Cipari","SMP",108.759,-7.4493,"Cipari","S"],["SMP PGRI 27 Cisuru","SMP",108.7589,-7.4562,"Cipari","S"],["SMP PGRI 3 Carui Cipari","SMP",108.7524,-7.4046,"Cipari","S"],["SMP Muhammadiyah 1 Dayeuhluhur","SMP",108.6074,-7.2597,"Dayeuhluhur","S"],["SMP Muhammadiyah 2 Bolang","SMP",108.5866,-7.2837,"Dayeuhluhur","S"],["SMP Muhammadiyah 3 Dayeuhluhur","SMP",108.6314,-7.2092,"Dayeuhluhur","S"],["SMP Negeri 1 Dayeuhluhur","SMP",108.6023,-7.2391,"Dayeuhluhur","N"],["SMP Negeri 2 Dayeuhluhur","SMP",108.5873,-7.3012,"Dayeuhluhur","N"],["SMP PGRI 12 Dayeuhluhur","SMP",108.6064,-7.2567,"Dayeuhluhur","S"],["SMP Islam AL Irsyad Gandrungmangu","SMP",108.83,-7.5031,"Gandrungmangu","S"],["SMP Kristen Gandrungmangu","SMP",108.8586,-7.5343,"Gandrungmangu","S"],["SMP Miftahul Falah Gandrungmangu","SMP",108.8819,-7.4574,"Gandrungmangu","S"],["SMP Muhammadiyah Gandrungmangu","SMP",108.8473,-7.5168,"Gandrungmangu","S"],["SMP Negeri 3 Gandrungmangu","SMP",108.8526,-7.4727,"Gandrungmangu","N"],["SMP Negeri 1 Gandrungmangu","SMP",108.8486,-7.5128,"Gandrungmangu","N"],["SMP Negeri 2 Gandrungmangu","SMP",108.8538,-7.5269,"Gandrungmangu","N"],["SMP Negeri Satu Atap 1 Gandrungmangu","SMP",108.8357,-7.5427,"Gandrungmangu","N"],["SMP Nurul Huda Gandrungmangu","SMP",108.8536,-7.5222,"Gandrungmangu","S"],["SMP PGRI 5 Gandrungmangu","SMP",108.8397,-7.4981,"Gandrungmangu","S"],["SMP PGRI 6 Gandrungmangu 2","SMP",108.887,-7.4438,"Gandrungmangu","S"],["SMP Purnama Gandrungmangu","SMP",108.8474,-7.5667,"Gandrungmangu","S"],["SMP Yos Soedarso Sidaurip Gandrungmangu","SMP",108.8795,-7.5028,"Gandrungmangu","S"],["SMP Muhammadiyah Jeruklegi","SMP",109.0227,-7.5758,"Jeruklegi","S"],["SMP Negeri 1 Jeruklegi","SMP",108.9991,-7.5656,"Jeruklegi","N"],["SMP Negeri 2 Jeruklegi","SMP",108.9911,-7.5534,"Jeruklegi","N"],["SMP Negeri 3 Jeruklegi","SMP",108.9978,-7.6266,"Jeruklegi","N"],["SMP Nusantara Jeruklegi","SMP",109.0204,-7.6003,"Jeruklegi","S"],["SMP Purnama Jeruklegi","SMP",108.9842,-7.6434,"Jeruklegi","S"],["SMP Yos Sudarso Jeruklegi","SMP",109.0202,-7.6183,"Jeruklegi","S"],["SMP Ma`arif NU 1 Kampunglaut","SMP",108.8596,-7.6149,"Kampung Laut","S"],["SMP Negeri 1 Satu Atap Kampung Laut","SMP",108.8775,-7.6483,"Kampung Laut","N"],["SMP Negeri 2 Kampung Laut","SMP",108.8344,-7.7084,"Kampung Laut","N"],["SMP Negeri 1 Kampung Laut","SMP",108.8802,-7.7177,"Kampung Laut","N"],["SMP Islam Karangpucung","SMP",108.8921,-7.3456,"Karangpucung","S"],["SMP Jenderal Ahmad Yani Karangpucung","SMP",108.914,-7.4133,"Karangpucung","S"],["SMP Muhammadiyah 1 Karangpucung","SMP",108.8488,-7.3745,"Karangpucung","S"],["SMP Muhammadiyah 2 Karangpucung","SMP",108.8956,-7.4137,"Karangpucung","S"],["SMP Muhammadiyah 3 Karangpucung","SMP",108.937,-7.3447,"Karangpucung","S"],["SMP Negeri 3 Satu Atap Karangpucung","SMP",108.8662,-7.4155,"Karangpucung","N"],["SMP Negeri 4 Satu Atap Karangpucung","SMP",108.8752,-7.4116,"Karangpucung","N"],["SMP Negeri 1 Karangpucung","SMP",108.8941,-7.4144,"Karangpucung","N"],["SMP Negeri 2 Karangpucung","SMP",108.8918,-7.392,"Karangpucung","N"],["SMP PGRI 19 Karangpucung 1","SMP",108.9248,-7.3724,"Karangpucung","S"],["SMP AL Hikmah Kawunganten","SMP",108.9292,-7.5655,"Kawunganten","S"],["SMP Bahari Kawunganten","SMP",108.9401,-7.6475,"Kawunganten","S"],["SMP Negeri 1 Kawunganten","SMP",108.8931,-7.6069,"Kawunganten","N"],["SMP Negeri 3 Kawunganten","SMP",108.9829,-7.6144,"Kawunganten","N"],["SMP Negeri 4 Satu Atap Kawunganten","SMP",108.9644,-7.5828,"Kawunganten","N"],["SMP Negeri 2 Kawunganten","SMP",108.9227,-7.5853,"Kawunganten","N"],["SMP Nurul Mubtadiin","SMP",108.972,-7.6374,"Kawunganten","S"],["SMP Sultan Agung Kawunganten","SMP",108.9243,-7.5908,"Kawunganten","S"],["SMP Ya Bakii 04 Kawunganten","SMP",108.9496,-7.6228,"Kawunganten","S"],["SMP Yos Sudarso Kawunganten","SMP",108.9155,-7.5866,"Kawunganten","S"],["SMP Jenderal Sudirman Kedungreja","SMP",108.7949,-7.5068,"Kedungreja","S"],["SMP Muhammadiyah Kedungreja","SMP",108.7768,-7.5149,"Kedungreja","S"],["SMP Negeri 1 Kedungreja","SMP",108.7673,-7.5512,"Kedungreja","N"],["SMP Negeri 2 Kedungreja","SMP",108.796,-7.4936,"Kedungreja","N"],["SMP Negeri 3 Kedungreja","SMP",108.8047,-7.5456,"Kedungreja","N"],["SMP PGRI 11 Kedungreja","SMP",108.78,-7.5054,"Kedungreja","S"],["SMP Negeri 1 Kesugihan","SMP",109.1138,-7.5945,"Kesugihan","N"],["SMP Negeri 2 Kesugihan","SMP",109.1136,-7.6606,"Kesugihan","N"],["SMP Negeri 3 Kesugihan","SMP",109.0805,-7.6468,"Kesugihan","N"],["SMP Nusantara Kesugihan","SMP",109.0596,-7.6344,"Kesugihan","S"],["SMP Pembudi Darma 1 Kesugihan","SMP",109.0782,-7.6288,"Kesugihan","S"],["SMP Pemda 2 Kesugihan","SMP",109.0684,-7.6669,"Kesugihan","S"],["SMP PGRI 21 Kesugihan I","SMP",109.085,-7.6197,"Kesugihan","S"],["SMP Ya Bakii 1 Kesugihan","SMP",109.0695,-7.5835,"Kesugihan","S"],["SMP Ya Bakii 2 Kesugihan","SMP",109.0809,-7.6612,"Kesugihan","S"],["SMP Ya Bakii 5 Kesugihan","SMP",109.093,-7.6441,"Kesugihan","S"],["SMP Masyithoh Kroya","SMP",109.2241,-7.6272,"Kroya","S"],["SMP Muhammadiyah 1 Kroya","SMP",109.2419,-7.6283,"Kroya","S"],["SMP Muhammadiyah 2 Kroya","SMP",109.2402,-7.6373,"Kroya","S"],["SMP Negeri 1 Kroya","SMP",109.2927,-7.6452,"Kroya","N"],["SMP Negeri 2 Kroya","SMP",109.2221,-7.6457,"Kroya","N"],["SMP Negeri 3 Kroya","SMP",109.2231,-7.6414,"Kroya","N"],["SMP Negeri 4 Kroya","SMP",109.2149,-7.6004,"Kroya","N"],["SMP Negeri 5 Kroya","SMP",109.247,-7.6316,"Kroya","N"],["SMP Negeri 6 Kroya","SMP",109.19889,-7.64965,"Kroya","N"],["SMP PGRI 1 Kroya","SMP",109.2266,-7.6412,"Kroya","S"],["SMP PGRI 10 Kroya","SMP",109.2363,-7.598,"Kroya","S"],["SMP Ype Kroya","SMP",109.2364,-7.5981,"Kroya","S"],["SMP Alma Ata","SMP",108.7886,-7.3337,"Majenang","S"],["SMP Diponegoro Majenang","SMP",108.7715,-7.2991,"Majenang","S"],["SMP Islam Majenang","SMP",108.7627,-7.2997,"Majenang","S"],["SMP Maarif NU 2 Majenang","SMP",108.7689,-7.3075,"Majenang","S"],["SMP Ma`arif NU 1 Majenang","SMP",108.72577,-7.2983,"Majenang","S"],["SMP Muhammadiyah Majenang","SMP",108.7611,-7.3014,"Majenang","S"],["SMP Negeri 1 Majenang","SMP",108.7272,-7.3001,"Majenang","N"],["SMP Negeri 2 Majenang","SMP",108.7215,-7.3004,"Majenang","N"],["SMP Negeri 3 Majenang","SMP",108.78476,-7.31402,"Majenang","N"],["SMP Negeri 4 Majenang","SMP",108.73,-7.2067,"Majenang","N"],["SMP Negeri Satap 5 Majenang","SMP",108.7584,-7.2556,"Majenang","N"],["SMP Negeri Satap 6 Majenang","SMP",108.7674,-7.3549,"Majenang","N"],["SMP Negeri Satap 7 Majenang","SMP",108.761,-7.299,"Majenang","N"],["SMP Yos Sudarso Majenang","SMP",108.7429,-7.3018,"Majenang","S"],["SMP Muhammadiyah Maos","SMP",109.1479,-7.6205,"Maos","S"],["SMP Negeri 1 Maos","SMP",109.1514,-7.5917,"Maos","N"],["SMP Negeri 2 Maos","SMP",109.1696,-7.6206,"Maos","N"],["SMP Negeri 3 Maos","SMP",109.14225,-7.61968,"Maos","N"],["SMP PGRI 09 Maos","SMP",109.1504,-7.6239,"Maos","S"],["SMP Muhammadiyah Nusawungu","SMP",109.308,-7.64,"Nusawungu","S"],["SMP Negeri 1 Nusawungu","SMP",109.3611,-7.6717,"Nusawungu","N"],["SMP Negeri 2 Nusawungu","SMP",109.3491,-7.6725,"Nusawungu","N"],["SMP Negeri 3 Nusawungu","SMP",109.3342,-7.6666,"Nusawungu","N"],["SMP Pemda Nusawungu","SMP",109.3199,-7.6391,"Nusawungu","S"],["SMP PGRI 4 Nusawungu","SMP",109.3278,-7.6912,"Nusawungu","S"],["SMP Ype Nusawungu","SMP",109.3882,-7.6944,"Nusawungu","S"],["SMP Diponegoro Patimuan","SMP",108.7837,-7.6513,"Patimuan","S"],["SMP Kristen Patimuan","SMP",108.7513,-7.5996,"Patimuan","S"],["SMP Negeri 1 Patimuan","SMP",108.7778,-7.5728,"Patimuan","N"],["SMP Negeri 2 Satu Atap Patimuan","SMP",108.7542,-7.5972,"Patimuan","N"],["SMP Negeri 3 Satu Atap Patimuan","SMP",108.7669,-7.612,"Patimuan","N"],["SMP Diponegoro Sampang","SMP",109.2017,-7.5742,"Sampang","S"],["SMP Muhammadiyah Sampang","SMP",109.2098,-7.5701,"Sampang","S"],["SMP Negeri 1 Sampang","SMP",109.2014,-7.5613,"Sampang","N"],["SMP Negeri 2 Sampang","SMP",109.1755,-7.5644,"Sampang","N"],["SMP Purnama Sampang","SMP",109.1781,-7.5907,"Sampang","S"],["SMP AL Hidayah Sidareja","SMP",108.7711,-7.4821,"Sidareja","S"],["SMP IT Bina Insan Kamil Sidareja","SMP",108.7951,-7.489,"Sidareja","S"],["SMP Kristen Sidareja","SMP",108.7744,-7.467,"Sidareja","S"],["SMP Muhammadiyah Sidareja","SMP",108.811,-7.4868,"Sidareja","S"],["SMP Nasional Sidareja","SMP",108.7491,-7.4872,"Sidareja","S"],["SMP Negeri 1 Sidareja","SMP",108.7998,-7.4855,"Sidareja","N"],["SMP Negeri 2 Sidareja","SMP",108.8026,-7.4657,"Sidareja","N"],["SMP Negeri 3 Sidareja","SMP",108.8375,-7.436,"Sidareja","N"],["SMP Pius Sidareja","SMP",108.7976,-7.4879,"Sidareja","S"],["SMP Tamtama Sidareja","SMP",108.8024,-7.4655,"Sidareja","S"],["SMP Anak Soleh Wanareja","SMP",108.6456,-7.2697,"Wanareja","S"],["SMP Maarif NU 1 Wanareja","SMP",108.7146,-7.3139,"Wanareja","S"],["SMP Muhammadiyah 1 Wanareja","SMP",108.6861,-7.3343,"Wanareja","S"],["SMP Muhammadiyah 2 Wanareja","SMP",108.6228,-7.3125,"Wanareja","S"],["SMP Negeri 1 Wanareja","SMP",108.66,-7.3488,"Wanareja","N"],["SMP Negeri 2 Wanareja","SMP",108.6424,-7.3319,"Wanareja","N"],["SMP Negeri 3 Wanareja","SMP",108.6832,-7.3298,"Wanareja","N"],["SMP Negeri Satu Atap 1 Wanareja","SMP",108.6452,-7.2581,"Wanareja","N"],["SMP PGRI 7 Wanareja","SMP",108.6875,-7.3591,"Wanareja","S"],["Ranggawarsita Tour","B",109.01818,-7.7101,"Cilacap Tengah","",1,"Jl. Arteri Soekarno Hatta No.10 (Perkantoran WPC Mas)"],["Dewangga Wisata","B",109.01006,-7.73016,"Cilacap Selatan","",1,"Jl. Laut Jawa No.6A, Perum Indah, Klega, Tambakreja"],["Kalingga Wisata","B",109.04485,-7.68286,"Cilacap Utara","",1,"Jl. Urip Sumoharjo, Cilumpang, Gumilir"],["Agimsa Total Nusantara","B",109.04548,-7.68656,"Cilacap Utara","",1,"Jl. Dr. Cipto No.1B, Rejamulya, Gumilir"],["Savitri Tour & Travel","B",109.01533,-7.70928,"Cilacap Tengah","",1,"Jl. Dokter Soetomo No.16, Bojong, Gunungsimping"],["Kusyara Tour","B",109.03434,-7.6826,"Cilacap Utara","",1,"Jl. Urip Sumoharjo No.59a, Limbangan, Mertasinga"],["Win Holiday","B",109.01881,-7.70963,"Cilacap Tengah","",1,"Pertokoan Puri Kusuma B3, Jl. Rinjani, Sidanegara"],["Perwira Tour & Travel","B",109.01954,-7.70976,"Cilacap Tengah","",1,"Jl. Perwira Blk. G No.2, Sidanegara"],["Madina Wisata","B",109.01341,-7.72786,"Cilacap Selatan","",1,"Jl. Kolonel Sugiono, Sentolokawat"],["ABS Tour & Travel","B",109.01392,-7.72582,"Cilacap Selatan","",1,"Kandang Macan, Tegalreja"],["King Tour & Travel","B",109.04294,-7.6885,"Cilacap Utara","",1,"Jl. Urip Sumoharjo No.88, Pantusan, Gumilir"],["Banyu Biru Tour and Travel","B",109.0178,-7.70973,"Cilacap Tengah","",1,"Jl. Jenderal Gatot Subroto No.251, Rejamulya, Gunungsimping"],["Mulia Tour","B",109.0343,-7.68153,"Cilacap Utara","",1,"Jl. Darusman, Cirandu, Karangtalun"],["Grand Travelindo","B",109.03663,-7.68268,"Cilacap Utara","",1,"Jl. Perintis Kemerdekaan No.225, Sabukjanur, Kebonmanis"],["Cahaya Suci Travel","B",109.01462,-7.72989,"Cilacap Selatan","",1,"Jl. Baleng No.2, Pandanarang"],["Sabar Subur Travel","B",109.03318,-7.68206,"Cilacap Utara","",1,"Jl. Tegal-Cilacap No.23, Sabukjanur, Kebonmanis"],["Traveling Wisata / Agen Bus","B",109.09624,-7.66112,"Kesugihan","",0,"Jl. Raya Kalisabuk RT 02/02, Cipelus, Kalisabuk"]];
+/* sekolah SMP/SMA/SMK Kab. Cilacap: nama dan koordinat dari data Dapodik (Kemendikdasmen) via dataset publik; biro wisata: alamat dari direktori web, koordinat perkiraan kecuali yang bertanda pasti */
+var LOCS=LOCS_RAW.map(function(a,i){return {id:'loc'+i,n:a[0],j:a[1],lon:a[2],lat:a[3],kec:a[4],st:a[5],ap:a[6]||0,ad:a[7]||'',al:[]}});
+(function(){
+  var seen={};
+  LOCS.forEach(function(L){
+    var base=L.n.replace(/\s*\(.*?\)\s*/g,' ').trim(),al=[L.n,base];
+    if(L.j!=='B'){
+      al.push(base.replace(/^(SMP|SMA|SMK) Negeri /i,'$1N '),base.replace(/ Negeri /i,' N '));
+      if(L.st==='N')al.push(base.replace(/ Negeri /i,' '));
+    }
+    L.al=al.map(function(a){return norm(a).trim()}).filter(function(a,i,arr){return a&&arr.indexOf(a)===i});
+  });
+})();
+function findLoc(txt){
+  var q=norm(txt),best=null,bl=0;
+  if(q.trim().length<4)return null;
+  LOCS.forEach(function(L){L.al.forEach(function(a){if(a.length>bl&&q.indexOf(' '+a+' ')>=0){best=L;bl=a.length}})});
+  return best;
+}
+var LOCOK=null;
+function useLoc(L){
+  if(!NODE[L.id]){
+    NODE[L.id]={id:L.id,lon:L.lon,lat:L.lat,name:L.n,al:[],spot:false,par:null,loc:true};
+    var bestId=null,bd=1e9;
+    Object.keys(NODE).forEach(function(id){
+      var n=NODE[id];
+      if(n.loc||n.spot||id==='nus'||!ADJ[id]||!ADJ[id].length||n.lon<108.4||n.lon>109.5||n.lat<-7.9||n.lat>-7.1)return;
+      var d=kmd(n,L);if(d<bd){bd=d;bestId=id}
+    });
+    NODE[L.id].anchor=bestId;
+    var km=Math.max(.4,bd*1.35);
+    EDGE[bestId+'|'+L.id]={km:km,t:'g'};EDGE[L.id+'|'+bestId]={km:km,t:'g'};
+  }
+  return NODE[L.id];
 }
 var RC={};
 function speeds(){return {a:+S.settings.speedA>0?+S.settings.speedA:33,t:+S.settings.speedT>0?+S.settings.speedT:52}}
@@ -1418,10 +1477,13 @@ function routeHint(){
   if(!dest){h.textContent='Rute di tab Tracking dipilih otomatis dari kolom Penjemputan dan Tujuan.';return}
   var r=routeOf({pickup:$('#f-pickup').value,destination:dest,start:$('#f-start').value,end:$('#f-end').value,startTime:$('#f-stime').value,endTime:$('#f-etime').value});
   if(!r){h.textContent='Tujuan belum dikenali, jadi order ini belum muncul di tab Tracking. Tulis nama kota atau tempat wisatanya, mis. Bandung, Borobudur, atau Demak.';return}
-  h.textContent='Rute otomatis: '+(r.pick?'pool Cilacap → '+r.pickName+' (jemput) → ':'Cilacap → ')+r.dest+' · lewat '+viaList(r,8)+' · ±'+Math.round(r.out.km)+' km · ±'+fmtDur(r.out.T)+' sekali jalan dari titik jemput.'
+  h.textContent='Rute otomatis: '+(r.pick?'pool Cilacap → '+r.pickName+' (jemput'+(r.pickLoc&&r.pickLoc.ap?', koordinat perkiraan':'')+') → ':'Cilacap → ')+r.dest+' · lewat '+viaList(r,8)+' · ±'+Math.round(r.out.km)+' km · ±'+fmtDur(r.out.T)+' sekali jalan dari titik jemput.'
     +(r.pick?' Bus berangkat dari pool ±'+fmtDur(r.pick.T+.5)+' sebelum jam berangkat (menuju '+r.pickName+').':'')
     +(r.tour?' Di '+r.dest+' diatur keliling: '+r.tour.names.join(', ')+'.'+(r.tour.cut?' ('+r.tour.cut+' tempat dipangkas karena maksimal 3 wisata per hari.)':''):'');
 }
+(function(){var dl=document.createElement('datalist');dl.id='dl-pick';
+  dl.innerHTML=LOCS.map(function(L){return '<option value="'+esc(L.n)+'" label="'+esc((L.j==='B'?'Biro wisata':L.j)+' · '+L.kec)+'">'}).join('')+Object.keys(NODE).filter(function(id){return id!=='cil'&&!NODE[id].spot&&!NODE[id].loc}).map(function(id){return '<option value="'+esc(NODE[id].name)+'">'}).join('');
+  document.body.appendChild(dl)})();
 $('#f-dest').addEventListener('input',routeHint);
 $('#f-pickup').addEventListener('input',routeHint);
 function hueOf(t){return HUES[hash(t.id)%HUES.length]}
@@ -1785,7 +1847,7 @@ function mapSvg(active,selS,now,W,poolN){
     a.r.out.pts.concat(a.r.back.pts,a.r.pick?a.r.pick.pts:[],a.r.tour?a.r.tour.pts:[]).forEach(function(p){onRoute[p[2]]=1});
   });
   Object.keys(NODE).forEach(function(id){
-    var n=NODE[id];if(id==='cil')return;
+    var n=NODE[id];if(id==='cil'||n.loc)return;
     var major=MAJOR.indexOf(n.name)>=0,lbl=n.spot?((w<=160&&!!onRoute[n.name])||w<=60):(major||w<=160||(w<=520&&onRoute[n.name]));
     var q=xy(n),dy=n.spot?((hash(id)%3)-1)*11*k:0;
     if(n.spot&&!onRoute[n.name]&&w>160)return;
@@ -1799,6 +1861,20 @@ function mapSvg(active,selS,now,W,poolN){
     var q=xy({lon:p.lon,lat:p.lat});
     s+='<rect x="'+(q[0]-4*k).toFixed(3)+'" y="'+(q[1]-4*k).toFixed(3)+'" width="'+sw(8)+'" height="'+sw(8)+'" rx="'+sw(2)+'" fill="'+p.c+'" stroke="#000" stroke-width="'+sw(1)+'"/>'
      +(w<=60?'<text class="m-bt" x="'+(q[0]+7*k).toFixed(3)+'" y="'+(q[1]+3*k).toFixed(3)+'" style="font-size:'+sw(9)+'px;stroke-width:'+sw(2.5)+'px">'+esc(p.n)+'</text>':'');
+  });
+  if(S.showLoc!==false&&w<=140)LOCS.forEach(function(L){
+    var q=xy(L);
+    if(q[0]<x0-8||q[0]>x0+w+8||q[1]<y0-8||q[1]>y0+h+8)return;
+    var c=L.j==='SMP'?'#8ef0a1':(L.j==='SMA'?'#a5b4ff':(L.j==='SMK'?'#ff9ecb':'#ffd23f'));
+    s+='<g class="m-loc"><title>'+esc(L.n+' · '+(L.j==='B'?'Biro wisata':L.j)+' · '+L.kec+(L.ap?' · koordinat perkiraan':''))+'</title>'
+      +(L.j==='B'?'<rect x="'+(q[0]-3.2*k).toFixed(3)+'" y="'+(q[1]-3.2*k).toFixed(3)+'" width="'+sw(6.4)+'" height="'+sw(6.4)+'" fill="'+c+'" stroke="#000" stroke-width="'+sw(1)+'" transform="rotate(45 '+q[0].toFixed(3)+' '+q[1].toFixed(3)+')"/>'
+        :'<circle cx="'+q[0].toFixed(3)+'" cy="'+q[1].toFixed(3)+'" r="'+sw(2.8)+'" fill="'+c+'" stroke="#000" stroke-width="'+sw(.9)+'"/>')
+      +((w<=24||(L.j==='B'&&w<=60))?'<text class="m-bt" x="'+(q[0]+6*k).toFixed(3)+'" y="'+(q[1]+3*k).toFixed(3)+'" style="font-size:'+sw(9)+'px;stroke-width:'+sw(2.5)+'px">'+esc(L.n)+'</text>':'')+'</g>';
+  });
+  active.forEach(function(a){
+    var L=a.r.pickLoc;if(!L||w>320)return;
+    var q=xy(L);
+    s+='<g class="m-loc"><circle cx="'+q[0].toFixed(3)+'" cy="'+q[1].toFixed(3)+'" r="'+sw(4)+'" fill="#fff" stroke="hsl('+hueOf(a.t)+' 85% 45%)" stroke-width="'+sw(2)+'"/><text class="m-bt" x="'+(q[0]+7*k).toFixed(3)+'" y="'+(q[1]-5*k).toFixed(3)+'" style="font-size:'+sw(9)+'px;stroke-width:'+sw(2.5)+'px">'+esc(L.n)+'</text></g>';
   });
   var seen={};
   active.forEach(function(a){
@@ -1852,6 +1928,7 @@ function dynHtml(){
   var zv=Math.max(0,Math.min(100,Math.round(100*Math.log(FULLW/S.cur.w)/Math.log(FULLW/MINW))));
   h+='<div class="mapbox" id="trkMap">'+mp.svg+'<button type="button" class="btn sm mapctl" data-trk="view">'+(S.mapView==='all'?'Fokus ke bus':'Lihat seluruh peta')+'</button><div class="mapzoom"><button type="button" data-trk="zin" aria-label="Perbesar">+</button><div class="zbox"><input class="zs" type="range" min="0" max="100" value="'+zv+'" aria-label="Zoom peta"></div><button type="button" data-trk="zout" aria-label="Perkecil">−</button></div>'
     +(selS?panelHtml(selS,now,panelStyle(mp,selS,W)):'')+'</div>';
+  h+='<div class="locleg"><label><input type="checkbox" data-locsw'+(S.showLoc!==false?' checked':'')+'> Tampilkan sekolah &amp; biro wisata</label><span><i style="background:#8ef0a1"></i>SMP ('+LOCS.filter(function(l){return l.j==="SMP"}).length+')</span><span><i style="background:#a5b4ff"></i>SMA ('+LOCS.filter(function(l){return l.j==="SMA"}).length+')</span><span><i style="background:#ff9ecb"></i>SMK ('+LOCS.filter(function(l){return l.j==="SMK"}).length+')</span><span><i class="dm" style="background:#ffd23f"></i>Biro wisata ('+LOCS.filter(function(l){return l.j==="B"}).length+')</span><span>Zoom ke wilayah Cilacap untuk melihat titiknya.</span></div>';
   h+='<p class="hint">Posisi dan kecepatan dihitung dari jadwal order, bukan GPS asli. Klik bus di peta untuk melihat keterangannya. Geser peta dengan drag dan atur zoom dengan slider. Tampilan peta bergaya citra satelit (ilustrasi), bukan foto satelit asli. Jalur dipilih otomatis dari jaringan jalan utama (perkiraan), jadi tidak seakurat peta jalan.</p>';
   if(!active.length){
     h+='<div class="empty"><strong>Tidak ada bus yang sedang jalan</strong><span>Pada jam ini semua unit ada di pool. Bus muncul di peta saat berangkat dari pool menuju titik jemput order yang sudah diplot.</span></div>';
@@ -1866,7 +1943,7 @@ function dynHtml(){
 }
 function viewTrack(){
   var sp2=speeds();
-  return '<div class="trk"><div class="trk" id="trkDyn">'+dynHtml()+'</div>'
+  return '<div class="trk"><div class="trk" id="trkDyn">'+dynHtml()+'</div><section class="fleetbox" id="fleetBox">'+fleetHtml()+'</section>'
    +'<details class="rtbl"><summary>Kecepatan rata-rata bus</summary><div class="tw"><table><tbody>'
    +'<tr><td>Jalan biasa</td><td><input class="sp" type="number" min="10" max="100" step="1" data-key="speedA" value="'+sp2.a+'" aria-label="Kecepatan rata-rata jalan biasa"> km/jam</td></tr>'
    +'<tr><td>Jalan tol</td><td><input class="sp" type="number" min="10" max="120" step="1" data-key="speedT" value="'+sp2.t+'" aria-label="Kecepatan rata-rata jalan tol"> km/jam</td></tr>'
@@ -1972,59 +2049,6 @@ function autoFinish(){
   });
 }
 setInterval(autoFinish,30000);
-/* ---------- rundown / program perjalanan, disusun otomatis dari simulasi jadwal ---------- */
-function hhmm(ms){var d=new Date(ms);return pad(d.getHours())+'.'+pad(d.getMinutes())}
-function nightsOf(t){
-  var r=routeOf(t),days=Math.max(1,toDay(t.end)-toDay(t.start)+1);
-  if(r&&r.tour){var s=tripState(t,tripWin(t).dep),n=tourSlots(r,t,s.outEnd,s.gb||s.backStart).filter(function(x){return x.kind==='hotel'}).length;if(n)return n}
-  return Math.max(0,days-1);
-}
-function rdEvents(t){
-  var s=tripState(t,tripWin(t).dep);if(!s.r||s.bad)return null;
-  var r=s.r,ev=[],H=36e5,M=6e4,U=function(ms,tx,b){ev.push({ms:ms,tx:tx,b:!!b,i:ev.length})};
-  function stops(m){
-    var o=stopsFor(m.key,m.ls,m.le,namedStops(s,m)),P=profile(m.key);
-    o.st.forEach(function(x){var q=pointAt(m.leg,gOf(P,x.phi));U(x.s,stopLbl(x)+(x.name?' di '+x.name:' di dekat '+m.leg.pts[q.i][2]));U(x.e,'Melanjutkan perjalanan')});
-  }
-  if(r.pick){U(s.pickStart,'Bus berangkat dari pool Cilacap menuju '+r.pickName);U(s.pickEnd,'Tiba di titik jemput ('+r.pickName+')')}
-  U(s.w.dep,'Rombongan berangkat menuju '+r.dest,1);
-  stops({leg:r.out,key:t.id+'|o',ls:s.w.dep,le:s.outEnd});
-  U(s.outEnd,'Tiba di '+r.dest,1);
-  if(r.tour){
-    var sl=tourSlots(r,t,s.outEnd,s.gb||s.backStart);
-    sl.forEach(function(x,i){
-      var arr=x.s+x.mv,nx=sl[i+1],h0=new Date(arr).getHours();
-      if(x.kind==='transit'){if(x.mv)U(x.s,'Menuju '+x.name+' untuk transit, sarapan, dan bersih-bersih');U(arr,'Tiba di '+x.name+', transit',1)}
-      else if(x.kind==='hotel'){
-        U(x.s,'Menuju hotel '+x.name);U(arr,'Tiba di '+x.name+', check in dan istirahat',1);
-        if(h0<20)U(arr+45*M,'Makan malam prasmanan di hotel');
-        if(nx){U(nx.s-75*M,'Makan pagi prasmanan di hotel');U(nx.s-20*M,'Check out dan bersiap melanjutkan wisata')}
-      }else{
-        if(x.mv)U(x.s,'Menuju '+x.name);
-        U(arr,'Tiba di '+x.name+(x.lunch?', ISHOMA dilanjutkan wisata':''),1);
-      }
-    });
-  }
-  U(s.backStart,'Rombongan pulang menuju Cilacap',1);
-  stops({leg:r.back,key:t.id+'|b',ls:s.backStart,le:s.w.ret});
-  U(s.w.ret,'Diperkirakan tiba di tempat penjemputan ('+(r.pickName||'Cilacap')+')',1);
-  ev.sort(function(a,b){return a.ms-b.ms||a.i-b.i});
-  return ev;
-}
-function dayKey(ms){var d=new Date(ms);return toDay(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()))}
-function rdHtml(t){
-  var ev=rdEvents(t);if(!ev)return '<p>Rundown belum bisa dibuat: tujuan belum dikenali atau jam pulang sebelum jam berangkat.</p>';
-  var d0=toDay(t.start),days=Math.max(1,toDay(t.end)-d0+1),h='',cur=-1,r=routeOf(t);
-  ev.forEach(function(e){
-    var n=Math.max(1,dayKey(e.ms)-d0+1);
-    if(n!==cur){if(cur>0)h+='</tbody></table>';cur=n;var dd=toDay(toStr(d0+n-1)),p=parts(d0+n-1);h+='<div class="rdh">Hari '+n+' ('+DAYN[p.w]+', '+p.d+' '+MONTHS[p.m]+' '+p.y+')</div><table class="rdt"><tbody>'}
-    h+='<tr'+(e.b?' class="b"':'')+'><td>Pk. '+hhmm(e.ms)+' WIB</td><td>'+esc(e.tx)+'</td></tr>';
-  });
-  h+='</tbody></table>';
-  return '<div class="nt">PROGRAM PERJALANAN</div><div class="nt" style="margin-top:0">'+esc(String(t.customer||'').toUpperCase())+'</div>'
-    +'<div class="nm">'+esc((t.pickup||'Cilacap')+' – '+(t.destination||''))+' · '+(nightsOf(t)>0?'INAP '+nightsOf(t)+' MALAM':'PULANG PERGI')+'</div>'+h
-    +'<p style="margin-top:12px"><b>Nb:</b></p><ol><li>Program bisa berubah menyesuaikan situasi dan kondisi.</li><li>Sholat, waktu, dan tempat menyesuaikan.</li><li>Jam makan, istirahat, dan lama di tiap tempat disusun dari simulasi jadwal Arsyi Trans dan rundown paket yang sudah berjalan, bukan jadwal pasti.</li></ol>';
-}
 /* ---------- nota sewa bus ---------- */
 function terbilang(n){
   var s=['','satu','dua','tiga','empat','lima','enam','tujuh','delapan','sembilan','sepuluh','sebelas'];
@@ -2073,9 +2097,9 @@ function notaHtml(t){
    +(terms.length?'<b>Syarat dan ketentuan</b><ol>'+terms.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ol>':'')
    +'<div class="sig"><div>Penyewa<i></i>( '+esc(t.customer)+' )</div><div>Hormat kami,<br>'+esc(u)+'<i></i>( ................ )</div></div>';
 }
-function notaRender(){if(NOTA)$('#nota-doc').innerHTML=NMODE==='run'?rdHtml(NOTA):notaHtml(NOTA)}
+function notaRender(){if(NOTA)$('#nota-doc').innerHTML=notaHtml(NOTA)}
 function openNota(t,mode){
-  NOTA=t;NMODE=mode||'nota';$('#sn-title').textContent=NMODE==='run'?'Rundown perjalanan':'Nota sewa bus';$('.nota-edit').hidden=NMODE==='run';
+  NOTA=t;NMODE='nota';$('#sn-title').textContent='Nota sewa bus';
   var pr={};try{pr=JSON.parse(lsGet('nota-prof')||'{}')}catch(e){}
   $('#n-usaha').value=pr.u||'Arsyi Trans';$('#n-alamat').value=pr.a||'Cilacap, Jawa Tengah';$('#n-telp').value=pr.t||'';$('#n-rek').value=pr.r||'';
   $('#n-terms').value=pr.k||NOTA_TERMS.join('\n');$('#n-dp').value=lsGet('nota-dp-'+t.id)||'';
@@ -2094,19 +2118,13 @@ $('#f-nota').addEventListener('click',function(){
   if(!t.customer||!t.start||!t.end||toDay(t.end)<toDay(t.start)){$('#f-error').textContent='Isi nama customer dan tanggal berangkat/pulang dulu untuk menerbitkan nota.';return}
   $('#f-error').textContent='';openNota(t);
 });
-$('#f-rundown').addEventListener('click',function(){
-  var t=formTrip();
-  if(!t.customer||!t.start||!t.end||toDay(t.end)<toDay(t.start)||!t.destination){$('#f-error').textContent='Isi customer, tujuan, dan tanggal berangkat/pulang dulu untuk membuat rundown.';return}
-  if(!routeOf(t)){$('#f-error').textContent='Tujuan belum dikenali, jadi rundown belum bisa dibuat.';return}
-  $('#f-error').textContent='';openNota(t,'run');
-});
 $('#nota-close').addEventListener('click',closeNota);
 var DL=null;
 try{if(window.claude&&window.claude.use)window.claude.use('downloads').then(function(d){DL=d},function(){})}catch(e){}
 var DOC_CSS='body{font:13px/1.45 Arial,Helvetica,sans-serif;color:#111;margin:0;padding:24px;background:#fff}.nota h1{font-size:18px;margin:0;letter-spacing:.04em}.nota .nh{display:flex;justify-content:space-between;gap:12px;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:12px}.nota .nh small{display:block;color:#444}.nota .nt{text-align:center;font-weight:700;font-size:15px;margin:6px 0 2px;letter-spacing:.06em}.nota .nm{text-align:center;color:#444;margin-bottom:12px}.nota table{width:100%;border-collapse:collapse;margin:8px 0}.nota th,.nota td{border:1px solid #999;padding:5px 7px;text-align:left;vertical-align:top}.nota th{background:#eee}.nota td.r,.nota th.r{text-align:right;white-space:nowrap}.nota .kv td:first-child{width:34%;font-weight:600;background:#f6f6f6}.nota .tot td{font-weight:700}.nota ol{margin:4px 0 0 18px;padding:0}.nota .sig{display:flex;justify-content:space-around;margin-top:18px;text-align:center}.nota .sig div{min-width:170px}.nota .sig i{display:block;height:64px}.nota .rdt td{border:0;padding:1px 6px 1px 0}.nota .rdt td:first-child{white-space:nowrap;width:84px}.nota .rdh{font-weight:700;text-decoration:underline;margin:12px 0 4px}.nota .rdt tr.b td{font-weight:700}@page{margin:14mm}';
 $('#nota-print').addEventListener('click',function(){
   if(!NOTA)return;
-  var run=NMODE==='run',nm=(run?'rundown-':'nota-')+(String(NOTA.customer||'order').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'order')+'-'+(NOTA.start||'')+'.html',
+  var run=false,nm='nota-'+(String(NOTA.customer||'order').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'order')+'-'+(NOTA.start||'')+'.html',
       html='<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(run?'Rundown perjalanan':'Nota sewa bus')+'</title><style>'+DOC_CSS+'</style></head><body><div class="nota">'+$('#nota-doc').innerHTML+'</div></body></html>';
   if(DL){DL.save({filename:nm,data:html}).then(function(){toast('File tersimpan. Buka lalu cetak atau simpan sebagai PDF dari browser.')}).catch(function(e){if(!e||e.code!=='declined')toast('Gagal menyimpan file',true)});return}
   try{var u=URL.createObjectURL(new Blob([html],{type:'text/html'})),a=document.createElement('a');a.href=u;a.download=nm;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000);toast('File diunduh. Buka lalu cetak atau simpan sebagai PDF dari browser.')}catch(e){toast('Gagal menyimpan file',true)}
@@ -2227,6 +2245,167 @@ document.addEventListener('pointerdown',function(){pressed=true},true);
 ['pointerup','pointercancel'].forEach(function(n){document.addEventListener(n,function(){setTimeout(function(){pressed=false},80)},true)});
 setInterval(function(){if(S.tab==='tracking'&&!document.hidden&&!pressed&&S.ready.buses&&S.ready.trips)refreshDyn()},1000);
 
+
+/* ---------- status armada: sedang trip / pengecekan otomatis ----------
+   Interval servis Hino: oli+filter tiap 10.000 km, oli gardan 30.000 km, filter udara+bearing depan 40.000 km, oli transmisi+power steering 60.000 km (detik.com, servis Hino).
+   Kampas rem, kampas kopling, AC, dan ban adalah perkiraan umum. Jadwal pengecekan disimulasikan: bukan catatan servis asli. */
+var WH=36e5;
+var JOBS=[
+  {k:'cuci',n:'Cuci unit dan cek kondisi setelah trip',h:1.5,why:'Cuci eksterior dan interior, cek bodi, lampu, ban, dan kebocoran cairan setelah pulang trip.'},
+  {k:'oli',n:'Ganti oli mesin, filter oli, dan filter solar',h:3,km:10000,why:'Servis berkala Hino tiap ±10.000 km. Sekalian cek air aki, radiator, sasis, dan rem.'},
+  {k:'gardan',n:'Ganti oli gardan (diferensial)',h:2.5,km:30000,why:'Oli diferensial diganti tiap ±30.000 km.'},
+  {k:'udara',n:'Ganti filter udara dan cek bearing roda depan',h:4,km:40000,why:'Filter udara dan bearing roda depan diperiksa tiap ±40.000 km.'},
+  {k:'trans',n:'Ganti oli transmisi dan oli power steering',h:3,km:60000,why:'Oli transmisi, power steering, dan bearing roda belakang tiap ±60.000 km.'},
+  {k:'rem',n:'Cek dan ganti kampas rem, setel rem',h:5,km:40000,why:'Kampas rem diperiksa tiap servis dan diganti bila tipis. Angka ±40.000 km adalah perkiraan, jalur pegunungan lebih cepat mengikis.'},
+  {k:'kopling',n:'Cek dan ganti kampas kopling',h:8,km:100000,why:'Kampas kopling dicek bila terasa selip atau berat. Angka ±100.000 km adalah perkiraan.'},
+  {k:'ac',n:'Service AC: freon, evaporator, filter, dan cek kebocoran',h:4,days:90,why:'AC yang menetes atau bocor tidak layak jalan. Perkiraan servis tiap 3 bulan.'},
+  {k:'ban',n:'Cek tekanan dan kembang ban, rotasi ban',h:2.5,days:30,why:'Ban dicek rutin, terutama sebelum musim ramai.'}
+];
+function dayStartOf(ms){var d=new Date(ms);return new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()}
+function wkNext(ms){
+  var day=dayStartOf(ms),h=(ms-day)/WH;
+  if(h<8)return day+8*WH;
+  if(h>=16)return day+864e5+8*WH;
+  return ms;
+}
+function wkAdd(start,hours){
+  var cur=wkNext(start),left=hours*WH;
+  for(var g=0;g<60;g++){
+    var day=dayStartOf(cur),avail=day+16*WH-cur;
+    if(left<=avail)return cur+left;
+    left-=avail;cur=day+864e5+8*WH;
+  }
+  return cur;
+}
+function workedMs(a,b){
+  var t=0,day=dayStartOf(a);
+  for(;day<b;day+=864e5){var lo=Math.max(a,day+8*WH),hi=Math.min(b,day+16*WH);if(hi>lo)t+=hi-lo}
+  return t;
+}
+function planJobs(b,idleStart,limit,light){
+  var out=[],cur=wkNext(idleStart+WH),odo=odoAt(b.code,idleStart),dIdx=Math.floor(idleStart/864e5);
+  var cand=[];
+  if(!light)JOBS.forEach(function(j){
+    if(j.k==='cuci')return;
+    var u=j.km?((odo+hash(b.code+j.k)%j.km)%j.km)/j.km:((dIdx+hash(b.code+j.k)%j.days)%j.days)/j.days;
+    cand.push({j:j,u:u});
+  });
+  cand.sort(function(a,c){return c.u-a.u});
+  var list=[{j:JOBS[0],u:1}].concat(cand.filter(function(c,i){return i===0||c.u>=.6}).slice(0,3));
+  if(light)list=[{j:JOBS[0],u:1}];
+  list.forEach(function(c){
+    var e=wkAdd(cur,c.j.h);
+    if(e>limit)return;
+    out.push({k:c.j.k,n:c.j.n,h:c.j.h,why:c.j.why,s:cur,e:e});
+    cur=e;
+  });
+  return out;
+}
+function fmtJam(ms,now){
+  var d=new Date(ms),n=new Date(now),dd=Math.round((dayStartOf(ms)-dayStartOf(now))/864e5);
+  var h=pad(d.getHours())+'.'+pad(d.getMinutes());
+  return (dd===0?'hari ini':dd===1?'besok':dd===-1?'kemarin':DAYN[d.getDay()]+' '+d.getDate()+' '+MON3[d.getMonth()])+' '+h;
+}
+function busStatus(b,now){
+  if(b.status==='bengkel')return {kind:'bengkel',badge:'Di bengkel',title:'Unit di bengkel (diatur manual)',detail:b.note||'Tidak muncul sebagai pilihan saat plotting. Ubah kondisi ke Aktif lewat tombol Ubah bila sudah selesai.'};
+  var trips=S.trips.filter(function(t){return t.status!=='batal'&&t.status!=='selesai'&&(t.buses||[]).indexOf(b.code)>=0});
+  var i,t,st,u,prevEnd=0,nextStart=Infinity,nextTrip=null;
+  for(i=0;i<trips.length;i++){
+    t=trips[i];var w=tripWin(t);st=tripState(t,now);
+    if(st.r&&!st.bad){
+      u=unitOf(st,b.code);
+      var ph=u.ph;
+      if(ph!=='belum'&&ph!=='selesai'){
+        var r=st.r,tx={jemput:'Menuju titik jemput: '+r.pickName,menunggu:'Menunggu rombongan di '+r.pickName,pergi:'Bus sedang berangkat trip ke '+r.dest,wisata:'Keliling wisata di '+r.dest,tujuan:'Di tujuan '+r.dest,pulang:'Dalam perjalanan pulang ke Cilacap'}[ph]||'Sedang trip';
+        var mv=isMoving(u),sp=mv?Math.round(speedAt(t,now,t.id+'|'+b.code)):0;
+        return {kind:'trip',badge:ph==='pergi'?'Sedang berangkat trip':(ph==='pulang'?'Pulang trip':'Sedang trip'),title:tx,detail:t.customer+' · '+fmtWhen(t)+(t.status==='tentatif'?' (tentatif)':'')+(mv?' · '+sp+' km/j':''),trip:t};
+      }
+      if(ph==='selesai'&&w.ret>prevEnd&&w.ret<=now)prevEnd=Math.max(prevEnd,u.w?u.w.ret:w.ret);
+      if(ph==='belum'&&st.pickStart>now&&st.pickStart<nextStart){nextStart=st.pickStart;nextTrip=t}
+    }else{
+      if(w.dep<=now&&now<=w.ret)return {kind:'trip',badge:'Sedang trip',title:'Bus sedang trip',detail:t.customer+' · '+fmtWhen(t)+' · tujuan belum dikenali sehingga tidak tampil di peta',trip:t};
+      if(w.ret<=now)prevEnd=Math.max(prevEnd,w.ret);
+      else if(w.dep-2*WH<nextStart){nextStart=w.dep-2*WH;nextTrip=t}
+    }
+  }
+  S.trips.forEach(function(t){
+    if(t.status!=='selesai'||(t.buses||[]).indexOf(b.code)<0)return;
+    var w=tripWin(t);if(w.ret<=now)prevEnd=Math.max(prevEnd,w.ret);
+  });
+  var nxt=nextTrip?'Trip berikutnya: '+nextTrip.customer+' · '+fmtWhen(nextTrip):'Belum ada trip terjadwal.';
+  var idleStart=prevEnd||dayStartOf(now),limit=nextStart===Infinity?Infinity:nextStart-3*WH,idle=nextStart-idleStart;
+  if(idle>=864e5||(nextStart===Infinity)){
+    var jobs=planJobs(b,idleStart,limit,false);
+    if(jobs.length)return checkState(jobs,now,nxt,'Libur beberapa hari: unit masuk pengecekan');
+  }else if(prevEnd&&idle>=3*WH){
+    var j2=planJobs(b,idleStart,limit,true);
+    if(j2.length)return checkState(j2,now,nxt,'Persiapan stut: cuci dan cek ringan');
+  }
+  return {kind:'siap',badge:'Siap jalan',title:'Siap jalan di pool Cilacap',detail:nxt};
+}
+function checkState(jobs,now,nxt,why){
+  var last=jobs[jobs.length-1],first=jobs[0],run=null,i;
+  if(now>=last.e)return {kind:'siap',badge:'Siap (sudah dicek)',title:'Pengecekan selesai, unit siap jalan',detail:nxt,jobs:jobs,jobNow:null,why:why};
+  for(i=0;i<jobs.length;i++)if(now<jobs[i].e){run=jobs[i];break}
+  if(now<first.s)return {kind:'check',badge:'Antre pengecekan',title:'Menunggu giliran pengecekan',detail:'Mulai '+fmtJam(first.s,now)+': '+first.n+'. '+nxt,jobs:jobs,jobNow:null,why:why};
+  var done=workedMs(run.s,Math.min(now,run.e)),tot=workedMs(run.s,run.e),pct=tot>0?Math.round(100*done/tot):0,wkOn=now>=dayStartOf(now)+8*WH&&now<dayStartOf(now)+16*WH;
+  return {kind:'check',badge:'Pengecekan',title:(wkOn?'Sedang dikerjakan: ':'Dihentikan sementara, lanjut jam kerja: ')+run.n,detail:'Perkiraan selesai '+fmtJam(run.e,now)+'. '+nxt,jobs:jobs,jobNow:run,pct:pct,why:why};
+}
+function fleetHtml(){
+  if(!S.buses.length)return emptyFleet();
+  var now=Date.now();
+  var h='<div class="fleet-h"><div class="sec-h">Armada · '+S.buses.length+' unit</div><button class="btn sm primary" data-act="new-bus">+ Tambah unit</button></div>';
+  ['big','medium'].forEach(function(type){
+    var list=S.buses.filter(function(b){return b.type===type});
+    if(!list.length)return;
+    h+='<div class="hint">'+TYPE[type]+' · '+list.length+' unit</div><div class="fgrid">'+list.map(function(b){
+      var st=busStatus(b,now);
+      return '<button type="button" class="bcard" data-act="bus-detail" data-code="'+esc(b.code)+'"><div class="bimg">'+(b.photo?'<img alt="Foto '+esc(b.code)+'" src="'+b.photo+'">':'<span>Belum ada foto</span>')+'</div><div class="bcap"><b>'+esc(b.code)+'</b><span class="bst k-'+st.kind+'">'+esc(st.badge)+'</span></div></button>';
+    }).join('')+'</div>';
+  });
+  return h;
+}
+function busDetailHtml(b){
+  var now=Date.now(),st=busStatus(b,now);
+  var h='<div class="bd-photo">'+(b.photo?'<img alt="Foto '+esc(b.code)+'" src="'+b.photo+'">':'<span class="hint">Belum ada foto</span>')+'</div>';
+  h+='<div class="bd-status k-'+st.kind+'"><b>'+esc(st.title)+'</b><span>'+esc(st.detail)+'</span>';
+  if(st.kind==='check'&&st.jobNow)h+='<div class="prog"><i style="width:'+st.pct+'%;background:var(--warn)"></i></div><span class="hint">'+st.pct+'% pekerjaan ini selesai</span>';
+  h+='</div>';
+  if(st.jobs&&st.jobs.length){
+    h+='<div><div class="sec-h" style="margin-bottom:6px">Daftar pengecekan · '+esc(st.why||'')+'</div><ul class="jobs">'+st.jobs.map(function(j){
+      var cls=now>=j.e?'done':(now>=j.s?'run':''),mark=now>=j.e?'Selesai':(now>=j.s?'Berjalan':'Antre');
+      return '<li class="'+cls+'"><b>'+esc(j.n)+'</b><small>'+mark+' · '+fmtJam(j.s,now)+' sampai '+fmtJam(j.e,now)+' · '+j.h+' jam kerja</small><small>'+esc(j.why)+'</small></li>';
+    }).join('')+'</ul><p class="hint" style="margin-top:6px">Jadwal pengecekan disusun otomatis dari odometer dan lama unit libur (jam kerja bengkel 08.00 sampai 16.00). Ini simulasi, bukan catatan servis asli. Interval oli, gardan, filter udara, dan transmisi mengikuti jadwal servis Hino; interval rem, kopling, AC, dan ban adalah perkiraan.</p></div>';
+  }
+  h+='<dl class="tdet"><dt>Tipe</dt><dd>'+esc(TYPE[b.type]||b.type)+'</dd><dt>Karoseri</dt><dd>'+esc(b.model||'—')+'</dd><dt>Sasis</dt><dd>'+esc(b.chassis||'—')+'</dd><dt>Kursi</dt><dd>'+(b.seats?esc(b.seats)+' kursi':'—')+'</dd><dt>Odometer</dt><dd>'+fmtKm(odoAt(b.code,now))+'</dd><dt>Kondisi</dt><dd>'+(b.status==='bengkel'?'Di bengkel':'Aktif')+'</dd>'+(b.note?'<dt>Catatan</dt><dd>'+esc(b.note)+'</dd>':'')+'</dl>';
+  var up=S.trips.filter(function(t){return t.status!=='batal'&&t.status!=='selesai'&&(t.buses||[]).indexOf(b.code)>=0&&toDay(t.end)>=TODAY}).sort(function(a,c){return toDay(a.start)-toDay(c.start)}).slice(0,4);
+  h+='<div><div class="sec-h" style="margin-bottom:6px">Trip terjadwal</div>'+(up.length?'<ul class="jobs">'+up.map(function(t){return '<li><b>'+esc(t.customer)+'</b><small>'+esc(fmtWhen(t))+' · '+esc((t.pickup||'—')+' → '+(t.destination||'—'))+'</small></li>'}).join('')+'</ul>':'<span class="hint">Belum ada.</span>')+'</div>';
+  return h;
+}
+function openBusDet(code){
+  var b=S.buses.find(function(x){return x.code===code});if(!b)return;
+  S.detBus=code;S.detDel=false;
+  paintBusDet();showSheet('#sheet-busdet');
+}
+function paintBusDet(){
+  var b=S.buses.find(function(x){return x.code===S.detBus});if(!b)return;
+  $('#bd-title').textContent=b.code+' · '+(b.model||TYPE[b.type]);
+  $('#bd-body').innerHTML=busDetailHtml(b);
+  var d=$('#bd-del');d.textContent=S.detDel?'Yakin hapus? Klik lagi':'Hapus unit';d.classList.toggle('armed',!!S.detDel);
+}
+function refreshFleet(){
+  var el=$('#fleetBox');if(el&&S.tab==='tracking')el.innerHTML=fleetHtml();
+  if(OPEN==='#sheet-busdet'&&S.detBus)paintBusDet();
+}
+setInterval(function(){if(!document.hidden&&S.ready.buses&&S.ready.trips)refreshFleet()},5000);
+$('#bd-edit').addEventListener('click',function(){var c=S.detBus;closeSheet();openBus(c)});
+$('#bd-del').addEventListener('click',function(){
+  var c=S.detBus;if(!c)return;
+  if(!S.detDel){S.detDel=true;paintBusDet();return}
+  closeSheet();deleteBus(c);
+});
+document.addEventListener('change',function(ev){var t=ev.target;if(t&&t.hasAttribute&&t.hasAttribute('data-locsw')){S.showLoc=t.checked;refreshDyn()}});
+
 /* ---------- events ---------- */
 document.addEventListener('click',function(ev){
   var el=ev.target.closest('[data-act],[data-close],#btn-new-order,#scrim');
@@ -2241,7 +2420,6 @@ document.addEventListener('click',function(ev){
     case 'next':S.month.m++;if(S.month.m>11){S.month.m=0;S.month.y++}render();break;
     case 'today':S.month={y:parts(TODAY).y,m:parts(TODAY).m};render();break;
     case 'nota':{var tn=S.trips.find(function(x){return x.id===d.id});if(tn)openNota(tn);break}
-    case 'rundown':{var tr2=S.trips.find(function(x){return x.id===d.id});if(tr2)openNota(tr2,'run');break}
     case 'bar':case 'edit-order':openOrder(d.id);break;
     case 'new-order':openOrder(null);break;
     case 'cell':{
@@ -2251,6 +2429,7 @@ document.addEventListener('click',function(ev){
     }
     case 'del-order':S.confirmKey='order:'+d.id;render();break;
     case 'del-order-yes':deleteOrder(d.id);break;
+    case 'bus-detail':openBusDet(d.code);break;
     case 'edit-bus':openBus(d.code);break;
     case 'new-bus':openBus(null);break;
     case 'del-bus':S.confirmKey='bus:'+d.code;render();break;
@@ -2304,7 +2483,7 @@ document.addEventListener('change',function(ev){
   render();
 });
 document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&OPEN)closeSheet()});
-function syncTab(){var h=location.hash.replace('#','');S.tab=['jadwal','tracking','order','armada','pendapatan'].indexOf(h)>=0?h:'jadwal';S.confirmKey=null;render()}
+function syncTab(){var h=location.hash.replace('#','');if(h==='armada'){location.hash='#tracking';return}S.tab=['jadwal','tracking','order','pendapatan'].indexOf(h)>=0?h:'jadwal';S.confirmKey=null;render()}
 window.addEventListener('hashchange',syncTab);
 
 /* ---------- boot ---------- */
