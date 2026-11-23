@@ -499,6 +499,7 @@ button.code{cursor:pointer;font:inherit}
       <fieldset>
         <div class="fld"><label for="b-code">Kode unit *</label><input id="b-code" type="text" class="mono" placeholder="AT-013"></div>
         <div class="fld"><label for="b-type">Tipe</label><select id="b-type"><option value="big">Big bus</option><option value="medium">Medium bus</option></select></div>
+        <div class="fld"><label for="b-cat">Kategori</label><select id="b-cat"><option value="standar">Standar Pariwisata</option><option value="premium">Premium (harga +Rp1.000.000)</option></select></div>
         <div class="fld"><label for="b-model">Karoseri / model</label><input id="b-model" type="text" placeholder="Jetbus 5 SHD"></div>
         <div class="fld"><label for="b-chassis">Sasis</label><input id="b-chassis" type="text" placeholder="Hino RM 280"></div>
         <div class="fld"><label for="b-seats">Jumlah kursi</label><input id="b-seats" type="number" min="0" max="80" inputmode="numeric"></div>
@@ -567,6 +568,9 @@ var HUES=[172,212,28,282,342,96,48,252,8,194];
 var hash=function(s){var h=0;String(s).split('').forEach(function(c){h=(h*31+c.charCodeAt(0))>>>0});return h};
 var STATUS={tentatif:'Tentatif',pasti:'Terkonfirmasi',selesai:'Selesai',batal:'Dibatalkan'};
 var TYPE={big:'Big Bus',medium:'Medium Bus'};
+var PREM_ADD=1000000;
+function isPrem(b){return !!b&&b.cat==='premium'}
+function catName(b){return isPrem(b)?'Premium':'Standar Pariwisata'}
 var SEAT={lr35:'35+1 TL (Leg Rest)',s48:'48+1 TL (2+2)',s50:'50+1 TL (2-2)'};
 var newId=function(){return 't'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)};
 var busSort=function(a,b){
@@ -762,7 +766,7 @@ function rowHtml(b,ms,me,dim,sep){
     cells+='<div class="cell'+(w===0||w===6?' we':'')+(d===TODAY?' today':'')+'" data-act="cell" data-d="'+d+'" data-bus="'+esc(b.code)+'"></div>';
   }
   var bars=bt.map(function(t){return barHtml(t,bt,ms,me)}).join('');
-  var meta=b.status==='bengkel'?'<span class="tag">Bengkel</span>':'<span class="meta">'+esc(b.model||TYPE[b.type])+'</span>';
+  var meta=b.status==='bengkel'?'<span class="tag">Bengkel</span>':'<span class="meta">'+(isPrem(b)?'Premium · ':'')+esc(b.model||TYPE[b.type])+'</span>';
   return '<div class="g-row'+(b.status==='bengkel'?' down':'')+(sep?' sep':'')+'"><div class="g-label"><span class="plate">'+esc(b.code)+'</span>'+meta+'</div><div class="track" style="--n:'+dim+'">'+cells+bars+'</div></div>';
 }
 function barHtml(t,bt,ms,me){
@@ -909,6 +913,7 @@ function chipHtml(b,a,fi){
   var on=F.sel.has(b.code),clash=on&&(a.state==='busy'||a.state==='down');
   var disabled=!on&&(a.state==='busy'||a.state==='down');
   var sub=clash?'Bentrok · '+esc(a.note):(a.state==='free'?'Tersedia':esc(a.note));
+  if(isPrem(b))sub='Premium · '+sub;
   var rec=fi&&fi.rank>0&&fi.rank<=(fi.top||99),ld=fi?'<span class="ld">Jalan '+fi.l.days+' hr · '+(fi.l.idle>=90?'belum pernah jalan':'nganggur '+fi.l.idle+' hr')+'</span>':'';
   return '<button type="button" class="chip '+a.state+(on?' on':'')+(rec&&!on?' rec':'')+'" data-code="'+esc(b.code)+'"'+(disabled?' disabled':'')+' aria-pressed="'+on+'"><span class="plate">'+esc(b.code)+'</span>'+(rec?'<span class="rk">Rekomendasi #'+fi.rank+'</span>':'')+'<span class="sub">'+sub+'</span>'+ld+(a.state==='stut'?'<span class="tag">Stut</span>':'')+'</button>';
 }
@@ -962,7 +967,7 @@ function openBus(code){
   B={code:b?b.code:null};
   $('#sb-title').textContent=b?'Ubah unit '+b.code:'Unit baru';
   var c=$('#b-code');c.value=b?b.code:'';c.readOnly=!!b;
-  $('#b-type').value=b?b.type:'big';$('#b-model').value=b?(b.model||''):'';$('#b-chassis').value=b?(b.chassis||''):'';
+  $('#b-type').value=b?b.type:'big';$('#b-cat').value=b&&b.cat==='premium'?'premium':'standar';$('#b-model').value=b?(b.model||''):'';$('#b-chassis').value=b?(b.chassis||''):'';
   $('#b-seats').value=b&&b.seats?b.seats:'';$('#b-km').value=b?Math.round(kmBase(b)):'';$('#b-status').value=b?(b.status||'aktif'):'aktif';$('#b-note').value=b?(b.note||''):'';
   $('#b-plate').value=b?(b.plate||''):'';$('#b-driver').value=b?(b.driver||''):'';$('#b-codriver').value=b?(b.codriver||''):'';
   $('#b-hint').textContent=b?'Kode unit tidak bisa diganti karena dipakai sebagai acuan di order. Untuk ganti kode, tambah unit baru lalu hapus yang lama.':'Unit yang berstatus "Di bengkel" tidak muncul sebagai pilihan saat plotting.';
@@ -999,7 +1004,7 @@ async function saveBus(){
   if(!/^[A-Z0-9][A-Z0-9_-]{1,19}$/.test(code)){err.textContent='Kode unit wajib diisi: huruf, angka, atau tanda hubung (mis. AT-013).';return}
   if(!B.code&&S.buses.some(function(b){return b.code===code})){err.textContent='Kode '+code+' sudah dipakai unit lain.';return}
   var seats=parseInt($('#b-seats').value,10);
-  var doc={code:code,type:$('#b-type').value,model:$('#b-model').value.trim(),chassis:$('#b-chassis').value.trim(),seats:seats>0?seats:null,status:$('#b-status').value,note:$('#b-note').value.trim(),plate:$('#b-plate').value.trim().toUpperCase().replace(/\s+/g,' '),driver:$('#b-driver').value.trim(),codriver:$('#b-codriver').value.trim()};
+  var doc={code:code,type:$('#b-type').value,cat:$('#b-cat').value,model:$('#b-model').value.trim(),chassis:$('#b-chassis').value.trim(),seats:seats>0?seats:null,status:$('#b-status').value,note:$('#b-note').value.trim(),plate:$('#b-plate').value.trim().toUpperCase().replace(/\s+/g,' '),driver:$('#b-driver').value.trim(),codriver:$('#b-codriver').value.trim()};
   var kmv=parseInt($('#b-km').value,10);if(kmv>=0)doc.km=kmv;
   if(B.photo)doc.photo=B.photo;
   try{await store.put('buses',code,doc);closeSheet();toast('Unit disimpan')}
@@ -2055,7 +2060,8 @@ function estimate(t){
   if(!t.destination||!t.start)return null;
   var r=routeOf(t),km=r?(r.pick?r.pick.km:0)+r.out.km:300,s=toDay(t.start),e=t.end?toDay(t.end):s,days=Math.max(1,e-s+1),inap=days>1,
       big=bigRate(km,inap),med=Math.round(big*MED_RATIO/50000)*50000,nb=+t.needBig||0,nm=+t.needMed||0;
-  return {total:(nb*big+nm*med)*(inap?days:1),days:days,inap:inap,km:km,big:big,med:med,nb:nb,nm:nm,guess:!r};
+  var np=(t.buses||[]).filter(function(k){return isPrem(S.buses.find(function(b){return b.code===k}))}).length,mul=inap?days:1;
+  return {total:(nb*big+nm*med+np*PREM_ADD)*mul,days:days,inap:inap,km:km,big:big,med:med,nb:nb,nm:nm,np:np,guess:!r};
 }
 /* skema uang jalan: 20% dari harga sewa untuk crew = 10% solar + 10% gaji crew (supir 60%, kernet 40%). Sisa 80% jadi pendapatan/keuntungan. */
 var UJ={solar:.10,crew:.10,driver:.60,kernet:.40};
@@ -2071,9 +2077,9 @@ function priceOf(t){if(t.priceManual&&+t.price>=0)return +t.price;var e=estimate
 function priceLine(t){return t.status==='batal'?'':'<p class="route">Sewa: <b>'+rupiah(priceOf(t))+'</b>'+(t.priceManual?'':' (estimasi)')+' · uang jalan crew '+rupiah(ujOf(t).total)+' · bersih '+rupiah(ujOf(t).net)+'</p>'}
 function priceSync(){
   var el=$('#f-price');if(!el||!F)return;
-  var e=estimate({pickup:$('#f-pickup').value,destination:$('#f-dest').value.trim(),start:$('#f-start').value,end:$('#f-end').value,needBig:+$('#f-big').value||0,needMed:+$('#f-med').value||0});
+  var e=estimate({pickup:$('#f-pickup').value,destination:$('#f-dest').value.trim(),start:$('#f-start').value,end:$('#f-end').value,needBig:+$('#f-big').value||0,needMed:+$('#f-med').value||0,buses:Array.from(F.sel)});
   if(!F.pm)el.value=e?e.total:'';
-  $('#f-price-hint').textContent=!e?'Isi tujuan dan tanggal untuk melihat estimasi harga.':'Estimasi '+rupiah(e.total)+' = '+[e.nb?e.nb+' big × '+rupiah(e.big):'',e.nm?e.nm+' medium × '+rupiah(e.med):''].filter(Boolean).join(' + ')
+  $('#f-price-hint').textContent=!e?'Isi tujuan dan tanggal untuk melihat estimasi harga.':'Estimasi '+rupiah(e.total)+' = '+[e.nb?e.nb+' big × '+rupiah(e.big):'',e.nm?e.nm+' medium × '+rupiah(e.med):'',e.np?e.np+' premium × +'+rupiah(PREM_ADD):''].filter(Boolean).join(' + ')
     +(e.inap?' per hari × '+e.days+' hari (inap)':' (pulang pergi 1 hari)')+' · jarak ±'+Math.round(e.km)+' km'+(e.guess?' (tujuan tidak dikenali, dipakai jarak menengah)':'')
     +'. Sudah termasuk BBM dan driver; belum termasuk tol, parkir, tiket wisata, ferry, dan tip kru.'
     +(F.pm&&+el.value!==e.total?' Kolom harga sudah diubah manual.':'');
@@ -2344,6 +2350,7 @@ function notaHtml(t){
       kv=function(a,b){return '<tr><td>'+a+'</td><td>'+b+'</td></tr>'},rows='';
   if(!t.priceManual&&e&&(e.nb||e.nm)){
     if(e.nb)rows+='<tr><td>Sewa big bus pariwisata'+(e.inap?' (menginap)':' (pulang pergi)')+'</td><td class="r">'+e.nb+'</td><td class="r">'+(e.inap?e.days:1)+'</td><td class="r">'+rupiah(e.big)+'</td><td class="r">'+rupiah(e.nb*e.big*(e.inap?e.days:1))+'</td></tr>';
+    if(e.np)rows+='<tr><td>Tambahan kategori Premium'+(e.inap?' (menginap)':' (pulang pergi)')+'</td><td class="r">'+e.np+'</td><td class="r">'+(e.inap?e.days:1)+'</td><td class="r">'+rupiah(PREM_ADD)+'</td><td class="r">'+rupiah(e.np*PREM_ADD*(e.inap?e.days:1))+'</td></tr>';
     if(e.nm)rows+='<tr><td>Sewa medium bus pariwisata'+(e.inap?' (menginap)':' (pulang pergi)')+'</td><td class="r">'+e.nm+'</td><td class="r">'+(e.inap?e.days:1)+'</td><td class="r">'+rupiah(e.med)+'</td><td class="r">'+rupiah(e.nm*e.med*(e.inap?e.days:1))+'</td></tr>';
   }else rows='<tr><td>Sewa bus pariwisata (harga kesepakatan)</td><td class="r">'+((+t.needBig||0)+(+t.needMed||0)||'—')+'</td><td class="r">'+days+'</td><td class="r">—</td><td class="r">'+rupiah(total)+'</td></tr>';
   return '<div class="nh"><div><h1>'+esc(u.toUpperCase())+'</h1><small>Persewaan Bus Pariwisata</small>'+(al?'<small>'+esc(al)+'</small>':'')+(tl?'<small>Telp/WA: '+esc(tl)+'</small>':'')+'</div>'
@@ -2699,7 +2706,7 @@ function busDetailHtml(b){
       return '<li class="'+cls+'"><b>'+esc(j.n)+'</b><small>'+mark+' · '+fmtJam(j.s,now)+' sampai '+fmtJam(j.e,now)+' · '+j.h+' jam kerja</small><small>'+esc(j.why)+'</small></li>';
     }).join('')+'</ul><p class="hint" style="margin-top:6px">Jadwal pengecekan disusun otomatis dari odometer dan lama unit libur (jam kerja bengkel 08.00 sampai 16.00). Ini simulasi, bukan catatan servis asli. Interval oli, gardan, filter udara, dan transmisi mengikuti jadwal servis Hino; interval rem, kopling, AC, dan ban adalah perkiraan.</p></div>';
   }
-  h+='<dl class="tdet"><dt>Plat nomor</dt><dd>'+(b.plate?esc(b.plate):'Belum diisi')+'</dd><dt>Driver</dt><dd>'+(b.driver?esc(b.driver):'Belum diisi')+'</dd><dt>Co driver</dt><dd>'+(b.codriver?esc(b.codriver):'Belum diisi')+'</dd><dt>Tipe</dt><dd>'+esc(TYPE[b.type]||b.type)+'</dd><dt>Karoseri</dt><dd>'+esc(b.model||'—')+'</dd><dt>Sasis</dt><dd>'+esc(b.chassis||'—')+'</dd><dt>Kursi</dt><dd>'+(b.seats?esc(b.seats)+' kursi':'—')+'</dd><dt>Odometer</dt><dd>'+fmtKm(odoAt(b.code,now))+'</dd><dt>Kondisi</dt><dd>'+(b.status==='bengkel'?'Di bengkel':'Aktif')+'</dd>'+(b.note?'<dt>Catatan</dt><dd>'+esc(b.note)+'</dd>':'')+'</dl>';
+  h+='<dl class="tdet"><dt>Plat nomor</dt><dd>'+(b.plate?esc(b.plate):'Belum diisi')+'</dd><dt>Driver</dt><dd>'+(b.driver?esc(b.driver):'Belum diisi')+'</dd><dt>Co driver</dt><dd>'+(b.codriver?esc(b.codriver):'Belum diisi')+'</dd><dt>Tipe</dt><dd>'+esc(TYPE[b.type]||b.type)+'</dd><dt>Kategori</dt><dd>'+catName(b)+'</dd><dt>Karoseri</dt><dd>'+esc(b.model||'—')+'</dd><dt>Sasis</dt><dd>'+esc(b.chassis||'—')+'</dd><dt>Kursi</dt><dd>'+(b.seats?esc(b.seats)+' kursi':'—')+'</dd><dt>Odometer</dt><dd>'+fmtKm(odoAt(b.code,now))+'</dd><dt>Kondisi</dt><dd>'+(b.status==='bengkel'?'Di bengkel':'Aktif')+'</dd>'+(b.note?'<dt>Catatan</dt><dd>'+esc(b.note)+'</dd>':'')+'</dl>';
   var up=S.trips.filter(function(t){return t.status!=='batal'&&t.status!=='selesai'&&(t.buses||[]).indexOf(b.code)>=0&&toDay(t.end)>=TODAY}).sort(function(a,c){return toDay(a.start)-toDay(c.start)}).slice(0,4);
   h+='<div><div class="sec-h" style="margin-bottom:6px">Trip terjadwal</div>'+(up.length?'<ul class="jobs">'+up.map(function(t){return '<li><b>'+esc(t.customer)+'</b><small>'+esc(fmtWhen(t))+' · '+esc((t.pickup||'—')+' → '+(t.destination||'—'))+'</small></li>'}).join('')+'</ul>':'<span class="hint">Belum ada.</span>')+'</div>';
   return h;
@@ -2769,7 +2776,7 @@ $('#plot').addEventListener('click',function(ev){
   var c=ev.target.closest('.chip');if(!c||c.disabled)return;
   var code=c.dataset.code;
   if(F.sel.has(code))F.sel.delete(code);else F.sel.add(code);
-  $('#f-error').textContent='';renderPlot();
+  $('#f-error').textContent='';renderPlot();priceSync();
 });
 $('#auto-fill').addEventListener('click',autoFill);
 $('#clear-sel').addEventListener('click',function(){F.sel.clear();$('#f-error').textContent='';renderPlot()});
