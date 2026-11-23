@@ -120,6 +120,7 @@ h1,h2,h3,h4,p{margin:0}
 .cell:hover{background:color-mix(in srgb,var(--accent) 14%,transparent)}
 .g-row.down .track{background:repeating-linear-gradient(135deg,transparent 0 8px,color-mix(in srgb,var(--fg) 8%,transparent) 8px 9px)}
 .g-row.down .cell{cursor:not-allowed}
+.autop{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:12px 14px;display:grid;gap:8px}.autop .ap-h{display:flex;gap:8px;align-items:center}.autop .ap-a{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.autop .hint{margin:0}.autop label{font-size:13px;display:flex;gap:6px;align-items:center}
 .tag{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:1px 5px;border-radius:4px;background:var(--warn-soft);color:var(--warn);align-self:flex-start}
 .bar{position:absolute;top:5px;bottom:5px;left:calc(var(--cw) * var(--bl));width:calc(var(--cw) * var(--bw) - 2px);margin-left:1px;z-index:2;
   border:1px solid hsl(var(--h) 40% var(--bar-line-l));background:hsl(var(--h) var(--bar-s) var(--bar-l));color:hsl(var(--h) 55% var(--bar-fg-l));
@@ -704,7 +705,7 @@ function availability(bus,cand,ignoreId){
 
 /* ---------- render utama ---------- */
 function queueRender(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;render()})}
-function onData(){queueRender();autoFinish();if(OPEN==='#sheet-order'&&F)renderPlot()}
+function onData(){queueRender();autoFinish();autoKick();if(OPEN==='#sheet-order'&&F)renderPlot()}
 
 function render(){
   $$('#tabs a').forEach(function(a){if(a.dataset.tab===S.tab)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
@@ -787,7 +788,7 @@ function barHtml(t,bt,ms,me){
 /* ---------- tab Order ---------- */
 function viewOrders(){
   var opts=Object.keys(STATUS).map(function(k){return '<option value="'+k+'"'+(S.filter.status===k?' selected':'')+'>'+STATUS[k]+'</option>'}).join('');
-  return '<div class="filters"><input id="q" type="search" placeholder="Cari customer, tujuan, atau kode unit…" value="'+esc(S.filter.q)+'" aria-label="Cari order"><select id="fstatus" aria-label="Filter status"><option value="">Semua status</option>'+opts+'</select></div><div class="list" id="orderList">'+ordersListHtml()+'</div>';
+  return autoPanel()+'<div class="filters"><input id="q" type="search" placeholder="Cari customer, tujuan, atau kode unit…" value="'+esc(S.filter.q)+'" aria-label="Cari order"><select id="fstatus" aria-label="Filter status"><option value="">Semua status</option>'+opts+'</select></div><div class="list" id="orderList">'+ordersListHtml()+'</div>';
 }
 function ordersListHtml(){
   var q=S.filter.q.trim().toLowerCase(),st=S.filter.status;
@@ -811,7 +812,7 @@ function orderItem(t){
   var timeLine=hasTimes(t)?'<span>Jam '+esc(t.startTime)+' – '+esc(t.endTime)+'</span>':'<span>Jam belum diisi</span>';
   var seat=t.seatBig&&SEAT[t.seatBig]&&+t.needBig>0?'<p class="route">Seat big bus: '+esc(SEAT[t.seatBig])+'</p>':'';
   return '<article class="item"><div class="when"><b>'+esc(fmtRange(t))+'</b><span>'+days+' hari · '+parts(s).y+'</span>'+timeLine+'</div>'
-  +'<div class="main"><h3>'+esc(t.customer)+'<span class="st '+esc(t.status)+'">'+esc(STATUS[t.status]||t.status)+'</span>'+(t.example?'<span class="st">contoh</span>':'')+'</h3>'
+  +'<div class="main"><h3>'+esc(t.customer)+'<span class="st '+esc(t.status)+'">'+esc(STATUS[t.status]||t.status)+'</span>'+(t.example?'<span class="st">contoh</span>':'')+(t.auto?'<span class="st">otomatis</span>':'')+'</h3>'
   +'<p class="route">'+esc(t.pickup||'—')+' → '+esc(t.destination||'—')+(t.phone?' · '+esc(t.phone):'')+'</p>'+seat+priceLine(t)+'<div class="chips-sm">'+chips+'</div></div>'
   +'<div class="acts"><button class="btn sm" data-act="spj" data-id="'+esc(t.id)+'">SPJ</button><button class="btn sm" data-act="nota" data-id="'+esc(t.id)+'">Nota</button><button class="btn sm" data-act="edit-order" data-id="'+esc(t.id)+'">Ubah</button><button class="btn sm danger'+(armed?' armed':'')+'" data-act="'+(armed?'del-order-yes':'del-order')+'" data-id="'+esc(t.id)+'">'+(armed?'Yakin hapus?':'Hapus')+'</button></div></article>';
 }
@@ -2035,7 +2036,7 @@ $('#f-price-auto').addEventListener('click',function(){F.pm=false;priceSync()});
 ['#f-start','#f-end'].forEach(function(s){$(s).addEventListener('change',priceSync)});
 ['#f-big','#f-med','#f-pickup','#f-dest'].forEach(function(s){$(s).addEventListener('input',priceSync)});
 (function(){var dl=document.createElement('datalist');dl.id='dl-dest';dl.innerHTML=Object.keys(NODE).filter(function(id){return id!=='cil'}).map(function(id){return '<option value="'+esc(NODE[id].name)+'">'}).join('');document.body.appendChild(dl)})();
-document.addEventListener('change',function(ev){if(ev.target.id==='revyear'){S.revYear=+ev.target.value;render()}});
+document.addEventListener('change',function(ev){if(ev.target.id==='revyear'){S.revYear=+ev.target.value;render()}if(ev.target.id==='auto-level'){autoSave({level:ev.target.value}).then(function(){toast('Keramaian autopilot: '+ev.target.value)})}});
 function viewRevenue(){
   var rows=S.trips.filter(function(t){return !t.example&&t.status!=='batal'&&t.start}).map(function(t){var p=parts(toDay(t.start)),u=ujOf(t);return {t:t,y:p.y,m:p.m,v:u.price,u:u,ok:t.status==='pasti'||t.status==='selesai'}}),
       ok=rows.filter(function(x){return x.ok}),pot=rows.filter(function(x){return !x.ok}),py=parts(TODAY),y=S.revYear||py.y,ys=[py.y];
@@ -2122,6 +2123,149 @@ function autoFinish(){
   });
 }
 setInterval(autoFinish,30000);
+/* ---------- autopilot: order dibuat otomatis ----------
+   Deterministik per tanggal (id a+YYYYMMDD+urutan) supaya beberapa perangkat tidak membuat order dobel.
+   Unit dipilih dengan recFor (prinsip adil yang sama dengan rekomendasi manual) dan hanya unit yang tersedia. */
+var AR={busy:false,kicked:false,last:0};
+var AUTO_LV={sepi:.55,normal:1,ramai:1.7};
+var AUTO_DOW=[1.1,.6,.6,.6,.8,1.1,1.7];
+var AUTO_MON=[1.2,.9,.9,.9,1,1.3,1.4,1,.9,1,1.1,1.4];
+var AN_F=['Slamet','Sutrisno','Budi','Agus','Wahyu','Eko','Joko','Hendra','Rudi','Bambang','Teguh','Imam','Dedi','Yanto','Sugeng','Heri','Andi','Fajar','Nur','Siti','Ratna','Dewi','Wati','Sri','Endang','Yuni','Lilik','Mulyadi','Karyono','Tarno'];
+var AN_L=['Santoso','Wijaya','Prasetyo','Hidayat','Setiawan','Kurniawan','Rahmat','Susanto','Purnomo','Saputra','Widodo','Nugroho','Raharjo','Hartono','Wibowo','Suryadi','Mulyono','Pratama','Aziz','Firmansyah'];
+var AN_ORG=['CV Mitra Sejahtera','PT Karya Bahari','Koperasi Karyawan Sinar Laut','CV Berkah Jaya Abadi','PT Samudra Logistik','Yayasan Pendidikan Insan Mulia','UD Sumber Rejeki','PT Tirta Mandiri','Paguyuban Pedagang Pasar','Klinik Sehat Sentosa','BPR Artha Sejahtera','Dealer Motor Cilacap Jaya'];
+var AN_MASJID=['Al-Ikhlas','Al-Hidayah','Nurul Huda','At-Taqwa','Baitul Muttaqin','Al-Falah','Darussalam','Miftahul Jannah','Al-Barokah','Nurul Iman'];
+var AN_NOTE=['Minta AC dingin dan audio karaoke','Jemput 30 menit lebih awal dari jadwal','Bawa kotak P3K dan kantong plastik','Peserta banyak lansia, jalan santai','Ada koper besar di bagasi','Tolong sopir paham jalur alternatif tol','Makan siang di rumah makan langganan','Sudah DP, pelunasan saat berangkat'];
+var AN_DEST={
+  sekolah:[['Yogyakarta',30],['Jakarta',14],['Semarang',10],['Bali',9],['Malang',8],['Borobudur',8],['Solo',6],['Surabaya',5],['Purwokerto',4],['Dieng',3],['Bromo',3]],
+  keluarga:[['Yogyakarta',18],['Purwokerto',12],['Kebumen',10],['Dieng',8],['Borobudur',8],['Gunung Kidul',8],['Wates',6],['Tegal',6],['Semarang',6],['Tawangmangu',5],['Solo',5],['Jakarta',4],['Bali',3]],
+  religi:[['Sunan Kalijaga',16],['Sunan Kudus',14],['Cirebon',14],['Gresik',12],['Surabaya',10],['Tuban',8],['Sunan Drajat',6],['Tebuireng',6],['Pekalongan',6],['Sunan Muria',5],['Jakarta',3]],
+  instansi:[['Yogyakarta',20],['Bali',16],['Malang',12],['Jakarta',12],['Bromo',10],['Semarang',10],['Dieng',8],['Solo',6],['Banyuwangi',6]],
+  manten:[['Purwokerto',20],['Kebumen',18],['Majenang',14],['Sidareja',12],['Banyumas',10],['Wangon',10],['Maos',8],['Kroya',8]],
+  biro:[['Bali',22],['Yogyakarta',20],['Jakarta',14],['Bromo',12],['Malang',12],['Banyuwangi',8],['Semarang',6],['Surabaya',6]]
+};
+var AN_KIND=[['sekolah',30],['keluarga',25],['religi',15],['instansi',12],['manten',8],['biro',10]];
+function mkRng(s){var h=2166136261,i;for(i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}var a=h>>>0;return function(){a=(a+0x6D2B79F5)|0;var t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296}}
+function aPick(r,a){return a[Math.floor(r()*a.length)]}
+function aW(r,a){var s=0,i;a.forEach(function(x){s+=x[1]});var v=r()*s;for(i=0;i<a.length;i++){v-=a[i][1];if(v<=0)return a[i][0]}return a[a.length-1][0]}
+function aInt(r,lo,hi){return lo+Math.floor(r()*(hi-lo+1))}
+function autoCfg(){var a=S.settings&&S.settings.auto||{};return {on:a.on!==false,level:AUTO_LV[a.level]?a.level:'normal',ahead:+a.ahead>0?+a.ahead:21,upTo:a.upTo||''}}
+function autoSave(p){
+  var c=Object.assign(autoCfg(),p);
+  S.settings=Object.assign({},S.settings,{auto:c});
+  return store.put('settings','app',Object.assign({},S.settings,{gapHours:S.gap}));
+}
+function nowDay(){var n=new Date();return toDay(n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate()))}
+function autoPools(){
+  var sc=LOCS.filter(function(l){return l.j==='SMP'||l.j==='SMA'||l.j==='SMK'}),bi=LOCS.filter(function(l){return l.j==='B'}),kec={};
+  LOCS.forEach(function(l){if(l.kec)kec[l.kec]=1});
+  return {sc:sc,bi:bi,kec:Object.keys(kec)};
+}
+function autoOrdersFor(D,cfg,P){
+  var r=mkRng('arsyi|'+D),dw=parts(D),rate=AUTO_LV[cfg.level]*AUTO_DOW[dw.w]*AUTO_MON[dw.m],n=Math.floor(rate+r()),out=[],k;
+  for(k=0;k<n;k++){
+    var kind=aW(r,AN_KIND),dest=aW(r,AN_DEST[kind]),cust,pick,nb=0,nm=0,seat='',tag=kind,who=aPick(r,AN_F)+' '+aPick(r,AN_L),kc=aPick(r,P.kec),mj=aPick(r,AN_MASJID);
+    if(kind==='sekolah'){var sl=aPick(r,P.sc);cust=sl.n+' (Karya Wisata)';pick=sl.n;nb=aW(r,[[1,22],[2,34],[3,26],[4,18]]);nm=r()<.15?1:0;seat=aPick(r,['s50','s50','s48'])}
+    else if(kind==='keluarga'){var t=r();cust=t<.5?'Keluarga Bpk. '+who:t<.8?'Arisan '+aPick(r,['RT 03 RW 05','Dusun Krajan','Ibu-Ibu PKK','Warga Perum Griya'])+' '+kc:'Reuni Alumni '+aPick(r,['SMAN 1 ','SMKN 1 ','SMPN 2 '])+kc+' '+aInt(r,1995,2015);pick=kc;if(r()<.5){nb=1}else{nm=1}if(r()<.2)nb=2;seat=aPick(r,['lr35','s48','s48'])}
+    else if(kind==='religi'){cust=aPick(r,['Majelis Taklim ','Pengajian Masjid ','Jamaah Yasinan Masjid '])+mj+' '+kc;pick=kc;nb=aW(r,[[1,45],[2,35],[3,20]]);nm=r()<.2?1:0;seat=aPick(r,['s50','s48'])}
+    else if(kind==='instansi'){cust=r()<.55?aPick(r,AN_ORG):aPick(r,['Karang Taruna Desa ','PKK Desa ','Perangkat Desa Kec. ','Puskesmas '])+kc;pick=r()<.5?'Cilacap':kc;nb=aW(r,[[1,55],[2,35],[3,10]]);if(r()<.2)nm=1;seat=aPick(r,['lr35','s48'])}
+    else if(kind==='manten'){cust='Hajatan Pernikahan Keluarga '+who;pick=kc;if(r()<.55){nm=1}else{nb=1}if(r()<.25)nb+=1;seat='s48'}
+    else{var bl=aPick(r,P.bi);cust=bl.n;pick=bl.n;nb=aW(r,[[1,45],[2,35],[3,20]]);nm=r()<.15?1:0;seat=aPick(r,['s50','s48','lr35'])}
+    if(!nb&&!nm)nb=1;
+    out.push({k:k,kind:kind,cust:cust,pick:pick,dest:dest,nb:nb,nm:nm,seat:seat,r:r});
+  }
+  return out;
+}
+function autoBuild(D,o,today){
+  var r=o.r,t0={pickup:o.pick,destination:o.dest,start:toStr(D),end:toStr(D),needBig:Math.max(1,o.nb),needMed:o.nm},e0=estimate(t0);
+  if(!e0||e0.guess){var t1=Object.assign({},t0,{pickup:'Cilacap'});e0=estimate(t1);if(!e0||e0.guess)return null;o.pick='Cilacap'}
+  var km=e0.km,days,st,en;
+  if(o.kind==='manten')days=1;
+  else if(km<=70)days=1;
+  else if(km<=230)days=r()<.6?1:2;
+  else if(km<=380)days=r()<.55?2:3;
+  else if(km<=650)days=aInt(r,3,4);
+  else days=aInt(r,4,6);
+  if(days===1){
+    st=km>150?aPick(r,['04:30','05:00']):o.kind==='manten'?aPick(r,['07:00','08:00','09:00']):aPick(r,['05:00','05:30','06:00','06:30','07:00']);
+    en=km<=80?aPick(r,['15:00','16:30','17:30']):km<=150?aPick(r,['18:30','19:30','20:30']):aPick(r,['21:00','22:00','23:00']);
+  }else{
+    st=aPick(r,(o.kind==='religi'||o.kind==='instansi')?['04:30','05:00','06:00','20:00']:['04:30','05:00','06:00','07:00']);
+    en=aPick(r,['14:00','16:00','18:00','20:00','22:00']);
+  }
+  var t={customer:o.cust,phone:'0812-0000-'+String(aInt(r,0,9999)).padStart(4,'0'),start:toStr(D),end:toStr(D+days-1),startTime:st,endTime:en,pickup:o.pick,destination:o.dest,needBig:o.nb,needMed:o.nm,seatBig:o.nb>0?o.seat:'',buses:[],status:'pasti',note:r()<.5?aPick(r,AN_NOTE):'',price:0,priceManual:false,created:0,auto:true};
+  return t;
+}
+function autoStatus(D,t,r,today){
+  var e=toDay(t.end);
+  if(e<today)return r()<.08?'batal':'selesai';
+  if(D<=today+2)return 'pasti';
+  return r()<.85?'pasti':'tentatif';
+}
+function autoGenerate(from,to){
+  var cfg=autoCfg(),P=autoPools(),keep=S.trips,W=S.trips.slice(),made=[],today=nowDay(),D,j;
+  S.trips=W;
+  try{
+    for(D=from;D<=to;D++){
+      var orders=autoOrdersFor(D,cfg,P);
+      for(j=0;j<orders.length;j++){
+        var o=orders[j],id='a'+toStr(D).replace(/-/g,'')+o.k;
+        if(W.some(function(x){return x.id===id}))continue;
+        var t=autoBuild(D,o,today);if(!t)continue;
+        t.status=autoStatus(D,t,o.r,today);
+        if(t.status!=='batal'){
+          var codes=[],c={start:t.start,end:t.end,startTime:t.startTime,endTime:t.endTime};
+          [['big',o.nb],['medium',o.nm]].forEach(function(x){
+            if(!x[1])return;
+            var list=S.buses.filter(function(b){return b.type===x[0]});
+            var rc=recFor(list,list.map(function(b){return availability(b,c,null)}),c,x[1]);
+            rc.order.slice(0,x[1]).forEach(function(k){codes.push(k)});
+          });
+          if(!codes.length)continue;
+          t.buses=codes.sort();
+          t.needBig=t.buses.filter(function(k){var b=S.buses.find(function(x){return x.code===k});return b&&b.type==='big'}).length;
+          t.needMed=t.buses.length-t.needBig;
+          if(!t.needBig)t.seatBig='';
+        }else{t.buses=[]}
+        var e=estimate(t);t.price=e?e.total:0;
+        if(e&&o.r()<.4){t.price=Math.max(P_MIN,Math.round(e.total*(.9+o.r()*.12)/50000)*50000);t.priceManual=true}
+        t.created=Math.min(Date.now(),Date.UTC(parts(D).y,parts(D).m,parts(D).d)-aInt(o.r,2,35)*DAY);
+        t.id=id;W.push(t);made.push(t);
+      }
+    }
+  }finally{S.trips=keep}
+  return made;
+}
+async function autoRun(force,quiet){
+  if(AR.busy||!store||!(S.ready.buses&&S.ready.trips)||!S.buses.length)return 0;
+  var cfg=autoCfg();if(!cfg.on&&!force)return 0;
+  AR.busy=true;
+  try{
+    var today=nowDay(),from=cfg.upTo?toDay(cfg.upTo)+1:today-21,to=today+cfg.ahead;
+    if(force&&cfg.upTo&&toDay(cfg.upTo)>=to)from=to+1;
+    if(from>to){AR.busy=false;return 0}
+    if(from<today-60)from=today-60;
+    var made=autoGenerate(from,to),i;
+    for(i=0;i<made.length;i+=8){await Promise.all(made.slice(i,i+8).map(function(t){var d=Object.assign({},t);delete d.id;return store.put('trips',t.id,d)}))}
+    await autoSave({upTo:toStr(to)});
+    if(made.length&&!quiet)toast('Autopilot membuat '+made.length+' order baru');
+    return made.length;
+  }catch(e){toast('Autopilot gagal: '+(e&&(e.message||e.code)||'coba lagi'),true);return 0}
+  finally{AR.busy=false;queueRender()}
+}
+function autoKick(){if(AR.kicked||!store||!(S.ready.buses&&S.ready.trips))return;AR.kicked=true;setTimeout(function(){autoRun(false)},S.setLoaded?800:3500)}
+setInterval(function(){autoRun(false,true)},10*60*1000);
+function autoPanel(){
+  var c=autoCfg(),n=S.trips.filter(function(t){return t.auto}).length,armed=S.confirmKey==='auto-clear';
+  var opts=Object.keys(AUTO_LV).map(function(k){return '<option value="'+k+'"'+(c.level===k?' selected':'')+'>'+k.charAt(0).toUpperCase()+k.slice(1)+'</option>'}).join('');
+  return '<section class="autop"><div class="ap-h"><b>Autopilot order</b><span class="st '+(c.on?'pasti':'')+'">'+(c.on?'Aktif':'Mati')+'</span></div>'
+  +'<p class="hint">Order, customer, tujuan, jam, unit (rekomendasi adil) dan harga dibuat otomatis, 3 minggu ke depan dan 3 minggu ke belakang saat pertama aktif. '
+  +'Jalan selama halaman ini dibuka, dan langsung mengejar hari yang terlewat. '+(c.upTo?'Terisi sampai '+esc(fmtDay(toDay(c.upTo)))+'. ':'')+n+' order otomatis. Ini simulasi, customer dan nomor telepon fiktif.</p>'
+  +'<div class="ap-a"><label>Keramaian <select id="auto-level">'+opts+'</select></label>'
+  +'<button class="btn sm" data-act="auto-toggle">'+(c.on?'Matikan':'Aktifkan')+'</button>'
+  +'<button class="btn sm" data-act="auto-run">Buat sekarang</button>'
+  +(n?(armed?'<button class="btn sm danger" data-act="auto-clear-yes">Ya, hapus '+n+' order otomatis</button><button class="btn sm" data-act="auto-clear-no">Batal</button>':'<button class="btn sm" data-act="auto-clear">Hapus order otomatis</button>'):'')
+  +'</div></section>';
+}
 /* ---------- nota sewa bus ---------- */
 function terbilang(n){
   var s=['','satu','dua','tiga','empat','lima','enam','tujuh','delapan','sembilan','sepuluh','sebelas'];
@@ -2566,6 +2710,11 @@ document.addEventListener('click',function(ev){
     case 'del-bus':S.confirmKey='bus:'+d.code;render();break;
     case 'del-bus-yes':deleteBus(d.code);break;
     case 'seed-fleet':seedFleet();break;
+    case 'auto-toggle':autoSave({on:!autoCfg().on}).then(function(){toast(autoCfg().on?'Autopilot aktif':'Autopilot dimatikan');if(autoCfg().on)autoRun(false);queueRender()}).catch(function(e){toast('Gagal menyimpan: '+(e&&(e.message||e.code)||'coba lagi'),true)});break;
+    case 'auto-run':autoRun(true).then(function(n){if(!n)toast('Semua hari sudah terisi')});break;
+    case 'auto-clear':S.confirmKey='auto-clear';render();break;
+    case 'auto-clear-no':S.confirmKey=null;render();break;
+    case 'auto-clear-yes':(async function(){var ids=S.trips.filter(function(t){return t.auto}).map(function(t){return t.id});try{for(var i=0;i<ids.length;i++)await store.del('trips',ids[i]);await autoSave({on:false,upTo:''});S.confirmKey=null;toast(ids.length+' order otomatis dihapus, autopilot dimatikan')}catch(e){toast('Gagal menghapus: '+(e&&(e.message||e.code)||'coba lagi'),true)}queueRender()})();break;
   }
 });
 $('#plot').addEventListener('click',function(ev){
@@ -2629,7 +2778,7 @@ async function boot(){
   store.start(
     function(b){S.buses=b.sort(busSort);S.ready.buses=true;clearTimeout(slow);S.slow=false;onData()},
     function(t){S.trips=t;S.ready.trips=true;onData()},
-    function(rows){var a=rows.find(function(r){return r.id==='app'});if(a){S.settings=Object.assign({},a);delete S.settings.id;if(+a.gapHours>=0)S.gap=+a.gapHours}onData()},
+    function(rows){var a=rows.find(function(r){return r.id==='app'});S.setLoaded=true;if(a){S.settings=Object.assign({},a);delete S.settings.id;if(+a.gapHours>=0)S.gap=+a.gapHours}onData()},
     function(e){S.error=e;render()}
   );
   render();
