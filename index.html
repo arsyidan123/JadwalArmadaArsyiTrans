@@ -481,11 +481,8 @@ button.code{cursor:pointer;font:inherit}
   <div class="sheet-head"><h2 id="sn-title">Nota sewa bus</h2><button type="button" class="btn ghost sm" id="nota-close">Tutup</button></div>
   <div class="sheet-body">
     <div class="nota-edit">
-      <div class="fld"><label for="n-usaha">Nama usaha</label><input id="n-usaha" type="text"></div>
-      <div class="fld"><label for="n-telp">Telepon</label><input id="n-telp" type="text" placeholder="08xx xxxx xxxx"></div>
-      <div class="fld full"><label for="n-alamat">Alamat</label><input id="n-alamat" type="text"></div>
-      <div class="fld"><label for="n-rek">Rekening pembayaran</label><input id="n-rek" type="text" placeholder="mis. BCA 1234567890 a.n. ..."></div>
-      <div class="fld"><label for="n-dp">Uang muka / DP (Rp)</label><input id="n-dp" type="number" min="0" step="50000" inputmode="numeric"></div>
+      <div class="fld full"><label for="n-telp">Telepon / WA (tampil di kolom Hubungi Kami)</label><input id="n-telp" type="text" placeholder="08xx xxxx xxxx"></div>
+      <div class="fld full"><label for="n-pay">Riwayat pembayaran (satu baris per pembayaran: tanggal | metode | nominal)</label><textarea id="n-pay" rows="3" placeholder="2026-11-15 | Transfer | 5000000"></textarea></div>
       <div class="fld full"><label for="n-terms">Syarat dan ketentuan (satu poin per baris)</label><textarea id="n-terms"></textarea></div>
     </div>
     <div class="nota" id="nota-doc"></div>
@@ -2336,45 +2333,77 @@ function terbilang(n){
   }
   var t=n>0?f(Math.round(n)):'nol';return t.charAt(0).toUpperCase()+t.slice(1)+' rupiah';
 }
-var NMODE='nota',NOTA=null,NOTA_TERMS=['Harga sudah termasuk BBM, driver dan kernet; belum termasuk tol, parkir, tiket wisata, penyeberangan, dan tip kru.','Untuk perjalanan menginap, makan dan penginapan kru ditanggung penyewa.','Masa sewa berakhir pada jam pulang yang tertera; kelebihan waktu dikenai biaya overtime sesuai kesepakatan.','Sisa pembayaran dilunasi paling lambat sebelum bus berangkat.','Pembatalan sepihak oleh penyewa menyebabkan uang muka tidak dapat dikembalikan.','Jumlah penumpang tidak melebihi kapasitas seat; penyewa bertanggung jawab atas kerusakan atau kehilangan akibat kelalaian rombongan.'];
+var CO={name:'Arsyi Trans',pt:'PT Arsyidan Suhaeli Transportasi',pusat:'Jl. Perintis Kemerdekaan, Cilacap',cabang:'Jl. Raya Kalisabuk, Cilacap',bank:'MANDIRI',rek:'90034-4678-0857',an:'PT Arsyidan Suhaeli Transportasi'};
+function notaProf(){var o={};try{o=JSON.parse(lsGet('nota-prof2')||'null')||{}}catch(e){}if(o.t==null){try{o.t=(JSON.parse(lsGet('nota-prof')||'{}')||{}).t||''}catch(e){o.t=''}}return o}
+var NMODE='nota',NOTA=null,NOTA_TERMS=['Uang Muka (DP): dibayarkan saat pemesanan untuk mengunci unit dan tanggal; sisa pembayaran dilunasi sebelum bus berangkat.','Kebijakan Pembatalan: apabila terjadi pembatalan secara sepihak oleh penyewa, maka uang muka tidak dapat dikembalikan (non-refundable).','Pengecualian Biaya: harga sewa sudah termasuk BBM dan crew, tetapi tidak mencakup biaya tol, tiket parkir, tiket wisata, penyeberangan, serta tip untuk kru (pengemudi dan asisten).','Perubahan Armada: kami berhak melakukan penyesuaian atau penggantian unit jika kendala operasional tidak terduga, dengan kelas armada yang setara.','Batas Waktu Pemakaian: masa sewa berakhir pada jam pulang yang tertera; kelebihan waktu dikenai biaya overtime sesuai kesepakatan.','Kapasitas Penumpang: jumlah penumpang harus sesuai kapasitas seat.','Rute Perjalanan: penambahan rute atau titik baru di luar order dikenakan biaya tambahan sesuai kesepakatan.'];
 function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 function longDay(s){var p=parts(toDay(s));return DAYN[new Date(p.y,p.m,p.d).getDay()]+', '+p.d+' '+MONTHS[p.m]+' '+p.y}
+var KW_CSS='.nota .kw{font:12px/1.4 Arial,Helvetica,sans-serif;color:#1a2433;background:#f7f7f4;margin:-22px;padding:0 0 0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.nota .kw *{box-sizing:border-box}.nota .kw table{border-collapse:collapse;width:100%;margin:0}.nota .kw td,.nota .kw th{border:0;padding:0;text-align:left;vertical-align:middle;background:none}'
++'.kw .k-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-top:3px solid #5b8fc9}.kw .k-hl{display:flex;gap:10px;padding:14px 16px 6px;align-items:center}.kw .k-hl svg{flex:none;width:64px;height:64px}.kw .k-hl h1{font-size:22px;margin:0;color:#0f3470;letter-spacing:.01em;line-height:1.1}.kw .k-hl small{display:block;color:#0f3470;font-style:italic;font-weight:700;font-size:11px}.kw .k-hl em{display:block;color:#33445f;font-size:10px;font-weight:700;margin-top:2px;font-style:normal}'
++'.kw .k-hr{background:#0f3470;color:#fff;text-align:center;padding:16px 28px 18px;min-width:210px;border-radius:0 0 0 26px}.kw .k-hr b{display:block;font-size:20px;letter-spacing:.04em}.kw .k-hr small{display:block;font-size:10px;color:#c5d3ea;margin-top:6px}.kw .k-hr strong{display:block;font-size:22px;color:#cfe0ff;letter-spacing:.03em}'
++'.kw .k-ad{display:flex;justify-content:space-between;gap:12px;padding:6px 16px 8px;font-size:10px;color:#33445f}.kw .k-ad div{flex:1}.kw .k-ad b{display:block;color:#1a2433}.kw .k-dt{text-align:right;padding:0 16px;font-size:10px;color:#33445f}.kw .k-dt b{color:#1a2433}'
++'.kw .k-bg{display:block;margin:6px 16px 8px auto;width:max-content;font-weight:800;font-size:17px;letter-spacing:.05em;color:#fff;padding:5px 22px;border-radius:4px;background:#1f8f4e}.kw .k-bg.dp{background:#c9831a}.kw .k-bg.no{background:#a63d3d}'
++'.kw .k-rule{border-top:1px solid #cfd3da;margin:0 16px 10px}.kw .k-cols{display:flex;gap:14px;padding:0 16px}.kw .k-cols>div{flex:1}'
++'.kw .k-pill{display:inline-block;background:#0f3470;color:#fff;font-weight:700;font-size:10px;letter-spacing:.02em;padding:4px 10px;border-radius:5px 5px 0 0}.kw .k-box{border:1px solid #cfd3da;border-radius:0 8px 8px 8px;background:#f3f3f0;padding:8px 10px}'
++'.kw .kvt td{padding:3px 0;font-size:11.5px;color:#33445f}.kw .kvt td:first-child{width:36%}.kw .k-box td+td{color:#111;font-weight:600}.kw .kvt td+td:before{content:": "}.kw .kvt.k-am td+td:before{content:""}.kw .kvt.k-am td+td{text-align:right}'
++'.kw .k-pill.s{font-size:9px;margin-top:8px}.kw .k-hist{width:100%;border:1px solid #cfd3da;margin:0}.kw .k-hist th{font-size:9.5px;font-weight:800;padding:3px 6px;border-bottom:1px solid #cfd3da;background:#ececec}.kw .k-hist td{font-size:10px;padding:3px 6px;border-bottom:1px solid #dde0e5}.kw .k-hist .r{text-align:right}'
++'.kw .k-bar{display:flex;justify-content:space-between;background:#0f3470;color:#fff;font-weight:700;font-size:11.5px;padding:6px 10px;border-radius:4px;margin-top:6px}'
++'.kw .k-dtl{padding:10px 16px 0}.kw .k-dtl table{border:1px solid #cfd3da;border-radius:6px}.kw .k-dtl th{background:#ececec;font-size:9.5px;font-weight:800;text-align:center;padding:7px 4px;border:1px solid #cfd3da}.kw .k-dtl td{font-size:10.5px;text-align:center;padding:9px 5px;border:1px solid #cfd3da}.kw .k-dtl .k-ok{color:#1f8f4e;font-weight:800;font-size:15px}'
++'.kw .k-tb{margin:8px 16px 0;border:1px solid #cfd3da;border-radius:6px;padding:7px 10px;font-size:11px;color:#33445f}.kw .k-tb b{color:#111;text-transform:uppercase}'
++'.kw .k-xt{margin:6px 16px 0;font-size:10.5px;color:#33445f}.kw .k-xt b{color:#111}'
++'.kw .k-lo{display:flex;justify-content:space-between;gap:20px;padding:12px 16px 14px;align-items:flex-start}.kw .k-cn{flex:1;font-size:8.8px;color:#1a2433;line-height:1.4}.kw .k-cn h4{margin:0 0 3px;font-size:9.5px}.kw .k-cn ol{margin:0;padding-left:14px}.kw .k-sg{width:210px;text-align:center;font-size:10px;font-weight:700;color:#33445f}.kw .k-sg i{display:block;height:78px;border-bottom:1px dashed #9aa3b2}.kw .k-sg span{display:block;font-weight:400;margin-top:4px}'
++'.kw .k-ft{background:#0f3470;color:#fff;display:flex;justify-content:space-between;gap:14px;padding:12px 18px;border-top:3px solid #5b8fc9}.kw .k-ft small{display:block;color:#9fb7e0;font-size:9.5px;font-weight:700;letter-spacing:.04em;margin-bottom:3px}.kw .k-ft b{font-size:11px}.kw .k-ft div:last-child{text-align:right}';
+(function(){var st=document.createElement('style');st.textContent=KW_CSS;document.head.appendChild(st);DOC_CSS+=KW_CSS})();
+function payParse(txt){
+  return String(txt||'').split('\n').map(function(l){
+    var p=l.split('|').map(function(x){return x.trim()});if(!l.trim())return null;
+    var dm=p[0].match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/),dm2=p[0].match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/),y,m,d;
+    if(dm){y=+dm[1];m=+dm[2]-1;d=+dm[3]}else if(dm2){y=+dm2[3];m=+dm2[2]-1;d=+dm2[1]}else return null;
+    var n=parseInt(String(p[2]||'').replace(/[^0-9]/g,''),10);if(!(n>0)||m<0||m>11||d<1||d>31)return null;
+    return {y:y,m:m,d:d,met:(p[1]||'Transfer'),n:n};
+  }).filter(Boolean);
+}
 function notaHtml(t){
-  var u=$('#n-usaha').value.trim()||'Arsyi Trans',al=$('#n-alamat').value.trim(),tl=$('#n-telp').value.trim(),rk=$('#n-rek').value.trim(),dp=Math.max(0,+$('#n-dp').value||0),
+  var u=CO.name,tl=$('#n-telp').value.trim(),pays=payParse($('#n-pay').value),
       terms=$('#n-terms').value.split('\n').map(function(x){return x.trim()}).filter(Boolean),
-      r=routeOf(t),e=estimate(t),total=priceOf(t),days=Math.max(1,toDay(t.end)-toDay(t.start)+1),sisa=Math.max(0,total-dp),now=new Date(),
-      no='NS/'+t.start.slice(0,4)+t.start.slice(5,7)+'/'+(1000+hash(String(t.id))%9000),
-      units=(t.buses||[]).map(function(c){var b=busByCode(c);return esc(c)+(b&&(b.model||b.seats)?' ('+esc([b.model,b.seats?b.seats+' kursi':''].filter(Boolean).join(', '))+')':'')}).join('<br>'),
-      need=[+t.needBig>0?t.needBig+' big bus'+(t.seatBig&&SEAT[t.seatBig]?' ('+SEAT[t.seatBig]+')':''):'',+t.needMed>0?t.needMed+' medium bus':''].filter(Boolean).join(', ')||'—',
-      kv=function(a,b){return '<tr><td>'+a+'</td><td>'+b+'</td></tr>'},rows='';
-  if(!t.priceManual&&e&&(e.nb||e.nm)){
-    if(e.nb)rows+='<tr><td>Sewa big bus pariwisata'+(e.inap?' (menginap)':' (pulang pergi)')+'</td><td class="r">'+e.nb+'</td><td class="r">'+(e.inap?e.days:1)+'</td><td class="r">'+rupiah(e.big)+'</td><td class="r">'+rupiah(e.nb*e.big*(e.inap?e.days:1))+'</td></tr>';
-    if(e.np)rows+='<tr><td>Tambahan kategori Premium'+(e.inap?' (menginap)':' (pulang pergi)')+'</td><td class="r">'+e.np+'</td><td class="r">'+(e.inap?e.days:1)+'</td><td class="r">'+rupiah(PREM_ADD)+'</td><td class="r">'+rupiah(e.np*PREM_ADD*(e.inap?e.days:1))+'</td></tr>';
-    if(e.nm)rows+='<tr><td>Sewa medium bus pariwisata'+(e.inap?' (menginap)':' (pulang pergi)')+'</td><td class="r">'+e.nm+'</td><td class="r">'+(e.inap?e.days:1)+'</td><td class="r">'+rupiah(e.med)+'</td><td class="r">'+rupiah(e.nm*e.med*(e.inap?e.days:1))+'</td></tr>';
-  }else rows='<tr><td>Sewa bus pariwisata (harga kesepakatan)</td><td class="r">'+((+t.needBig||0)+(+t.needMed||0)||'—')+'</td><td class="r">'+days+'</td><td class="r">—</td><td class="r">'+rupiah(total)+'</td></tr>';
-  return '<div class="nh"><div><h1>'+esc(u.toUpperCase())+'</h1><small>Persewaan Bus Pariwisata</small>'+(al?'<small>'+esc(al)+'</small>':'')+(tl?'<small>Telp/WA: '+esc(tl)+'</small>':'')+'</div>'
-   +'<div style="text-align:right"><small>No. Nota</small><b>'+no+'</b><small>Tanggal terbit</small><b>'+now.getDate()+' '+MONTHS[now.getMonth()]+' '+now.getFullYear()+'</b></div></div>'
-   +'<div class="nt">NOTA SEWA BUS PARIWISATA</div><div class="nm">'+(t.status==='tentatif'?'Pesanan belum dikonfirmasi':t.status==='batal'?'Pesanan dibatalkan':'Pesanan terkonfirmasi')+'</div>'
-   +'<table class="kv"><tbody>'+kv('Penyewa',esc(t.customer))+(t.phone?kv('Telepon / WA',esc(t.phone)):'')
-   +kv('Berangkat',esc(longDay(t.start))+(t.startTime?' · pukul '+esc(t.startTime)+' WIB':''))+kv('Pulang (batas sewa)',esc(longDay(t.end))+(t.endTime?' · pukul '+esc(t.endTime)+' WIB':''))+kv('Lama sewa',days+' hari'+(nightsOf(t)>0?' ('+nightsOf(t)+' malam di penginapan)':' (pulang pergi)'))
-   +kv('Titik penjemputan',esc(t.pickup||'Cilacap'))+kv('Tujuan',esc(t.destination||'—'))
-   +(r&&r.tour?kv('Rencana wisata',esc(r.tour.names.join(' → '))):'')+kv('Kebutuhan armada',esc(need))+(units?kv('Unit bertugas',units):'')+'</tbody></table>'
-   +'<table><thead><tr><th>Keterangan</th><th class="r">Unit</th><th class="r">Hari</th><th class="r">Tarif</th><th class="r">Jumlah</th></tr></thead><tbody>'+rows
-   +'<tr class="tot"><td colspan="4" class="r">Total</td><td class="r">'+rupiah(total)+'</td></tr>'
-   +(dp?'<tr><td colspan="4" class="r">Uang muka (DP)</td><td class="r">'+rupiah(dp)+'</td></tr>':'')
-   +'<tr class="tot"><td colspan="4" class="r">'+(dp?'Sisa pembayaran':'Yang harus dibayar')+'</td><td class="r">'+rupiah(sisa)+'</td></tr></tbody></table>'
-   +'<p><i>Terbilang: '+esc(terbilang(sisa))+'</i></p>'+(rk?'<p>Pembayaran ke: <b>'+esc(rk)+'</b></p>':'')
-   +(t.note?'<p>Catatan: '+esc(t.note)+'</p>':'')
-   +(terms.length?'<b>Syarat dan ketentuan</b><ol>'+terms.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ol>':'')
-   +'<div class="sig"><div>Penyewa<i></i>( '+esc(t.customer)+' )</div><div>Hormat kami,<br>'+esc(u)+'<i></i>( ................ )</div></div>';
+      r=routeOf(t),e=estimate(t),total=priceOf(t),days=Math.max(1,toDay(t.end)-toDay(t.start)+1),now=new Date(),
+      paid=pays.reduce(function(a,p){return a+p.n},0),sisa=Math.max(0,total-paid),
+      no=1000+hash(String(t.id))%9000,
+      nUnit=(+t.needBig||0)+(+t.needMed||0)||(t.buses||[]).length||1,
+      seat=+t.needBig>0&&t.seatBig&&SEAT[t.seatBig]?SEAT[t.seatBig].toUpperCase():(+t.needBig>0?'BIG BUS':'MEDIUM BUS'),
+      ds=function(p){return p.d+' '+MONTHS[p.m].toUpperCase()+' '+p.y},
+      st=total>0&&paid>=total?['LUNAS','']:(paid>0?['DP / BELUM LUNAS','dp']:['BELUM BAYAR','no']),
+      units=(t.buses||[]).join(', '),
+      stIcon=t.status==='batal'?'<span style="color:#a63d3d;font-weight:800">BATAL</span>':(t.status==='tentatif'?'<span style="color:#c9831a;font-weight:800">TENTATIF</span>':'<span class="k-ok">&#10003;</span>'),
+      logo='<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="#fff" stroke="#0f3470" stroke-width="4"/><path d="M12 40h40v-12a5 5 0 0 0-5-5H17a5 5 0 0 0-5 5z" fill="#0f3470"/><rect x="16" y="27" width="9" height="7" fill="#fff"/><rect x="28" y="27" width="9" height="7" fill="#fff"/><rect x="40" y="27" width="8" height="7" fill="#fff"/><circle cx="21" cy="42" r="4.5" fill="#d99a1b" stroke="#fff" stroke-width="2"/><circle cx="43" cy="42" r="4.5" fill="#d99a1b" stroke="#fff" stroke-width="2"/></svg>',
+      hist=pays.length?pays.map(function(p,i){return '<tr><td>'+(i+1)+'</td><td>'+ds(p)+'</td><td>'+esc(String(p.met).toUpperCase())+'</td><td class="r">'+rupiah(p.n)+'</td></tr>'}).join(''):'<tr><td colspan="4" style="text-align:center;color:#777">Belum ada pembayaran</td></tr>',
+      sm=parts(toDay(t.start)),
+      perUnit=Math.round(total/nUnit);
+  return '<div class="kw"><div class="k-hd"><div class="k-hl">'+logo+'<div><h1>'+esc(u.toUpperCase())+'</h1><small>'+esc(CO.pt.toUpperCase())+'</small><em>BUS PARIWISATA'+((t.buses||[]).some(function(k){return isPrem(busByCode(k))})?' | PREMIUM':'')+'</em></div></div>'
+   +'<div class="k-hr"><b>KWITANSI</b><small>NO. KWITANSI:</small><strong>'+no+'</strong></div></div>'
+   +'<div class="k-ad"><div><b>KANTOR PUSAT &amp; GARASI:</b>'+esc(CO.pusat.toUpperCase())+'</div><div><b>KANTOR CABANG:</b>'+esc(CO.cabang.toUpperCase())+'</div><div class="k-dt" style="padding:0"><span>TANGGAL: <b>'+now.getDate()+' '+MONTHS[now.getMonth()].toUpperCase()+' '+now.getFullYear()+'</b></span></div></div>'
+   +'<span class="k-bg '+st[1]+'">'+st[0]+'</span><div class="k-rule"></div>'
+   +'<div class="k-cols"><div><span class="k-pill">INFORMASI PELANGGAN</span><div class="k-box"><table class="kvt"><tbody><tr><td>TERIMA DARI</td><td>'+esc(String(t.customer||'').toUpperCase())+'</td></tr><tr><td>NO. HP</td><td>'+esc(t.phone||'-')+'</td></tr><tr><td>ALAMAT</td><td>'+esc(String(t.pickup||'Cilacap').toUpperCase())+'</td></tr></tbody></table></div></div>'
+   +'<div><span class="k-pill">RINGKASAN PEMBAYARAN</span><div class="k-box"><table class="kvt k-am"><tbody><tr><td>HARGA PER UNIT</td><td>'+rupiah(perUnit)+'</td></tr>'
+   +(e&&e.np&&!t.priceManual?'<tr><td>SUDAH TERMASUK PREMIUM</td><td>'+e.np+' unit × '+rupiah(PREM_ADD)+(e.inap?' × '+e.days+' hari':'')+'</td></tr>':'')
+   +'<tr><td>SUB TOTAL</td><td>'+rupiah(total)+'</td></tr><tr><td>TOTAL PEMBAYARAN</td><td><b>'+rupiah(total)+'</b></td></tr></tbody></table>'
+   +'<span class="k-pill k-s">RIWAYAT PEMBAYARAN</span><table class="k-hist"><thead><tr><th style="width:26px">NO</th><th>TANGGAL</th><th>METODE</th><th class="r">NOMINAL</th></tr></thead><tbody>'+hist+'</tbody></table>'
+   +'<div class="k-bar"><span>TOTAL TERBAYAR</span><span>'+rupiah(paid)+'</span></div><div class="k-bar"><span>SISA PEMBAYARAN</span><span>'+rupiah(sisa)+'</span></div></div></div></div>'
+   +'<div class="k-dtl"><span class="k-pill">DETAIL PENYEWAAN</span><table><thead><tr><th>PENJEMPUTAN</th><th>TANGGAL JEMPUT</th><th>WAKTU STANDBY</th><th>TUJUAN</th><th>DURASI</th><th>JML UNIT</th><th>ARMADA</th><th>STATUS</th></tr></thead><tbody><tr>'
+   +'<td>'+esc(String(t.pickup||'Cilacap').toUpperCase())+'</td><td>'+sm.d+' '+MONTHS[sm.m].toUpperCase()+' '+sm.y+'</td><td>'+esc(String(t.startTime||'-').replace(':','.'))+'</td><td>'+esc(String(t.destination||'-').toUpperCase())+'</td><td>'+days+' HARI</td><td>'+nUnit+' UNIT</td><td><b>'+esc(seat)+'</b></td><td>'+stIcon+'</td></tr></tbody></table></div>'
+   +'<div class="k-tb">TERBILANG: <b>'+esc(terbilang(total))+'</b></div>'
+   +'<div class="k-xt"><b>Pulang:</b> '+esc(longDay(t.end))+(t.endTime?', pukul '+esc(String(t.endTime).replace(':','.'))+' WIB':'')+(units?' &nbsp;·&nbsp; <b>Unit:</b> '+esc(units):'')+(r&&r.tour?' &nbsp;·&nbsp; <b>Rencana wisata:</b> '+esc(r.tour.names.join(' → ')):'')+(t.note?'<br><b>Catatan order:</b> '+esc(t.note):'')+'</div>'
+   +'<div class="k-lo"><div class="k-cn">'+(terms.length?'<h4>CATATAN PENYEWA:</h4><ol>'+terms.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ol>':'')+'</div>'
+   +'<div class="k-sg">MARKETING '+esc(u.toUpperCase())+'<i></i><span>( TANDA TANGAN &amp; CAP )</span></div></div>'
+   +'<div class="k-ft"><div><small>REKENING PEMBAYARAN</small><b>BANK '+esc(CO.bank)+': '+esc(CO.rek)+'</b><br><b style="font-weight:400">(AN. '+esc(CO.an.toUpperCase())+')</b></div><div><small>HUBUNGI KAMI</small><b>'+esc(tl?'TELP/WA: '+tl:'-')+'</b></div></div></div>';
 }
 function notaRender(){if(NOTA)$('#nota-doc').innerHTML=notaHtml(NOTA)}
 function openNota(t,mode){
   NOTA=t;NMODE='nota';$('#sn-title').textContent='Nota sewa bus';
-  var pr={};try{pr=JSON.parse(lsGet('nota-prof')||'{}')}catch(e){}
-  $('#n-usaha').value=pr.u||'Arsyi Trans';$('#n-alamat').value=pr.a||'Cilacap, Jawa Tengah';$('#n-telp').value=pr.t||'';$('#n-rek').value=pr.r||'';
-  $('#n-terms').value=pr.k||NOTA_TERMS.join('\n');$('#n-dp').value=lsGet('nota-dp-'+t.id)||'';
+  var pr=notaProf();
+  $('#n-telp').value=pr.t||'';
+  $('#n-terms').value=pr.k||NOTA_TERMS.join('\n');(function(){var v=lsGet('nota-pay-'+t.id),o=lsGet('nota-dp-'+t.id);if(v==null&&o&&+o>0){var n=new Date();v=n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate())+' | Transfer | '+(+o)}$('#n-pay').value=v||''})();
   notaRender();
   $('#scrim').hidden=false;$('#sheet-nota').hidden=false;document.body.classList.add('lock');
 }
@@ -2430,8 +2459,7 @@ function spjPage(t,code,i,n,pr){
   return h;
 }
 function spjHtml(t){
-  var pr={};try{pr=JSON.parse(lsGet('nota-prof')||'{}')}catch(e){}
-  pr.u=pr.u||'Arsyi Trans';pr.a=pr.a||'Cilacap, Jawa Tengah';
+  var pr={u:CO.name,a:CO.pusat+' (garasi & kantor pusat)'};
   var codes=(t.buses||[]).slice();
   if(!codes.length)return '<p class="note">Order ini belum punya unit. SPJ dibuat setelah unit dipilih, jadi pilih unit dulu lalu simpan order.</p>'+spjPage(t,null,0,1,pr);
   return codes.map(function(c,i){return spjPage(t,c,i,codes.length,pr)}).join('');
@@ -2462,9 +2490,9 @@ $('#nota-copy').addEventListener('click',function(){
   var tx=$('#nota-doc').innerText;
   try{navigator.clipboard.writeText(tx).then(function(){toast('Nota disalin')},function(){toast('Gagal menyalin')})}catch(e){toast('Gagal menyalin')}
 });
-['#n-usaha','#n-alamat','#n-telp','#n-rek','#n-terms','#n-dp'].forEach(function(s){$(s).addEventListener('input',function(){
-  lsSet('nota-prof',JSON.stringify({u:$('#n-usaha').value,a:$('#n-alamat').value,t:$('#n-telp').value,r:$('#n-rek').value,k:$('#n-terms').value}));
-  if(NOTA)lsSet('nota-dp-'+NOTA.id,$('#n-dp').value);notaRender();
+['#n-telp','#n-terms','#n-pay'].forEach(function(s){$(s).addEventListener('input',function(){
+  lsSet('nota-prof2',JSON.stringify({t:$('#n-telp').value,k:$('#n-terms').value}));
+  if(NOTA)lsSet('nota-pay-'+NOTA.id,$('#n-pay').value);notaRender();
 })});
 var FULLW=1100,MINW=30,LAST=null,SAT=null,SATK='',SQ=0,MP=null,MOVED=false,M=document.createElement('canvas');
 var PAL=[[30,62,26],[56,92,38],[104,112,60],[150,128,92]];
