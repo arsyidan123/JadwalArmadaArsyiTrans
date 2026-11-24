@@ -2249,8 +2249,25 @@ function autoPools(){
   LOCS.forEach(function(l){if(l.kec)kec[l.kec]=1});
   return {sc:sc,bi:bi,kec:Object.keys(kec)};
 }
+var MI_N=["Ma'arif NU",'Muhammadiyah','Al-Ikhlas','Nurul Huda','Miftahul Ulum','Darul Falah','Al-Hidayah',"Mathla'ul Anwar"];
+var MI_ZR=[['Ziarah Wali 4',20],['Ziarah Jawa Tengah',16],['Ziarah Wali 5',14],['Ziarah Wali 9',20],['Sunan Kalijaga',10],['Sunan Kudus',10],['Cirebon',10]];
+var MI_COMBO={'Yogyakarta':['Sunan Pandanaran'],'Borobudur':['Sunan Pandanaran'],'Solo':['Sunan Pandanaran'],'Semarang':['Sunan Kalijaga','Sunan Kudus'],'Jakarta':['Sunan Gunung Jati','Luar Batang'],'Tegal':['Sunan Gunung Jati'],'Surabaya':['Sunan Kalijaga','Sunan Kudus','Sunan Giri','Sunan Ampel'],'Malang':['Sunan Kalijaga','Sunan Kudus','Sunan Giri','Sunan Ampel'],'Bromo':['Sunan Kalijaga','Sunan Kudus','Sunan Giri','Sunan Ampel'],'Bali':['Sunan Kalijaga','Sunan Kudus','Sunan Giri','Sunan Ampel']};
+/* MI: bisa full study tour, full ziarah, atau study tour dengan 1-2 ziarah yang searah rute. Nama MI simulasi (belum ada data asli MI Cilacap). */
+function autoMiDest(r){
+  var m=r();
+  if(m<.4)return aW(r,AN_DEST.sekolah);
+  if(m<.7)return aW(r,MI_ZR);
+  var study=aW(r,AN_DEST.sekolah.filter(function(x){return MI_COMBO[x[0]]})),pool=MI_COMBO[study],n=Math.min(pool.length,r()<.4?2:1),idx=[],i;
+  while(idx.length<n){i=Math.floor(r()*pool.length);if(idx.indexOf(i)<0)idx.push(i)}
+  idx.sort(function(a,b){return a-b});
+  return idx.map(function(k){return pool[k]}).concat([study]).join(', ');
+}
+function autoSchoolPick(r,P,jj,kc){
+  if(jj==='MI')return {j:'MI',n:'MI '+aPick(r,MI_N)+' '+aInt(r,1,3)+' '+kc};
+  return aPick(r,P.sc.filter(function(l){return l.j===jj}));
+}
 function autoSchoolCust(r,sl,P){
-  var via=sl.j==='SMP'||sl.j==='SMK'||(sl.j==='SD'&&r()<.5);
+  var via=sl.j==='SMP'||sl.j==='SMK'||sl.j==='SMA'||((sl.j==='SD'||sl.j==='MI')&&r()<.5);
   if(via){var bl=aPick(r,P.bi);return {cust:bl.n,pick:sl.n,note:'Rombongan '+sl.n+' (karya wisata) lewat biro '+bl.n}}
   return {cust:sl.n+' (Karya Wisata)',pick:sl.n,note:''};
 }
@@ -2258,7 +2275,7 @@ function autoOrdersFor(D,cfg,P){
   var r=mkRng('arsyi|'+D),dw=parts(D),rate=AUTO_LV[cfg.level]*AUTO_DOW[dw.w]*AUTO_MON[dw.m],n=Math.floor(rate+r()),out=[],k;
   for(k=0;k<n;k++){
     var kind=aW(r,AN_KIND),dest=aW(r,AN_DEST[kind]),cust,pick,nb=0,nm=0,seat='',tag=kind,who=aPick(r,AN_F)+' '+aPick(r,AN_L),kc=aPick(r,P.kec),mj=aPick(r,AN_MASJID),note='';
-    if(kind==='sekolah'){var jj=aW(r,[['SD',40],['SMP',25],['SMA',17],['SMK',18]]),pl=P.sc.filter(function(l){return l.j===jj}),sl=aPick(r,pl),sc=autoSchoolCust(r,sl,P);cust=sc.cust;pick=sc.pick;note=sc.note;nb=aW(r,[[1,22],[2,34],[3,26],[4,18]]);nm=r()<.15?1:0;seat=aPick(r,['s50','s50','s48'])}
+    if(kind==='sekolah'){var jj=aW(r,[['SD',34],['MI',14],['SMP',22],['SMA',15],['SMK',15]]),sl=autoSchoolPick(r,P,jj,kc),sc=autoSchoolCust(r,sl,P);cust=sc.cust;pick=sc.pick;note=sc.note;if(jj==='MI'){dest=autoMiDest(r);pick=kc}nb=aW(r,[[1,22],[2,34],[3,26],[4,18]]);nm=r()<.15?1:0;seat=aPick(r,['s50','s50','s48'])}
     else if(kind==='keluarga'){var t=r();cust=t<.5?'Keluarga Bpk. '+who:t<.8?'Arisan '+aPick(r,['RT 03 RW 05','Dusun Krajan','Ibu-Ibu PKK','Warga Perum Griya'])+' '+kc:'Reuni Alumni '+aPick(r,['SMAN 1 ','SMKN 1 ','SMPN 2 '])+kc+' '+aInt(r,1995,2015);pick=kc;if(r()<.5){nb=1}else{nm=1}if(r()<.2)nb=2;seat=aPick(r,['lr35','s48','s48'])}
     else if(kind==='religi'){cust=aPick(r,['Majelis Taklim ','Pengajian Masjid ','Jamaah Yasinan Masjid '])+mj+' '+kc;pick=kc;nb=aW(r,[[1,45],[2,35],[3,20]]);nm=r()<.2?1:0;seat=aPick(r,['s50','s48'])}
     else if(kind==='instansi'){cust=r()<.55?aPick(r,AN_ORG):aPick(r,['Karang Taruna Desa ','PKK Desa ','Perangkat Desa Kec. ','Puskesmas '])+kc;pick=r()<.5?'Cilacap':kc;nb=aW(r,[[1,55],[2,35],[3,10]]);if(r()<.2)nm=1;seat=aPick(r,['lr35','s48'])}
@@ -2337,9 +2354,9 @@ async function autoRun(force,quiet){
   try{
     var P0=autoPools(),mig=[];
     S.trips.forEach(function(t){
-      if(!t.auto||t.biroFix||!/ \(Karya Wisata\)$/.test(t.customer||''))return;
-      var sch=t.customer.replace(/ \(Karya Wisata\)$/,''),h=hash(t.id),via=/^(SMP|SMK)/.test(sch)||(/^SD/.test(sch)&&((h>>>5)%2===0)),c=Object.assign({},t);
-      c.biroFix=1;
+      if(!t.auto||t.biroFix===2||!/ \(Karya Wisata\)$/.test(t.customer||''))return;
+      var sch=t.customer.replace(/ \(Karya Wisata\)$/,''),h=hash(t.id),via=/^(SMP|SMK|SMA)/.test(sch)||(/^(SD|MI)/.test(sch)&&((h>>>5)%2===0)),c=Object.assign({},t);
+      c.biroFix=2;
       if(via&&P0.bi.length){var bl=P0.bi[h%P0.bi.length];c.customer=bl.n;c.note=('Rombongan '+sch+' (karya wisata) lewat biro '+bl.n+(t.note?'. '+t.note:''))}
       mig.push(c);
     });
@@ -2380,7 +2397,7 @@ function autoFillIdle(look,extra){
         var r=mkRng('idle|'+b.code+'|'+s0),o=null,t=null,tries;
         for(tries=0;tries<14&&!t;tries++){
           var kind=tries<10?aW(r,AN_KIND):'manten',dest=tries<10?aW(r,AN_DEST[kind]):aPick(r,['Purwokerto','Kebumen','Majenang','Sidareja','Kroya']),who=aPick(r,AN_F)+' '+aPick(r,AN_L),kc=aPick(r,P.kec),mj=aPick(r,AN_MASJID),cust,pick,seat='s48',note='';
-          if(kind==='sekolah'){var jj=aW(r,[['SD',40],['SMP',25],['SMA',17],['SMK',18]]),pl=P.sc.filter(function(l){return l.j===jj}),sl=aPick(r,pl),sc=autoSchoolCust(r,sl,P);cust=sc.cust;pick=sc.pick;note=sc.note;seat=aPick(r,['s50','s48'])}
+          if(kind==='sekolah'){var jj=aW(r,[['SD',34],['MI',14],['SMP',22],['SMA',15],['SMK',15]]),sl=autoSchoolPick(r,P,jj,kc),sc=autoSchoolCust(r,sl,P);cust=sc.cust;pick=sc.pick;note=sc.note;if(jj==='MI'){if(tries<10)dest=autoMiDest(r);pick=kc}seat=aPick(r,['s50','s48'])}
           else if(kind==='keluarga'){cust='Keluarga Bpk. '+who;pick=kc}
           else if(kind==='religi'){cust=aPick(r,['Majelis Taklim ','Pengajian Masjid '])+mj+' '+kc;pick=kc;seat='s50'}
           else if(kind==='instansi'){cust=aPick(r,AN_ORG);pick='Cilacap'}
