@@ -2192,55 +2192,99 @@ function finSum(a,b,cache){
   t.opCash=t.profit;t.invCash=t.invIn-t.invOut;t.finCash=t.finIn-t.finOut;t.net=t.opCash+t.invCash+t.finCash;
   return t;
 }
-function viewFin(){
+/* data laporan satu periode (dipakai PDF dan CSV; laporan tidak ditampilkan di aplikasi) */
+function finData(){
   var f=finGet(),py=parts(TODAY),y=S.finY||py.y,mo=S.finM==null?-1:S.finM,cache={},a=mo<0?y*12:y*12+mo,b=mo<0?y*12+11:a,
-      T=finSum(a,b,cache),op=ymParse(f.open.ym);if(op===null)op=ymOf(TODAY);
-  var pre=0,i;for(i=op;i<a;i++)pre+=finMonth(i,cache).net;
-  var before=a>op?(f.open.amt||0)+pre:(a===op?(f.open.amt||0):0),after=before+T.net;
-  if(a<op){before=0;after=T.net;}
-  var yrs=[py.y],c=function(l,v,s,cls){return '<div class="revc"><span>'+l+'</span><b'+(cls?' style="color:'+cls+'"':'')+'>'+rupiah(v)+'</b><span>'+s+'</span></div>'},
-      td=function(l,v,bold,ind){return '<tr><td'+(ind?' style="padding-left:'+(8+ind*14)+'px"':'')+'>'+(bold?'<b>'+l+'</b>':l)+'</td><td style="text-align:right;white-space:nowrap">'+(bold?'<b>'+(v<0?'('+rupiah(-v)+')':rupiah(v))+'</b>':(v<0?'('+rupiah(-v)+')':rupiah(v)))+'</td></tr>'},
-      neg=function(v){return v<0?'var(--danger,#c0392b)':''};
+      T=finSum(a,b,cache),op=ymParse(f.open.ym),i;if(op===null)op=ymOf(TODAY);
+  var pre=0;for(i=op;i<a;i++)pre+=finMonth(i,cache).net;
+  var before=a>op?(f.open.amt||0)+pre:(a===op?(f.open.amt||0):0);if(a<op)before=0;
+  var months=[];for(i=0;i<12;i++)months.push(finMonth(y*12+i,cache));
+  var orders=S.trips.filter(function(t){return !t.example&&t.start&&(t.status==='pasti'||t.status==='selesai')&&ymOf(toDay(t.start))>=a&&ymOf(toDay(t.start))<=b}).sort(function(p,q){return toDay(p.start)-toDay(q.start)});
+  var txs=f.tx.filter(function(x){var v=x.date?ymOf(toDay(x.date)):-1;return v>=a&&v<=b}).sort(function(p,q){return p.date.localeCompare(q.date)});
+  return {f:f,y:y,mo:mo,a:a,b:b,T:T,before:before,after:before+T.net,months:months,orders:orders,txs:txs,per:mo<0?'Tahun '+y:MONTHS[mo]+' '+y};
+}
+function viewFin(){
+  var f=finGet(),py=parts(TODAY),y=S.finY||py.y,mo=S.finM==null?-1:S.finM,yrs=[py.y],D=finData(),per=D.per,nowM=ymStr(ymOf(TODAY));
   S.trips.forEach(function(t){if(t.start){var yy=parts(toDay(t.start)).y;if(yrs.indexOf(yy)<0)yrs.push(yy)}});if(yrs.indexOf(y)<0)yrs.push(y);yrs.sort();
-  var per=mo<0?'Tahun '+y:MONTHS[mo]+' '+y;
-  var lr='<table><tbody>'+td('Pendapatan jasa sewa bus ('+T.orders+' order)',T.inc,0,0)+(T.opIn?td('Pendapatan lain',T.opIn,0,0):'')+td('Total pendapatan',T.inc+T.opIn,1)
-    +td('Solar (10% dari sewa)',-T.solar,0,1)+td('Gaji supir dan kernet (10% dari sewa)',-T.crew,0,1)+td('Laba kotor',T.gross,1)
-    +FIN_C.opOut.map(function(c){var v=T.exp[c[0]]||0;return v||c[0]==='perawatan'?td(c[1]+(c[0]==='perawatan'&&T.mAuto?' <span class="hint">(termasuk estimasi '+rupiah(T.mAuto)+' dari ±'+Math.round(T.km).toLocaleString('id-ID')+' km)</span>':''),-v,0,1):''}).join('')
-    +td('Total beban operasional',-T.expT,1)+'<tr><td><b>Laba (rugi) bersih</b><br><span class="hint">sebelum pajak penghasilan dan penyusutan</span></td><td style="text-align:right;color:'+neg(T.profit)+'"><b>'+rupiah(T.profit)+'</b></td></tr></tbody></table>';
-  var ak='<table><tbody><tr><td colspan="2"><b>Aktivitas operasi</b></td></tr>'+td('Penerimaan dari pelanggan',T.inc+T.opIn,0,1)+td('Pembayaran solar dan gaji crew',-(T.solar+T.crew),0,1)
-    +FIN_C.opOut.map(function(c){var v=T.exp[c[0]]||0;return v?td('Pembayaran: '+c[1],-v,0,1):''}).join('')+td('Kas bersih dari aktivitas operasi',T.opCash,1)
-    +'<tr><td colspan="2"><b>Aktivitas investasi</b></td></tr>'+td('Penjualan aset',T.invIn,0,1)+td('Pembelian bus / aset',-T.invOut,0,1)+td('Kas bersih dari aktivitas investasi',T.invCash,1)
-    +'<tr><td colspan="2"><b>Aktivitas pendanaan</b></td></tr>'+td('Setoran modal dan pinjaman diterima',T.finIn,0,1)+td('Angsuran dan penarikan pemilik',-T.finOut,0,1)+td('Kas bersih dari aktivitas pendanaan',T.finCash,1)
-    +td('Kenaikan (penurunan) kas bersih',T.net,1)+td('Saldo kas awal periode',before,0)+td('Saldo kas akhir periode',after,1)+'</tbody></table>';
-  var bm=[],mx=1;for(i=0;i<12;i++){var m=finMonth(y*12+i,cache);bm.push(m);mx=Math.max(mx,Math.abs(m.net),m.inc)}
-  var bars=bm.map(function(m,i){return '<div class="revrow"><span>'+MON3[i]+'</span><div class="revbar"><i style="width:'+Math.round(Math.abs(m.net)/mx*100)+'%'+(m.net<0?';background:var(--danger,#c0392b)':'')+'"></i></div><span>kas '+(m.net<0?'-':'')+rupiah(Math.abs(m.net))+' · laba '+rupiah(m.profit)+'</span></div>'}).join('');
   var catOpts=function(arr){return arr.map(function(c){return '<option value="'+c[0]+'">'+esc(c[1])+'</option>'}).join('')};
   var fx=f.fixed.map(function(x){return '<tr><td>'+esc(x.name)+(x.seed?' <span class="tag">perkiraan awal</span>':'')+'<br><span class="hint">'+esc(finCatName(x.cat))+' · mulai '+esc(x.from||'-')+(x.per?' · dikali jumlah unit ('+S.buses.length+')':'')+'</span></td><td style="text-align:right"><input class="sp fin-amt" data-id="'+esc(x.id)+'" type="number" min="0" step="50000" value="'+(+x.amt||0)+'" aria-label="Jumlah per bulan"></td><td><button type="button" class="btn ghost sm" data-act="fin-delfix" data-id="'+esc(x.id)+'">Hapus</button></td></tr>'}).join('');
-  var txs=f.tx.filter(function(x){var v=x.date?ymOf(toDay(x.date)):-1;return v>=a&&v<=b}).sort(function(p,q){return q.date.localeCompare(p.date)}).map(function(x){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.desc||finCatName(x.cat))+'<br><span class="hint">'+esc(finCatName(x.cat))+'</span></td><td style="text-align:right;white-space:nowrap">'+(x.type==='in'?'+':'-')+rupiah(x.amt)+'</td><td><button type="button" class="btn ghost sm" data-act="fin-deltx" data-id="'+esc(x.id)+'">Hapus</button></td></tr>'}).join('');
-  var nowM=ymStr(ymOf(TODAY));
-  return '<div class="trk"><div class="revbox"><div class="revtop"><b>Laporan keuangan · '+per+'</b><span><select id="finy" aria-label="Tahun">'+yrs.map(function(k){return '<option'+(k===y?' selected':'')+'>'+k+'</option>'}).join('')+'</select> <select id="finm" aria-label="Bulan"><option value="-1">Setahun penuh</option>'+MONTHS.map(function(n,i){return '<option value="'+i+'"'+(i===mo?' selected':'')+'>'+n+'</option>'}).join('')+'</select> <button type="button" class="btn ghost sm" data-act="fin-csv">Unduh CSV</button></span></div></div>'
-   +'<div class="revgrid">'+c('Pendapatan',T.inc+T.opIn,T.orders+' order')+c('Total biaya',T.solar+T.crew+T.expT,'crew '+rupiah(T.solar+T.crew)+' · operasional '+rupiah(T.expT))+c('Laba (rugi) bersih',T.profit,'sebelum pajak',neg(T.profit))
-   +c('Kas masuk',T.inc+T.opIn+T.invIn+T.finIn,'semua aktivitas')+c('Kas keluar',T.solar+T.crew+T.expT+T.invOut+T.finOut,'semua aktivitas')+c('Saldo kas akhir',after,'awal '+rupiah(before),neg(after))+'</div>'
-   +'<div class="revbox"><b>Laporan laba rugi · '+per+'</b><div class="rtbl" style="border:0;padding:0"><div class="tw">'+lr+'</div></div></div>'
-   +'<div class="revbox"><b>Laporan arus kas · '+per+'</b><div class="rtbl" style="border:0;padding:0"><div class="tw">'+ak+'</div></div></div>'
-   +'<div class="revbox"><b>Arus kas per bulan '+y+'</b>'+bars+'</div>'
+  var txs=D.txs.slice().reverse().map(function(x){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.desc||finCatName(x.cat))+'<br><span class="hint">'+esc(finCatName(x.cat))+'</span></td><td style="text-align:right;white-space:nowrap">'+(x.type==='in'?'+':'-')+rupiah(x.amt)+'</td><td><button type="button" class="btn ghost sm" data-act="fin-deltx" data-id="'+esc(x.id)+'">Hapus</button></td></tr>'}).join('');
+  return '<div class="trk"><div class="revbox"><b>Laporan keuangan</b><p class="hint">Laporan tidak ditampilkan di layar. Pilih periode, lalu ekspor ke PDF (ringkasan, laba rugi, arus kas, rekap bulanan, rincian order, dan catatan kas). Data di bawah ini yang menjadi bahan laporan.</p>'
+   +'<div class="fin-add"><select id="finy" aria-label="Tahun">'+yrs.map(function(k){return '<option'+(k===y?' selected':'')+'>'+k+'</option>'}).join('')+'</select><select id="finm" aria-label="Bulan"><option value="-1">Setahun penuh</option>'+MONTHS.map(function(n,i){return '<option value="'+i+'"'+(i===mo?' selected':'')+'>'+n+'</option>'}).join('')+'</select><button type="button" class="btn primary sm" data-act="fin-pdf">Ekspor PDF</button><button type="button" class="btn sm" data-act="fin-csv">Unduh CSV</button></div></div>'
    +'<div class="revbox"><b>Biaya tetap bulanan</b><p class="hint">Gaji admin, listrik, pajak/KIR, dan sejenisnya. Otomatis masuk tiap bulan sejak bulan mulai. Ubah angkanya langsung di tabel. Angka "perkiraan awal" hanya tebakan awalku, ganti dengan angka perusahaan yang sebenarnya.</p><div class="rtbl" style="border:0;padding:0"><div class="tw"><table><tbody>'+(fx||'<tr><td class="hint">Belum ada biaya tetap.</td></tr>')+'</tbody></table></div></div>'
    +'<div class="fin-add"><input id="fx-name" type="text" placeholder="Nama biaya, mis. Gaji mekanik"><select id="fx-cat">'+catOpts(FIN_C.opOut)+'</select><input id="fx-amt" type="number" min="0" step="50000" placeholder="Rp per bulan"><input id="fx-from" type="month" value="'+nowM+'" aria-label="Mulai bulan"><label class="hint"><input id="fx-per" type="checkbox"> dikali jumlah unit bus</label><button type="button" class="btn primary sm" data-act="fin-addfix">Tambah</button></div></div>'
    +'<div class="revbox"><b>Catat pemasukan / pengeluaran</b><p class="hint">Untuk servis bus, ganti ban, beli sparepart, bayar pajak, setor modal, cicilan, dan lainnya.</p><div class="fin-add"><input id="tx-date" type="date" value="'+toStr(TODAY)+'"><select id="tx-type"><option value="out">Pengeluaran</option><option value="in">Pemasukan</option></select><select id="tx-cat">'+catOpts(FIN_C.opOut)+catOpts(FIN_C.opIn)+catOpts(FIN_C.invOut)+catOpts(FIN_C.invIn)+catOpts(FIN_C.finIn)+catOpts(FIN_C.finOut)+'</select><input id="tx-desc" type="text" placeholder="Keterangan, mis. Servis AT-004 ganti oli"><input id="tx-amt" type="number" min="0" step="50000" placeholder="Rp"><button type="button" class="btn primary sm" data-act="fin-addtx">Catat</button></div>'
-   +(txs?'<div class="rtbl" style="border:0;padding:0"><div class="tw"><table><tbody>'+txs+'</tbody></table></div></div>':'<p class="hint">Belum ada catatan di '+per+'.</p>')+'</div>'
+   +(txs?'<p class="hint">Catatan '+per+':</p><div class="rtbl" style="border:0;padding:0"><div class="tw"><table><tbody>'+txs+'</tbody></table></div></div>':'<p class="hint">Belum ada catatan di '+per+'.</p>')+'</div>'
    +'<div class="revbox"><b>Pengaturan</b><div class="fin-add"><label class="hint">Saldo kas awal Rp <input id="fs-open" type="number" step="50000" value="'+(+f.open.amt||0)+'"></label><label class="hint">per bulan <input id="fs-ym" type="month" value="'+esc(f.open.ym||nowM)+'"></label></div>'
    +'<div class="fin-add"><label class="hint"><input id="fs-mon" type="checkbox"'+(f.mon!==false?' checked':'')+'> Estimasi perawatan otomatis (oli, ban, kampas, sparepart)</label><label class="hint">Rp <input id="fs-mr" type="number" min="0" step="50" value="'+(+f.mr||0)+'"> per km tempuh</label><button type="button" class="btn primary sm" data-act="fin-saveset">Simpan</button></div>'
-   +'<p class="hint">Angka Rp600/km adalah asumsiku, bukan data perusahaan. Kalau kamu mencatat servis asli lewat "Catat pengeluaran", matikan estimasi otomatis supaya tidak dobel.</p></div>'
-   +'<details class="rtbl"><summary>Cara hitung dan keterbatasan</summary><p class="hint">Pendapatan: harga sewa order Terkonfirmasi/Selesai, dicatat di bulan tanggal berangkat (belum memisahkan DP dan pelunasan, jadi dianggap kas diterima saat berangkat). Solar 10% dan gaji crew 10% dari sewa memakai skema uang jalan di tab Pendapatan. Jarak perawatan dihitung dari rute jemput, berangkat, dan pulang tiap unit (tanpa keliling lokal). Tol, parkir, tiket wisata, dan tip tidak dihitung karena tidak termasuk harga sewa. Laporan ini belum memuat penyusutan bus, pajak penghasilan, maupun neraca. Struktur mengikuti laporan laba rugi dan laporan arus kas metode langsung (operasi, investasi, pendanaan).</p></details></div>';
+   +'<p class="hint">Angka Rp600/km adalah asumsiku, bukan data perusahaan. Kalau kamu mencatat servis asli lewat "Catat pengeluaran", matikan estimasi otomatis supaya tidak dobel.</p></div></div>';
 }
 function finCsv(){
-  var f=finGet(),py=parts(TODAY),y=S.finY||py.y,mo=S.finM==null?-1:S.finM,cache={},a=mo<0?y*12:y*12+mo,b=mo<0?y*12+11:a,rows=[['Periode',mo<0?'Tahun '+y:MONTHS[mo]+' '+y],[]],i;
+  var D=finData(),rows=[['Periode',D.per],[]],i;
   rows.push(['Bulan','Pendapatan','Solar','Gaji crew','Beban operasional','Laba bersih','Kas operasi','Kas investasi','Kas pendanaan','Kenaikan kas']);
-  for(i=a;i<=b;i++){var m=finMonth(i,cache);rows.push([ymStr(i),m.inc+m.opIn,m.solar,m.crew,m.expT,m.profit,m.opCash,m.invCash,m.finCash,m.net])}
+  for(i=D.a;i<=D.b;i++){var m=D.months[i-D.y*12];rows.push([ymStr(i),m.inc+m.opIn,m.solar,m.crew,m.expT,m.profit,m.opCash,m.invCash,m.finCash,m.net])}
   rows.push([]);rows.push(['Tanggal','Jenis','Kategori','Keterangan','Jumlah']);
-  f.tx.forEach(function(x){var v=x.date?ymOf(toDay(x.date)):-1;if(v>=a&&v<=b)rows.push([x.date,x.type==='in'?'Masuk':'Keluar',finCatName(x.cat),x.desc||'',x.amt])});
+  D.txs.forEach(function(x){rows.push([x.date,x.type==='in'?'Masuk':'Keluar',finCatName(x.cat),x.desc||'',x.amt])});
   var csv='﻿'+rows.map(function(r){return r.map(function(v){v=String(v==null?'':v);return /[",;\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(',')}).join('\n');
-  try{var u=URL.createObjectURL(new Blob([csv],{type:'text/csv'})),el=document.createElement('a');el.href=u;el.download='keuangan-'+(mo<0?y:y+'-'+pad(mo+1))+'.csv';document.body.appendChild(el);el.click();el.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000)}catch(e){toast('Gagal mengunduh CSV.',true)}
+  try{var u=URL.createObjectURL(new Blob([csv],{type:'text/csv'})),el=document.createElement('a');el.href=u;el.download='keuangan-'+(D.mo<0?D.y:D.y+'-'+pad(D.mo+1))+'.csv';document.body.appendChild(el);el.click();el.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000)}catch(e){toast('Gagal mengunduh CSV.',true)}
+}
+/* ---------- ekspor PDF (jsPDF + autotable dimuat saat dibutuhkan) ---------- */
+function loadJs(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=function(){rej(new Error(src))};document.head.appendChild(s)})}
+function pdfLib(){
+  if(window.jspdf&&window.jspdf.jsPDF&&window.jspdf.jsPDF.API.autoTable)return Promise.resolve();
+  return loadJs(window.__PDFJS||'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js').then(function(){return loadJs(window.__PDFAT||'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js')});
+}
+function finPdf(){
+  toast('Menyiapkan PDF...');
+  pdfLib().then(function(){
+    var D=finData(),T=D.T,J=window.jspdf.jsPDF,doc=new J({unit:'pt',format:'a4'}),W=doc.internal.pageSize.getWidth(),M=40,G=[15,110,86],y=0;
+    var rp=function(v){return v<0?'('+rupiah(-v)+')':rupiah(v)};
+    var title=function(t){if(y>740){doc.addPage();y=50}doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(15,110,86);doc.text(t,M,y);doc.setTextColor(0);y+=6};
+    var tbl=function(o){doc.autoTable(Object.assign({startY:y,margin:{left:M,right:M},theme:'grid',styles:{fontSize:8.5,cellPadding:4,lineColor:[210,214,212],lineWidth:.4,textColor:20},headStyles:{fillColor:G,textColor:255,fontStyle:'bold'}},o));y=doc.lastAutoTable.finalY+16};
+    var B=function(c,al){return {content:c,styles:{fontStyle:'bold',fillColor:[238,243,241],halign:al||'left'}}};
+    var H=function(c){return {content:c,colSpan:2,styles:{fontStyle:'bold',fillColor:[225,236,232]}}};
+    var I=function(c){return {content:c,styles:{cellPadding:{top:4,bottom:4,left:16,right:4}}}};
+    var R=function(c,bold){return {content:c,styles:{halign:'right',fontStyle:bold?'bold':'normal',fillColor:bold?[238,243,241]:undefined}}};
+    // kop
+    doc.setFillColor(15,110,86);doc.rect(0,0,W,6,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text(CO.pt.toUpperCase(),M,38);
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(90);doc.text(CO.name+' | Garasi & kantor pusat: '+CO.pusat+' | Cabang: '+CO.cabang,M,51);
+    doc.setDrawColor(20);doc.setLineWidth(1);doc.line(M,58,W-M,58);doc.setTextColor(0);
+    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text('LAPORAN KEUANGAN',W/2,82,{align:'center'});
+    doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text('Periode: '+D.per+'   |   Dicetak: '+toStr(TODAY),W/2,97,{align:'center'});
+    y=118;
+    title('1. Ringkasan');
+    tbl({body:[['Pendapatan (sewa bus + lainnya)',R(rupiah(T.inc+T.opIn))],['Total biaya (crew + operasional)',R(rupiah(T.solar+T.crew+T.expT))],[B('Laba (rugi) bersih sebelum pajak'),R(rp(T.profit),1)],['Kas masuk (semua aktivitas)',R(rupiah(T.inc+T.opIn+T.invIn+T.finIn))],['Kas keluar (semua aktivitas)',R(rupiah(T.solar+T.crew+T.expT+T.invOut+T.finOut))],[B('Saldo kas akhir periode'),R(rp(D.after),1)]],columnStyles:{0:{cellWidth:300}}});
+    title('2. Laporan Laba Rugi');
+    var op=FIN_C.opOut.map(function(c){var v=T.exp[c[0]]||0;return (v||c[0]==='perawatan')?[I(c[1]+(c[0]==='perawatan'&&T.mAuto?' (termasuk estimasi '+rupiah(T.mAuto)+' dari ±'+Math.round(T.km).toLocaleString('id-ID')+' km)':'')),R(rp(-v))]:null}).filter(Boolean);
+    tbl({head:[['Keterangan','Jumlah (Rp)']],body:[[H('PENDAPATAN')],[I('Pendapatan jasa sewa bus ('+T.orders+' order)'),R(rp(T.inc))]].concat(T.opIn?[[I('Pendapatan lain'),R(rp(T.opIn))]]:[],[[B('Total pendapatan'),R(rp(T.inc+T.opIn),1)],[H('BEBAN LANGSUNG (UANG JALAN CREW)')],[I('Solar (10% dari sewa)'),R(rp(-T.solar))],[I('Gaji supir dan kernet (10% dari sewa)'),R(rp(-T.crew))],[B('LABA KOTOR'),R(rp(T.gross),1)],[H('BEBAN OPERASIONAL')]],op,[[B('Total beban operasional'),R(rp(-T.expT),1)],[B('LABA (RUGI) BERSIH'),R(rp(T.profit),1)]]),columnStyles:{1:{cellWidth:130}}});
+    title('3. Laporan Arus Kas (metode langsung)');
+    var ako=FIN_C.opOut.map(function(c){var v=T.exp[c[0]]||0;return v?[I('Pembayaran: '+c[1]),R(rp(-v))]:null}).filter(Boolean);
+    tbl({head:[['Keterangan','Jumlah (Rp)']],body:[[H('AKTIVITAS OPERASI')],[I('Penerimaan dari pelanggan'),R(rp(T.inc+T.opIn))],[I('Pembayaran solar dan gaji crew'),R(rp(-(T.solar+T.crew)))]].concat(ako,[[B('Kas bersih dari aktivitas operasi'),R(rp(T.opCash),1)],[H('AKTIVITAS INVESTASI')],[I('Penjualan aset'),R(rp(T.invIn))],[I('Pembelian bus / aset'),R(rp(-T.invOut))],[B('Kas bersih dari aktivitas investasi'),R(rp(T.invCash),1)],[H('AKTIVITAS PENDANAAN')],[I('Setoran modal dan pinjaman diterima'),R(rp(T.finIn))],[I('Angsuran pinjaman dan penarikan pemilik'),R(rp(-T.finOut))],[B('Kas bersih dari aktivitas pendanaan'),R(rp(T.finCash),1)],[B('KENAIKAN (PENURUNAN) KAS BERSIH'),R(rp(T.net),1)],['Saldo kas awal periode',R(rp(D.before))],[B('SALDO KAS AKHIR PERIODE'),R(rp(D.after),1)]]),columnStyles:{1:{cellWidth:130}}});
+    if(D.mo<0){
+      title('4. Rekap per Bulan '+D.y);
+      var tot=D.months.reduce(function(a,m){a[0]+=m.inc+m.opIn;a[1]+=m.solar+m.crew;a[2]+=m.expT;a[3]+=m.profit;a[4]+=m.net;return a},[0,0,0,0,0]);
+      tbl({head:[['Bulan','Pendapatan','Crew','Operasional','Laba bersih','Kenaikan kas']],body:D.months.map(function(m,i){return [MONTHS[i],R(rupiah(m.inc+m.opIn)),R(rupiah(m.solar+m.crew)),R(rupiah(m.expT)),R(rp(m.profit)),R(rp(m.net))]}).concat([[B('Total'),R(rupiah(tot[0]),1),R(rupiah(tot[1]),1),R(rupiah(tot[2]),1),R(rp(tot[3]),1),R(rp(tot[4]),1)]]),columnStyles:{0:{cellWidth:70}}});
+    }
+    title((D.mo<0?'5':'4')+'. Rincian Order Terkonfirmasi / Selesai ('+D.orders.length+')');
+    if(D.orders.length)tbl({head:[['Tanggal','Customer','Rute','Unit','Sewa (Rp)']],body:D.orders.map(function(t){return [fmtRange(t),t.customer||'',(t.pickup||'-')+' - '+(t.destination||'-'),(t.buses||[]).join(', ')||'-',R(rupiah(priceOf(t)))]}),styles:{fontSize:7.5,cellPadding:3,lineColor:[210,214,212],lineWidth:.4,textColor:20},columnStyles:{0:{cellWidth:62},4:{cellWidth:70}}});
+    else{doc.setFont('helvetica','italic');doc.setFontSize(9);doc.text('Tidak ada order pada periode ini.',M,y+8);y+=26}
+    title((D.mo<0?'6':'5')+'. Catatan Kas Manual dan Biaya Tetap');
+    var fixedRows=D.f.fixed.map(function(x){return [x.name+(x.seed?' (perkiraan awal)':''),finCatName(x.cat)+' | mulai '+(x.from||'-')+(x.per?' | x '+S.buses.length+' unit':''),R(rupiah(x.amt)+' / bln')]});
+    if(fixedRows.length)tbl({head:[['Biaya tetap bulanan','Kategori','Jumlah']],body:fixedRows,styles:{fontSize:8,cellPadding:3,lineColor:[210,214,212],lineWidth:.4,textColor:20}});
+    if(D.txs.length)tbl({head:[['Tanggal','Keterangan','Kategori','Jumlah']],body:D.txs.map(function(x){return [x.date,x.desc||'-',finCatName(x.cat),R((x.type==='in'?'+':'-')+rupiah(x.amt))]}),styles:{fontSize:8,cellPadding:3,lineColor:[210,214,212],lineWidth:.4,textColor:20}});
+    else{doc.setFont('helvetica','italic');doc.setFontSize(9);doc.text('Tidak ada catatan kas manual pada periode ini.',M,y+4);y+=22}
+    title('Catatan dan Asumsi');
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(60);
+    var notes=['Pendapatan adalah harga sewa order berstatus Terkonfirmasi/Selesai, dicatat pada bulan tanggal berangkat. DP dan pelunasan belum dipisah, sehingga kas dianggap diterima saat berangkat.','Solar 10% dan gaji crew 10% dari sewa mengikuti skema uang jalan. Tol, parkir, tiket wisata, dan tip kru tidak dihitung karena tidak termasuk harga sewa.','Estimasi perawatan'+(D.f.mon!==false?' otomatis memakai asumsi Rp'+(+D.f.mr||0).toLocaleString('id-ID')+' per km tempuh (rute jemput, berangkat, dan pulang), bukan data servis nyata.':' otomatis dimatikan; perawatan hanya dari catatan manual.'),'Biaya tetap yang ditandai "perkiraan awal" adalah angka tebakan dan perlu diganti dengan angka perusahaan.','Laporan ini belum memuat penyusutan bus, pajak penghasilan, dan neraca. Struktur mengikuti laporan laba rugi dan laporan arus kas metode langsung (operasi, investasi, pendanaan).'];
+    notes.forEach(function(n,k){var ls=doc.splitTextToSize((k+1)+'. '+n,W-2*M);if(y+ls.length*10>770){doc.addPage();y=50}doc.text(ls,M,y+10);y+=ls.length*10+4});
+    doc.setTextColor(0);
+    if(y>690){doc.addPage();y=50}y+=22;
+    doc.setFontSize(9);doc.text('Dibuat oleh,',M+20,y);doc.text('Disetujui oleh,',W-M-120,y);doc.line(M,y+55,M+130,y+55);doc.line(W-M-140,y+55,W-M-10,y+55);doc.setFontSize(8);doc.text('Admin / Keuangan',M+20,y+66);doc.text('Direktur',W-M-120,y+66);
+    var n=doc.getNumberOfPages(),k;for(k=1;k<=n;k++){doc.setPage(k);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(120);doc.text(CO.name+' | Laporan Keuangan '+D.per,M,doc.internal.pageSize.getHeight()-22);doc.text('Halaman '+k+' dari '+n,W-M,doc.internal.pageSize.getHeight()-22,{align:'right'})}
+    doc.save('laporan-keuangan-arsyi-trans-'+(D.mo<0?D.y:D.y+'-'+pad(D.mo+1))+'.pdf');
+    toast('PDF laporan keuangan diunduh.');
+  }).catch(function(e){console.error(e);toast('Gagal membuat PDF. Cek koneksi internet lalu coba lagi.',true)});
 }
 document.addEventListener('change',function(ev){
   var t=ev.target;
@@ -3172,6 +3216,7 @@ document.addEventListener('click',function(ev){
     case 'new-bus':openBus(null);break;
     case 'del-bus':S.confirmKey='bus:'+d.code;render();break;
     case 'del-bus-yes':deleteBus(d.code);break;
+    case 'fin-pdf':finPdf();break;
     case 'fin-csv':case 'fin-addfix':case 'fin-delfix':case 'fin-addtx':case 'fin-deltx':case 'fin-saveset':finAct(act,d);break;
     case 'nf-filter':S.nfFilter=el.dataset.v;render();break;
     case 'seed-fleet':seedFleet();break;
