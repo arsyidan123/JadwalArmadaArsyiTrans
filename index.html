@@ -117,6 +117,8 @@ h1,h2,h3,h4,p{margin:0}
 .cell{width:var(--cw);flex:none;box-shadow:inset -1px 0 var(--line);cursor:pointer}
 .cell.we{background:var(--surface-2)}
 .cell.today{background:var(--accent-soft)}
+.cell.shut{background:repeating-linear-gradient(135deg,transparent 0 4px,color-mix(in srgb,var(--fg) 16%,transparent) 4px 5px),color-mix(in srgb,var(--warn,#d97706) 10%,transparent)}
+.shutlist{display:flex;flex-direction:column;gap:6px;margin-top:6px}.shutlist .sr{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
 .cell:hover{background:color-mix(in srgb,var(--accent) 14%,transparent)}
 .g-row.down .track{background:repeating-linear-gradient(135deg,transparent 0 8px,color-mix(in srgb,var(--fg) 8%,transparent) 8px 9px)}
 .g-row.down .cell{cursor:not-allowed}
@@ -698,6 +700,7 @@ function relOf(a,b){
 }
 function availability(bus,cand,ignoreId){
   if(bus.status==='bengkel')return {state:'down',note:'Di bengkel'+(bus.note?' · '+bus.note:'')};
+  var sh=cand.start&&shutHit(toDay(cand.start),toDay(cand.end||cand.start));if(sh)return {state:'down',note:sh.label+' (maintenance besar)'};
   var a=span(cand),notes=[],approx=false,i,t,r;
   for(i=0;i<S.trips.length;i++){
     t=S.trips[i];
@@ -711,6 +714,27 @@ function availability(bus,cand,ignoreId){
   return {state:'free',note:'Tersedia'};
 }
 
+/* Libur semua armada + maintenance besar. Awal Ramadan 1448 H: 8 Feb 2027 (Muhammadiyah; pemerintah menetapkan lewat sidang isbat, kemungkinan 8 atau 9 Feb). Idul Fitri: libur nasional 10-11 Mar 2027, cuti bersama 9, 12, dan 15 Mar 2027 (SKB 3 Menteri). Jadi semua unit libur 8 Feb sampai 15 Mar 2027. Bisa diubah di panel Autopilot. */
+var SHUT_DEF=[{id:'ramadan-1448',label:'Libur Ramadan & Lebaran 1448 H',start:'2027-02-08',end:'2027-03-15'}];
+function shutList(){var a=S.settings&&S.settings.shut;return Array.isArray(a)?a:SHUT_DEF}
+function shutHit(a,b){var l=shutList(),i;for(i=0;i<l.length;i++){if(a<=toDay(l[i].end)&&b>=toDay(l[i].start))return l[i]}return null}
+var BIG_JOBS=[
+  {k:'mesin',n:'Servis besar mesin: oli, filter oli/solar/udara, cek injektor dan kompresi',h:16,why:'Servis mesin menyeluruh: oli dan semua filter, injektor, kompresi, belt, radiator, dan selang.'},
+  {k:'tenaga',n:'Ganti oli gardan, transmisi, dan power steering',h:8,why:'Oli gardan (±30.000 km) dan transmisi serta power steering (±60.000 km) diganti sekalian.'},
+  {k:'rem',n:'Rem: kampas, tromol/cakram, kuras minyak rem, uji rem',h:10,why:'Sistem rem diperiksa total dan komponen tipis diganti.'},
+  {k:'kopling',n:'Cek dan ganti kampas kopling, bearing, dan master kopling',h:10,why:'Kopling dicek sebelum musim ramai.'},
+  {k:'kaki',n:'Kaki-kaki: per/air spring, shockbreaker, bushing, bearing roda, spooring',h:16,why:'Kaki-kaki bus pariwisata bekerja berat di jalur pegunungan.'},
+  {k:'ban',n:'Ban: rotasi, ganti yang aus, balancing, ban serep',h:8,why:'Kondisi ban menentukan keselamatan, periksa kembang dan umur ban.'},
+  {k:'ac',n:'Service AC total: freon, evaporator, blower, filter',h:12,why:'AC disiapkan sebelum musim ramai.'},
+  {k:'listrik',n:'Kelistrikan: aki, alternator, starter, lampu, wiper, klakson',h:6,why:'Kelistrikan diuji penuh.'},
+  {k:'bodi',n:'Bodi dan interior: cat, kaca, reclining seat, bagasi, karpet, deep cleaning',h:16,why:'Perbaikan bodi dan kabin supaya tampilan unit tetap menarik.'},
+  {k:'kir',n:'Uji KIR, kelengkapan keselamatan (APAR, P3K, palu darurat), dan dokumen',h:4,why:'Pastikan KIR, STNK, asuransi, dan perlengkapan darurat lengkap dan berlaku.'}
+];
+function bigPlan(b,sd){
+  var idx=Math.max(0,S.buses.findIndex(function(x){return x.code===b.code})),p0=parts(toDay(sd.start)),cur=wkNext(new Date(p0.y,p0.m,p0.d).getTime()+Math.floor(idx/3)*864e5),out=[];
+  BIG_JOBS.forEach(function(j){var e=wkAdd(cur,j.h);out.push({k:j.k,n:j.n,h:j.h,why:j.why,s:cur,e:e});cur=e});
+  return out;
+}
 /* Seat 2-3 (59+1 / 64+1 TL) hanya untuk bodi Jetbus 3+ SHD. Jetbus 5 SHD baru boleh di-set 2-3 kalau semua unit 3+ sudah terpakai (dipilih di order ini, jalan di order lain, atau di bengkel), misalnya ada beberapa order 2-3 bersamaan. Kalau armada belum punya unit 3+, seat 2-3 belum bisa dipakai. */
 function isSeat23(k){return k==='s59'||k==='s64'}
 function availSeat(bus,cand,ignoreId,sel){
@@ -773,14 +797,14 @@ function viewJadwal(){
   +'<div class="summary"><span class="pill acc">Hari ini ('+fmtDay(TODAY)+')</span><span class="pill ok"><b>'+siap+'</b> siap</span><span class="pill"><b>'+jalan+'</b> jalan</span>'+(bengkel?'<span class="pill bad"><b>'+bengkel+'</b> bengkel</span>':'')+(pending?'<span class="pill warn"><b>'+pending+'</b> order unit belum lengkap</span>':'')+'</div>'
   +'</div>'
   +'<div class="gantt"><div class="g-inner">'+head+rows+'</div></div>'
-  +'<div class="legend"><span><i class="sw"></i>Terkonfirmasi</span><span><i class="sw dash"></i>Tentatif</span><span><i class="sw cut"></i>Stut tanpa jam (dihitung per tanggal)</span><span><i class="sw hatch"></i>Bengkel</span><label class="gap" for="gap">Jeda stut minimal <input id="gap" type="number" min="0" max="24" step="0.5" value="'+S.gap+'" inputmode="decimal"> jam</label><span class="hint">Klik kotak kosong untuk order baru, klik blok untuk mengubah.</span></div>';
+  +'<div class="legend"><span><i class="sw"></i>Terkonfirmasi</span><span><i class="sw dash"></i>Tentatif</span><span><i class="sw cut"></i>Stut tanpa jam (dihitung per tanggal)</span><span><i class="sw hatch"></i>Bengkel / libur maintenance besar</span><label class="gap" for="gap">Jeda stut minimal <input id="gap" type="number" min="0" max="24" step="0.5" value="'+S.gap+'" inputmode="decimal"> jam</label><span class="hint">Klik kotak kosong untuk order baru, klik blok untuk mengubah.</span></div>';
 }
 function rowHtml(b,ms,me,dim,sep){
   var bt=S.trips.filter(function(t){return t.status!=='batal'&&(t.buses||[]).indexOf(b.code)>=0});
   var cells='';
   for(var i=0;i<dim;i++){
     var d=ms+i,w=parts(d).w;
-    cells+='<div class="cell'+(w===0||w===6?' we':'')+(d===TODAY?' today':'')+'" data-act="cell" data-d="'+d+'" data-bus="'+esc(b.code)+'"></div>';
+    cells+='<div class="cell'+(w===0||w===6?' we':'')+(d===TODAY?' today':'')+(shutHit(d,d)?' shut':'')+'" data-act="cell" data-d="'+d+'" data-bus="'+esc(b.code)+'"></div>';
   }
   var bars=bt.map(function(t){return barHtml(t,bt,ms,me)}).join('');
   var meta=b.status==='bengkel'?'<span class="tag">Bengkel</span>':'<span class="meta">'+(isPrem(b)?'Premium · ':'')+esc(b.model||TYPE[b.type])+'</span>';
@@ -2326,6 +2350,60 @@ function finAct(act,d){
   if(act==='fin-saveset'){f.open={amt:+$('#fs-open').value||0,ym:$('#fs-ym').value||ymStr(ymOf(TODAY))};f.mon=$('#fs-mon').checked;f.mr=Math.max(0,+$('#fs-mr').value||0);finSave().then(function(){render();toast('Pengaturan disimpan.')});return true}
   return false;
 }
+function fmtShort(v){var a=Math.abs(v);return (v<0?'-':'')+(a>=1e9?'Rp'+(a/1e9).toFixed(1).replace('.',',')+' M':a>=1e6?'Rp'+Math.round(a/1e5)/10+' jt':a>=1e3?'Rp'+Math.round(a/1e3)+' rb':'Rp'+a)}
+function revLine(byM,y){
+  var W=680,H=250,L=64,R=14,T=16,B=30,pw=W-L-R,ph=H-T-B,mx=Math.max.apply(null,byM.map(function(b){return Math.max(b.g,b.n)}).concat(1)),i,k,
+      stepRaw=mx/4,pow=Math.pow(10,Math.floor(Math.log10(stepRaw))),nice=[1,2,2.5,5,10].find(function(n){return n*pow>=stepRaw})*pow,top=nice*4,
+      X=function(i){return L+pw*i/11},Y=function(v){return T+ph*(1-v/top)};
+  var g='',sh='';
+  for(k=0;k<=4;k++){var yy=Y(nice*k);g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy+'" y2="'+yy+'" stroke="currentColor" stroke-opacity=".12"/><text x="'+(L-8)+'" y="'+(yy+4)+'" text-anchor="end" font-size="11" fill="currentColor" fill-opacity=".65">'+fmtShort(nice*k)+'</text>'}
+  for(i=0;i<12;i++){
+    var ms=toDay(y+'-'+pad(i+1)+'-01'),me=ms+new Date(Date.UTC(y,i+1,0)).getUTCDate()-1,hit=shutHit(ms,me);
+    if(hit){var cw=pw/11;sh+='<rect x="'+(X(i)-cw/2)+'" y="'+T+'" width="'+cw+'" height="'+ph+'" fill="currentColor" fill-opacity=".07"><title>'+esc(hit.label)+': armada libur, maintenance besar</title></rect>'}
+    g+='<text x="'+X(i)+'" y="'+(H-10)+'" text-anchor="middle" font-size="11" fill="currentColor" fill-opacity=".65">'+MON3[i]+'</text>';
+  }
+  var line=function(key,col,dash){
+    var pts=byM.map(function(b,i){return X(i).toFixed(1)+','+Y(b[key]).toFixed(1)}).join(' ');
+    return '<polyline points="'+pts+'" fill="none" stroke="'+col+'" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"'+(dash?' stroke-dasharray="6 4"':'')+'/>'+byM.map(function(b,i){return '<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(b[key]).toFixed(1)+'" r="3.6" fill="'+col+'" stroke="var(--surface,#fff)" stroke-width="1.5"><title>'+MONTHS[i]+' '+y+': '+rupiah(b[key])+(b.c?' · '+b.c+' order':'')+'</title></circle>'}).join('');
+  };
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Diagram garis pendapatan per bulan '+y+'" style="width:100%;height:auto;color:var(--fg,#222)">'+g+sh+line('g','#0f6e56',false)+line('n','#c26a0a',true)+'</svg>'
+   +'<div class="hint" style="display:flex;gap:14px;flex-wrap:wrap"><span><b style="color:#0f6e56">━</b> Sewa (bruto)</span><span><b style="color:#c26a0a">╍</b> Keuntungan bersih</span>'+(byM.some(function(b,i){var ms=toDay(y+'-'+pad(i+1)+'-01');return shutHit(ms,ms+27)})?'<span>▒ Bulan libur maintenance besar</span>':'')+'</div>';
+}
+/* saran dihitung dari data di aplikasi (sebagian simulasi) plus pertimbangan umum */
+function revAdvice(rows,ok,byM,y){
+  var out=[],py=parts(TODAY),i,act=byM.map(function(b,i){var ms=toDay(y+'-'+pad(i+1)+'-01'),me=ms+new Date(Date.UTC(y,i+1,0)).getUTCDate()-1,full=shutHit(ms,me)&&toDay(shutHit(ms,me).start)<=ms&&toDay(shutHit(ms,me).end)>=me;return {i:i,g:b.g,n:b.n,c:b.c,full:!!full,part:!!shutHit(ms,me)}}),
+      live=act.filter(function(a){return a.c>0&&!a.full});
+  var avg=live.length?live.reduce(function(n,a){return n+a.g},0)/live.length:0;
+  var low=live.filter(function(a){return avg>0&&a.g<avg*.7&&!a.part});
+  if(low.length)out.push([2,'Tutup bulan yang lemah: '+low.map(function(a){return MONTHS[a.i]}).join(', '),'Pendapatannya di bawah 70% dari rata-rata bulan aktif ('+fmtShort(avg)+'). Tawarkan paket early bird, promo hari kosong (Senin sampai Kamis), dan paket sekolah/instansi 1 sampai 2 bulan sebelumnya supaya lembahnya tidak dalam.']);
+  var tail=live.slice(-3),head=live.slice(-6,-3);
+  if(tail.length===3&&head.length===3){var a1=tail.reduce(function(n,a){return n+a.g},0)/3,a0=head.reduce(function(n,a){return n+a.g},0)/3;
+    if(a1<a0*.95)out.push([1,'Tren 3 bulan terakhir turun '+Math.round((1-a1/a0)*100)+'%','Rata-rata sewa bruto turun dari '+fmtShort(a0)+' ke '+fmtShort(a1)+' per bulan. Cek apakah penyebabnya jumlah order, harga, atau banyaknya order tentatif yang tidak jadi.']);
+    else if(a1>a0*1.05)out.push([9,'Tren 3 bulan terakhir naik '+Math.round((a1/a0-1)*100)+'%','Pertahankan: pola order yang sedang jalan (jenis customer dan rute) perlu dicatat dan diulang, jangan ganti strategi mendadak.'])}
+  var win=60,first=S.trips.reduce(function(m,t){return t.start&&!t.example&&toDay(t.start)<m?toDay(t.start):m},TODAY),t0=Math.max(TODAY-win+1,first),usedDays=0,units=S.buses.filter(function(b){return b.status!=='bengkel'}),cap=0,perBus={},d;
+  units.forEach(function(b){perBus[b.code]=0});
+  for(d=t0;d<=TODAY;d++){if(shutHit(d,d))continue;cap+=units.length}
+  S.trips.forEach(function(t){if(t.status==='batal'||t.example||!t.start)return;var a=Math.max(toDay(t.start),t0),b=Math.min(toDay(t.end||t.start),TODAY),x;(t.buses||[]).forEach(function(c){if(perBus[c]==null)return;for(x=a;x<=b;x++){if(!shutHit(x,x)){perBus[c]++;usedDays++}}})});
+  if(cap>0){var ut=Math.round(usedDays/cap*100),cs=Object.keys(perBus).sort(function(p,q){return perBus[p]-perBus[q]});
+    if(ut<65)out.push([2,'Utilisasi armada '+ut+'% ('+(TODAY-t0+1)+' hari terakhir)','Unit paling sepi: '+cs.slice(0,3).map(function(c){return c+' ('+perBus[c]+' hari)'}).join(', ')+'. Isi hari kosong dengan paket 1 hari dekat (Purwokerto, Dieng, Pangandaran), tarif khusus hari biasa, dan kerja sama dengan sekolah/instansi lokal. Sewa tetap per hari jadi hari kosong adalah pendapatan yang hilang.']);
+    else if(ut>=85)out.push([3,'Utilisasi armada '+ut+'% ('+(TODAY-t0+1)+' hari terakhir)','Armada hampir penuh. Naikkan harga di tanggal ramai (libur sekolah, akhir pekan panjang), atau pertimbangkan menambah unit karena order mulai tertolak.']);
+    else out.push([8,'Utilisasi armada '+ut+'% ('+(TODAY-t0+1)+' hari terakhir)','Sehat. Fokus menaikkan harga rata-rata, bukan jumlah order.'])}
+  var bi={},tot=0,viaB=0;LOCS.forEach(function(l){if(l.j==='B')bi[l.n]=1});
+  ok.forEach(function(x){if(x.y!==y)return;tot+=x.v;if(bi[x.t.customer]||/lewat biro/.test(x.t.note||''))viaB+=x.v});
+  if(tot>0){var pb=Math.round(viaB/tot*100);if(pb>=60)out.push([2,pb+'% pendapatan '+y+' datang lewat biro','Terlalu bergantung pada beberapa biro berisiko: kalau satu biro pindah vendor, pendapatan anjlok. Bangun jalur langsung (sekolah, instansi, majelis taklim, keluarga) lewat Instagram/TikTok dan testimoni, dan beri insentif biro yang rutin order.']);
+    else if(pb<=25)out.push([4,'Hanya '+pb+'% pendapatan '+y+' lewat biro','Kerja sama dengan biro wisata dan travel bisa menambah order di hari sepi. Tawarkan tarif biro yang jelas dan jadwal tetap.'])}
+  var tent=rows.filter(function(x){return !x.ok&&x.y===y}),tv=tent.reduce(function(n,x){return n+x.v},0);
+  if(tent.length&&tv>0)out.push([2,tent.length+' order tentatif senilai '+rupiah(tv),'Segera follow up dan minta DP supaya jadi terkonfirmasi. Tentatif yang tidak jadi membuat unit menganggur tanpa pendapatan.']);
+  var disc=0,dn=0;rows.forEach(function(x){if(x.y!==y||!x.t.priceManual)return;var e=estimate(x.t);if(e&&x.v<e.total){disc+=e.total-x.v;dn++}});
+  if(dn>0&&disc>0)out.push([3,dn+' order dihargai di bawah estimasi (total '+rupiah(disc)+')','Batasi diskon dan ganti dengan nilai tambah (mis. gratis cuci/kebersihan, kursi reclining) supaya harga dasar terjaga. Beri diskon hanya untuk hari sepi atau langganan tetap.']);
+  var sh=shutList().filter(function(x){return parts(toDay(x.start)).y===y||parts(toDay(x.end)).y===y});
+  sh.forEach(function(x){out.push([1,'Persiapan '+x.label+' ('+fmtDay(toDay(x.start))+' sampai '+fmtDay(toDay(x.end))+')','Pendapatan pada rentang ini nol karena armada libur, jadi penurunannya terencana, bukan masalah. Kompensasi: dorong order di bulan sebelumnya (perjalanan sebelum puasa, ziarah menjelang Ramadan), siapkan kas untuk maintenance besar, dan buka pemesanan paket libur Lebaran, halal bihalal, dan libur sekolah sejak sebelum unit kembali beroperasi.'])});
+  out.push([6,'Musim ramai: libur sekolah dan libur panjang','Permintaan bus pariwisata naik saat libur panjang dan event, dan operator bus melaporkan lonjakan saat libur sekolah (lihat Bisnis.com dan Kontan di bawah). Buka booking 2 sampai 3 bulan lebih awal untuk Juni–Juli dan Desember, dan jangan ambil order murah yang mengunci unit di tanggal ramai.']);
+  out.sort(function(a,b){return a[0]-b[0]});
+  return '<div class="revbox"><b>Rekomendasi agar pendapatan naik</b><p class="hint">Dihitung dari data order di aplikasi ini (sebagian masih simulasi) ditambah pertimbangan umum. Pendapatan sewa bus bersifat musiman, jadi mustahil naik terus tanpa turun sama sekali. Targetnya tren tahunan naik dan lembah bulan sepi dangkal. Tidak ada jaminan hasil.</p><ol style="margin:4px 0 0 18px;padding:0;display:flex;flex-direction:column;gap:8px">'
+   +out.slice(0,8).map(function(o){return '<li><b>'+esc(o[1])+'</b><br><span class="hint">'+esc(o[2])+'</span></li>'}).join('')+'</ol>'
+   +'<p class="hint">Rujukan: <a href="https://ekonomi.bisnis.com/read/20240208/98/1739333/pengusaha-bus-pariwisata-ketiban-berkah-kampanye-pemilu-hingga-libur-panjang" target="_blank" rel="noopener">Bisnis.com: permintaan bus pariwisata naik saat libur panjang dan event</a> · <a href="https://industri.kontan.co.id/news/libur-sekolah-dongkrak-penumpang-bus-okupansi-tembus-80-100" target="_blank" rel="noopener">Kontan: libur sekolah dongkrak okupansi bus</a> · <a href="https://kemenkopmk.go.id/node/6444" target="_blank" rel="noopener">Kemenko PMK: libur nasional dan cuti bersama 2027</a>.</p></div>';
+}
 function viewRevenue(){
   var rows=S.trips.filter(function(t){return !t.example&&t.status!=='batal'&&t.start}).map(function(t){var p=parts(toDay(t.start)),u=ujOf(t);return {t:t,y:p.y,m:p.m,v:u.price,u:u,ok:t.status==='pasti'||t.status==='selesai'}}),
       ok=rows.filter(function(x){return x.ok}),pot=rows.filter(function(x){return !x.ok}),py=parts(TODAY),y=S.revYear||py.y,ys=[py.y];
@@ -2349,7 +2427,8 @@ function viewRevenue(){
    +card('Bersih '+y,sum(yr,'net'),yr.length+' order · sewa '+rupiah(sum(yr)))
    +card('Bulan ini (bersih)',sum(mon,'net'),MONTHS[py.m]+' '+py.y)+card('Potensi tentatif (bersih)',sum(pot,'net'),pot.length+' order belum pasti')+'</div>'
    +'<div class="revbox"><div class="revtop"><b>Keuntungan bersih per bulan</b><select id="revyear" aria-label="Tahun">'+ys.map(function(k){return '<option'+(k===y?' selected':'')+'>'+k+'</option>'}).join('')+'</select></div>'
-   +byM.map(function(b,i){return '<div class="revrow"><span>'+MON3[i]+'</span><div class="revbar"><i style="width:'+Math.round(b.n/mx*100)+'%"></i></div><span>'+rupiah(b.n)+(b.c?' · '+b.c+' order · sewa '+rupiah(b.g):'')+'</span></div>'}).join('')+'</div>'
+   +revLine(byM,y)+'</div>'
+   +revAdvice(rows,ok,byM,y)
    +'<div class="revbox"><b>Uang jalan crew '+y+'</b><div class="rtbl" style="border:0;padding:0"><div class="tw"><table><tbody>'
    +'<tr><td>Solar (10% dari sewa)</td><td style="text-align:right">'+rupiah(sum(yr,'solar'))+'</td></tr>'
    +'<tr><td>Gaji supir (60% dari gaji crew)</td><td style="text-align:right">'+rupiah(sum(yr,'supir'))+'</td></tr>'
@@ -2535,6 +2614,7 @@ function autoGenerate(from,to){
         var o=orders[j],id='a'+toStr(D).replace(/-/g,'')+o.k;
         if(W.some(function(x){return x.id===id}))continue;
         var t=autoBuild(D,o,today);if(!t)continue;
+        if(shutHit(toDay(t.start),toDay(t.end)))continue;
         t.status=autoStatus(D,t,o.r,today);
         if(t.status!=='batal'){
           var codes=[],c={start:t.start,end:t.end,startTime:t.startTime,endTime:t.endTime};
@@ -2619,6 +2699,7 @@ function autoFillIdle(look,extra){
       for(it=0;it<6;it++){
         var occ={},run=null,d,a,z;
         W.forEach(function(t){if(t.status==='batal'||(t.buses||[]).indexOf(b.code)<0||!t.start)return;var s=toDay(t.start),e=toDay(t.end||t.start),x;for(x=s;x<=e;x++)occ[x]=1});
+        shutList().forEach(function(sh){var x;for(x=toDay(sh.start);x<=toDay(sh.end);x++)occ[x]=1});
         d=today+1;
         while(d<=end){if(occ[d]){d++;continue}a=d;while(d<=end2&&!occ[d])d++;z=d-1;if(z-a+1>=3){run=[a,z];break}d=z+1}
         if(!run)break;
@@ -2751,6 +2832,11 @@ async function scanOps(){
         if(rem<=800)ev.push({id:'due:'+b.code+':'+j.k+':'+Math.floor((odo+off)/j.km),ts:now,kind:'info',cat:'bus',title:b.code+' mendekati servis: '+j.n,body:'Sisa ±'+Math.round(rem/10)*10+' km dari interval '+j.km.toLocaleString('id-ID')+' km. Akan dijadwalkan saat unit ada jeda.',code:b.code});
       });
     });
+    shutList().forEach(function(sh){
+      var a0=toDay(sh.start),b0=toDay(sh.end),dd=a0-dayOf(now);
+      if(dd>=0&&dd<=14)ev.push({id:'shutsoon:'+sh.id+':'+sh.start,ts:now,kind:'info',cat:'bus',title:(dd?dd+' hari lagi':'Hari ini')+': '+sh.label,body:'Semua armada libur '+fmtDay(a0)+' sampai '+fmtDay(b0)+' untuk maintenance besar. Order baru di tanggal itu tidak bisa dibuat, dan autopilot tidak membuat order di rentang itu.'});
+      S.trips.forEach(function(t){if(t.status==='batal'||t.status==='selesai'||!t.start||toDay(t.end)<dayOf(now))return;if(toDay(t.start)<=b0&&toDay(t.end)>=a0)ev.push({id:'shutclash:'+sh.id+':'+t.id,ts:now,kind:'bad',cat:'order',title:'Order '+t.customer+' bentrok dengan '+sh.label,body:fmtWhen(t)+' jatuh di masa libur maintenance besar. Pindahkan jadwal atau batalkan order.'}) });
+    });
     NF.prev=cur;
     await nfAdd(ev);
     if(ups.length)await opsPutTrips(ups);
@@ -2782,8 +2868,12 @@ function autoPanel(){
   +'<button class="btn sm" data-act="auto-toggle">'+(c.on?'Matikan':'Aktifkan')+'</button>'
   +'<button class="btn sm" data-act="auto-run">Buat sekarang</button>'
   +(n?(armed?'<button class="btn sm danger" data-act="auto-clear-yes">Ya, hapus '+n+' order otomatis</button><button class="btn sm" data-act="auto-clear-no">Batal</button>':'<button class="btn sm" data-act="auto-clear">Hapus order otomatis</button>'):'')
-  +'</div></section>';
+  +'</div>'
+  +'<div class="ap-a" style="flex-direction:column;align-items:stretch"><b>Libur semua armada (maintenance besar)</b><p class="hint">Pada tanggal ini semua bus libur: tidak bisa diorder, autopilot tidak membuat order, dan unit masuk jadwal maintenance besar. Awal default: Ramadan sampai cuti bersama Lebaran 2027 (8 Feb sampai 15 Mar 2027).</p><div class="shutlist">'
+  +shutList().map(function(x){return '<div class="sr"><span><b>'+esc(x.label)+'</b> · '+esc(fmtDay(toDay(x.start)))+' sampai '+esc(fmtDay(toDay(x.end)))+'</span><button class="btn sm" data-act="shut-del" data-id="'+esc(x.id)+'">Hapus</button></div>'}).join('')
+  +'<div class="sr"><input id="sh-label" type="text" placeholder="Nama libur, mis. Libur Idul Adha" style="min-width:180px"><input id="sh-start" type="date" aria-label="Mulai"><input id="sh-end" type="date" aria-label="Sampai"><button class="btn sm primary" data-act="shut-add">Tambah</button></div></div></div></section>';
 }
+function shutSave(a){S.settings=Object.assign({},S.settings,{shut:a});return store.put('settings','app',Object.assign({},S.settings,{gapHours:S.gap})).catch(function(){toast('Gagal menyimpan libur.',true)})}
 /* ---------- nota sewa bus ---------- */
 function terbilang(n){
   var s=['','satu','dua','tiga','empat','lima','enam','tujuh','delapan','sembilan','sepuluh','sebelas'];
@@ -3131,6 +3221,7 @@ function fmtJam(ms,now){
   var h=pad(d.getHours())+'.'+pad(d.getMinutes());
   return (dd===0?'hari ini':dd===1?'besok':dd===-1?'kemarin':DAYN[d.getDay()]+' '+d.getDate()+' '+MON3[d.getMonth()])+' '+h;
 }
+function dayOf(ms){var d=new Date(ms);return toDay(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()))}
 function busStatus(b,now){
   if(b.status==='bengkel')return {kind:'bengkel',badge:'Di bengkel',title:'Unit di bengkel (diatur manual)',detail:b.note||'Tidak muncul sebagai pilihan saat plotting. Ubah kondisi ke Aktif lewat tombol Ubah bila sudah selesai.'};
   var trips=S.trips.filter(function(t){return t.status!=='batal'&&t.status!=='selesai'&&(t.buses||[]).indexOf(b.code)>=0});
@@ -3157,6 +3248,8 @@ function busStatus(b,now){
     if(t.status!=='selesai'||(t.buses||[]).indexOf(b.code)<0)return;
     var w=tripWin(t);if(w.ret<=now)prevEnd=Math.max(prevEnd,w.ret);
   });
+  var sd=shutHit(dayOf(now),dayOf(now));
+  if(sd)return checkState(bigPlan(b,sd),now,'Libur semua armada sampai '+fmtDay(toDay(sd.end))+'.','Maintenance besar: '+sd.label);
   var nxt=nextTrip?'Trip berikutnya: '+nextTrip.customer+' · '+fmtWhen(nextTrip):'Belum ada trip terjadwal.';
   var idleStart=prevEnd||dayStartOf(now),limit=nextStart===Infinity?Infinity:nextStart-3*WH,idle=nextStart-idleStart;
   if(idle>=864e5||(nextStart===Infinity)){
@@ -3265,6 +3358,8 @@ document.addEventListener('click',function(ev){
     case 'nf-filter':S.nfFilter=el.dataset.v;render();break;
     case 'seed-fleet':seedFleet();break;
     case 'auto-toggle':autoSave({on:!autoCfg().on}).then(function(){toast(autoCfg().on?'Autopilot aktif':'Autopilot dimatikan');if(autoCfg().on)autoRun(false);queueRender()}).catch(function(e){toast('Gagal menyimpan: '+(e&&(e.message||e.code)||'coba lagi'),true)});break;
+    case 'shut-add':{var l0=$('#sh-label').value.trim()||'Libur armada',a0=$('#sh-start').value,b0=$('#sh-end').value;if(!a0||!b0||toDay(b0)<toDay(a0)){toast('Isi tanggal mulai dan sampai dengan benar.',true);break}shutSave(shutList().concat([{id:'s'+Date.now().toString(36),label:l0,start:a0,end:b0}])).then(render);break}
+    case 'shut-del':{if(!confirm('Hapus jadwal libur ini?'))break;shutSave(shutList().filter(function(x){return x.id!==d.id})).then(render);break}
     case 'auto-run':autoRun(true).then(function(n){if(!n)toast('Semua hari sudah terisi')});break;
     case 'auto-clear':S.confirmKey='auto-clear';render();break;
     case 'auto-clear-no':S.confirmKey=null;render();break;
