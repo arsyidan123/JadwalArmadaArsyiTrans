@@ -711,6 +711,16 @@ function availability(bus,cand,ignoreId){
   return {state:'free',note:'Tersedia'};
 }
 
+/* Seat 2-3 (59+1 / 64+1 TL) hanya untuk bodi Jetbus 3+ SHD. Jetbus 5 SHD baru boleh di-set 2-3 kalau semua unit 3+ sudah terpakai (dipilih di order ini, jalan di order lain, atau di bengkel), misalnya ada beberapa order 2-3 bersamaan. Kalau armada belum punya unit 3+, seat 2-3 belum bisa dipakai. */
+function isSeat23(k){return k==='s59'||k==='s64'}
+function availSeat(bus,cand,ignoreId,sel){
+  var a=availability(bus,cand,ignoreId);
+  if(!(a.state==='free'||a.state==='stut')||!isSeat23(cand.seatBig)||!(+cand.needBig>0)||bus.type!=='big'||isJ3(bus))return a;
+  var J=S.buses.filter(function(b){return b.type==='big'&&isJ3(b)}),has=function(k){return sel&&(sel.has?sel.has(k):sel.indexOf(k)>=0)};
+  if(!J.length)return {state:'seat',note:'Seat 2-3 hanya untuk Jetbus 3+ SHD (belum ada unitnya)'};
+  var free=J.filter(function(j){if(has(j.code))return false;var x=availability(j,cand,ignoreId);return x.state==='free'||x.state==='stut'});
+  return free.length?{state:'seat',note:'Seat 2-3 hanya untuk Jetbus 3+ SHD, masih ada unit 3+ tersedia'}:a;
+}
 /* ---------- render utama ---------- */
 function queueRender(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;render()})}
 function onData(){queueRender();autoFinish();autoKick();scanSoon();setTimeout(nfBadge,0);if(OPEN==='#sheet-order'&&F)renderPlot()}
@@ -841,7 +851,8 @@ function closeSheet(){
   $('#sheet-order').hidden=true;$('#sheet-bus').hidden=true;$('#sheet-busdet').hidden=true;S.detBus=null;S.detDel=false;$('#sheet-nota').hidden=true;$('#sheet-spj').hidden=true;SPJT=null;$('#scrim').hidden=true;
   document.body.classList.remove('lock');OPEN=null;F=null;B=null;
 }
-function candFromForm(){return {start:$('#f-start').value,end:$('#f-end').value,startTime:$('#f-stime').value,endTime:$('#f-etime').value}}
+function candFromForm(){return {start:$('#f-start').value,end:$('#f-end').value,startTime:$('#f-stime').value,endTime:$('#f-etime').value,seatBig:$('#f-seat').value,needBig:+$('#f-big').value||0}}
+$('#f-seat').addEventListener('change',function(){renderPlot()});
 function syncNeed(){$('#f-seat').disabled=!(+$('#f-big').value>0);renderPlot()}
 function openOrder(id,preset){
   preset=preset||{};
@@ -882,7 +893,7 @@ function renderPlot(){
   var need={big:+$('#f-big').value||0,medium:+$('#f-med').value||0};
   box.innerHTML=['big','medium'].map(function(type){
     var list=S.buses.filter(function(b){return b.type===type});
-    var av=list.map(function(b){return availability(b,c,F.id)});
+    var av=list.map(function(b){return availSeat(b,c,F.id,F.sel)});
     var chosen=list.filter(function(b){return F.sel.has(b.code)}).length;
     var ok=av.filter(function(a){return a.state==='free'||a.state==='stut'}).length;
     var cls=chosen>need[type]?'warn':(chosen===need[type]&&need[type]>0?'ok':'');
@@ -917,9 +928,9 @@ function recFor(list,av,c,need){
   return {order:cand.map(function(r){return r.b.code}),info:info,note:note,top:top};
 }
 function chipHtml(b,a,fi){
-  var on=F.sel.has(b.code),clash=on&&(a.state==='busy'||a.state==='down');
-  var disabled=!on&&(a.state==='busy'||a.state==='down');
-  var sub=clash?'Bentrok · '+esc(a.note):(a.state==='free'?'Tersedia':esc(a.note));
+  var on=F.sel.has(b.code),clash=on&&(a.state==='busy'||a.state==='down'||a.state==='seat');
+  var disabled=!on&&(a.state==='busy'||a.state==='down'||a.state==='seat');
+  var sub=clash?(a.state==='seat'?'Tidak cocok · ':'Bentrok · ')+esc(a.note):(a.state==='free'?'Tersedia':esc(a.note));
   if(isPrem(b))sub='Premium · '+sub;
   var rec=fi&&fi.rank>0&&fi.rank<=(fi.top||99),ld=fi?'<span class="ld">Jalan '+fi.l.days+' hr · '+(fi.l.idle>=90?'belum pernah jalan':'nganggur '+fi.l.idle+' hr')+'</span>':'';
   return '<button type="button" class="chip '+a.state+(on?' on':'')+(rec&&!on?' rec':'')+'" data-code="'+esc(b.code)+'"'+(disabled?' disabled':'')+' aria-pressed="'+on+'"><span class="plate">'+esc(b.code)+'</span>'+(rec?'<span class="rk">Rekomendasi #'+fi.rank+'</span>':'')+'<span class="sub">'+sub+'</span>'+ld+(a.state==='stut'?'<span class="tag">Stut</span>':'')+'</button>';
@@ -933,8 +944,11 @@ function autoFill(){
   [['big','#f-big'],['medium','#f-med']].forEach(function(x){
     var need=+$(x[1]).value||0,list=S.buses.filter(function(b){return b.type===x[0]});
     var cur=list.filter(function(b){return F.sel.has(b.code)}).length;
-    var rc=recFor(list,list.map(function(b){return availability(b,c,F.id)}),c,need);
-    rc.order.forEach(function(code){if(cur<need&&!F.sel.has(code)){F.sel.add(code);cur++}});
+    var seq=0;
+    while(cur<need&&seq++<40){
+      var rc=recFor(list,list.map(function(b){return availSeat(b,c,F.id,F.sel)}),c,need),nx=rc.order.find(function(k){return !F.sel.has(k)});
+      if(!nx)break;F.sel.add(nx);cur++;
+    }
     if(cur<need)short.push((need-cur)+' '+TYPE[x[0]].toLowerCase());
   });
   renderPlot();
@@ -951,8 +965,8 @@ async function saveOrder(){
   F.sel.forEach(function(k){if(S.buses.some(function(b){return b.code===k}))codes.push(k)});
   if(status!=='batal'){
     var bad=[];
-    codes.forEach(function(k){var b=S.buses.find(function(x){return x.code===k}),a=availability(b,c,F.id);if(a.state==='busy'||a.state==='down')bad.push(k+' ('+a.note+')')});
-    if(bad.length){err.textContent='Unit bentrok: '+bad.join('; ')+'. Lepas unit itu atau ubah jadwal.';return}
+    codes.forEach(function(k){var b=S.buses.find(function(x){return x.code===k}),a=availSeat(b,c,F.id,F.sel);if(a.state==='busy'||a.state==='down'||a.state==='seat')bad.push(k+' ('+a.note+')')});
+    if(bad.length){err.textContent='Unit tidak bisa dipakai: '+bad.join('; ')+'. Lepas unit itu, ubah jadwal, atau ganti seat.';return}
   }
   var old=F.id?S.trips.find(function(t){return t.id===F.id}):null;
   var needBig=Math.max(0,+$('#f-big').value||0);
@@ -2439,11 +2453,23 @@ var MI_N=["Ma'arif NU",'Muhammadiyah','Al-Ikhlas','Nurul Huda','Miftahul Ulum','
 var MI_ZR=[['Ziarah Wali 4',20],['Ziarah Jawa Tengah',16],['Ziarah Wali 5',14],['Ziarah Wali 9',20],['Sunan Kalijaga',10],['Sunan Kudus',10],['Cirebon',10]];
 var MI_COMBO={'Yogyakarta':['Sunan Pandanaran'],'Borobudur':['Sunan Pandanaran'],'Solo':['Sunan Pandanaran'],'Semarang':['Sunan Kalijaga','Sunan Kudus'],'Jakarta':['Sunan Gunung Jati','Luar Batang'],'Tegal':['Sunan Gunung Jati'],'Surabaya':['Sunan Kalijaga','Sunan Kudus','Sunan Giri','Sunan Ampel'],'Malang':['Sunan Kalijaga','Sunan Kudus','Sunan Giri','Sunan Ampel'],'Bromo':['Sunan Kalijaga','Sunan Kudus','Sunan Giri','Sunan Ampel'],'Bali':['Sunan Kalijaga','Sunan Kudus','Sunan Giri','Sunan Ampel']};
 /* MI: bisa full study tour, full ziarah, atau study tour dengan 1-2 ziarah yang searah rute. Nama MI simulasi (belum ada data asli MI Cilacap). */
+function autoSeatPick(r,base){
+  if(S.buses.some(function(b){return b.type==='big'&&isJ3(b)})&&r()<.3)return aPick(r,['s59','s64']);
+  return base;
+}
+var NEAR=null;
+function autoNear(){
+  if(NEAR)return NEAR;
+  NEAR=AN_DEST.sekolah.filter(function(x){var e=estimate({pickup:'Cilacap',destination:x[0],start:'2026-01-05',end:'2026-01-05',needBig:1});return e&&!e.guess&&e.km<=KM_SMG+15});
+  if(!NEAR.length)NEAR=[['Yogyakarta',1]];
+  return NEAR;
+}
+var FAR_OK=/ziarah|wali|sunan|makam|madura|cirebon|kudus|banten|luar batang|imogiri|tebuireng|habib/i;
 function autoMiDest(r){
   var m=r();
-  if(m<.4)return aW(r,AN_DEST.sekolah);
+  if(m<.4)return aW(r,autoNear());
   if(m<.7)return aW(r,MI_ZR);
-  var study=aW(r,AN_DEST.sekolah.filter(function(x){return MI_COMBO[x[0]]})),pool=MI_COMBO[study],n=Math.min(pool.length,r()<.4?2:1),idx=[],i;
+  var study=aW(r,autoNear().filter(function(x){return MI_COMBO[x[0]]})),pool=MI_COMBO[study],n=Math.min(pool.length,r()<.4?2:1),idx=[],i;
   while(idx.length<n){i=Math.floor(r()*pool.length);if(idx.indexOf(i)<0)idx.push(i)}
   idx.sort(function(a,b){return a-b});
   return idx.map(function(k){return pool[k]}).concat([study]).join(', ');
@@ -2461,7 +2487,7 @@ function autoOrdersFor(D,cfg,P){
   var r=mkRng('arsyi|'+D),dw=parts(D),rate=AUTO_LV[cfg.level]*AUTO_DOW[dw.w]*AUTO_MON[dw.m],n=Math.floor(rate+r()),out=[],k;
   for(k=0;k<n;k++){
     var kind=aW(r,AN_KIND),dest=aW(r,AN_DEST[kind]),cust,pick,nb=0,nm=0,seat='',tag=kind,who=aPick(r,AN_F)+' '+aPick(r,AN_L),kc=aPick(r,P.kec),mj=aPick(r,AN_MASJID),note='';
-    if(kind==='sekolah'){var jj=aW(r,[['SD',34],['MI',14],['SMP',22],['SMA',15],['SMK',15]]),sl=autoSchoolPick(r,P,jj,kc),sc=autoSchoolCust(r,sl,P);cust=sc.cust;pick=sc.pick;note=sc.note;if(jj==='MI'){dest=autoMiDest(r);pick=kc}nb=aW(r,[[1,22],[2,34],[3,26],[4,18]]);nm=r()<.15?1:0;seat=aPick(r,['s50','s50','s48'])}
+    if(kind==='sekolah'){var jj=aW(r,[['SD',34],['MI',14],['SMP',22],['SMA',15],['SMK',15]]),sl=autoSchoolPick(r,P,jj,kc),sc=autoSchoolCust(r,sl,P);cust=sc.cust;pick=sc.pick;note=sc.note;if(jj==='MI'){dest=autoMiDest(r);pick=kc}else if(jj==='SD')dest=aW(r,autoNear());nb=aW(r,[[1,22],[2,34],[3,26],[4,18]]);nm=r()<.15?1:0;seat=autoSeatPick(r,aPick(r,['s50','s50','s48']))}
     else if(kind==='keluarga'){var t=r();cust=t<.5?'Keluarga Bpk. '+who:t<.8?'Arisan '+aPick(r,['RT 03 RW 05','Dusun Krajan','Ibu-Ibu PKK','Warga Perum Griya'])+' '+kc:'Reuni Alumni '+aPick(r,['SMAN 1 ','SMKN 1 ','SMPN 2 '])+kc+' '+aInt(r,1995,2015);pick=kc;if(r()<.5){nb=1}else{nm=1}if(r()<.2)nb=2;seat=aPick(r,['lr35','s48','s48'])}
     else if(kind==='religi'){cust=aPick(r,['Majelis Taklim ','Pengajian Masjid ','Jamaah Yasinan Masjid '])+mj+' '+kc;pick=kc;nb=aW(r,[[1,45],[2,35],[3,20]]);nm=r()<.2?1:0;seat=aPick(r,['s50','s48'])}
     else if(kind==='instansi'){cust=r()<.55?aPick(r,AN_ORG):aPick(r,['Karang Taruna Desa ','PKK Desa ','Perangkat Desa Kec. ','Puskesmas '])+kc;pick=r()<.5?'Cilacap':kc;nb=aW(r,[[1,55],[2,35],[3,10]]);if(r()<.2)nm=1;seat=aPick(r,['lr35','s48'])}
@@ -2514,9 +2540,14 @@ function autoGenerate(from,to){
           var codes=[],c={start:t.start,end:t.end,startTime:t.startTime,endTime:t.endTime};
           [['big',o.nb],['medium',o.nm]].forEach(function(x){
             if(!x[1])return;
-            var list=S.buses.filter(function(b){return b.type===x[0]});
-            var rc=recFor(list,list.map(function(b){return availability(b,c,null)}),c,x[1]);
-            rc.order.slice(0,x[1]).forEach(function(k){codes.push(k)});
+            var list=S.buses.filter(function(b){return b.type===x[0]}),got=[],g;
+            if(x[0]==='big'&&isSeat23(t.seatBig)){
+              c.seatBig=t.seatBig;c.needBig=x[1];
+              for(g=0;g<x[1];g++){var rq=recFor(list,list.map(function(b){return availSeat(b,c,null,got)}),c,1),nk=rq.order.find(function(k){return got.indexOf(k)<0});if(!nk)break;got.push(nk)}
+              if(got.length<x[1]){t.seatBig='s50';c.seatBig='';got=[]}
+            }
+            if(!got.length){var rc=recFor(list,list.map(function(b){return availability(b,c,null)}),c,x[1]);got=rc.order.slice(0,x[1])}
+            got.forEach(function(k){codes.push(k)});
           });
           if(!codes.length)continue;
           t.buses=codes.sort();
@@ -2545,6 +2576,19 @@ async function autoRun(force,quiet){
       c.biroFix=2;
       if(via&&P0.bi.length){var bl=P0.bi[h%P0.bi.length];c.customer=bl.n;c.note=('Rombongan '+sch+' (karya wisata) lewat biro '+bl.n+(t.note?'. '+t.note:''))}
       mig.push(c);
+    });
+    var td0=nowDay();
+    S.trips.forEach(function(t){
+      if(!t.auto||t.nearFix||!t.start||toDay(t.start)<=td0||t.status==='selesai'||t.status==='batal')return;
+      var sd=/^(SD|MI)/.test((t.customer||'').replace(/ \(Karya Wisata\)$/,''))||/^Rombongan (SD|MI)/.test(t.note||'');if(!sd)return;
+      var e0=estimate(t);if(!e0||e0.guess||e0.km<=KM_SMG+15||FAR_OK.test(t.destination||''))return;
+      var ix=-1;mig.forEach(function(m,k){if(m.id===t.id)ix=k});var c=ix>=0?mig[ix]:Object.assign({},t),h=hash(t.id),nr=autoNear(),nd=nr[h%nr.length][0];
+      c.nearFix=1;c.destination=nd;c.note=(c.note?c.note+'. ':'')+'Tujuan study tour SD/MI dibatasi sampai Jogja/Semarang';
+      var e1=estimate(c),dn=!e1?1:(e1.km<=230?((h>>>3)%5<3?1:2):2),d0=toDay(c.start);
+      c.end=toStr(d0+Math.min(dn,toDay(c.end)-d0+1)-1);
+      if(c.start===c.end&&c.startTime&&c.endTime&&tmin(c.endTime)<=tmin(c.startTime))c.endTime='21:00';
+      var e2=estimate(c);if(e2)c.price=e2.total;
+      if(ix<0)mig.push(c);
     });
     if(mig.length){var mi;for(mi=0;mi<mig.length;mi+=8)await Promise.all(mig.slice(mi,mi+8).map(function(t){var d=Object.assign({},t);delete d.id;return store.put('trips',t.id,d)}))}
     var today=nowDay(),from=cfg.upTo?toDay(cfg.upTo)+1:today-21,to=today+cfg.ahead,made=[],gen=false;
@@ -2583,7 +2627,7 @@ function autoFillIdle(look,extra){
         var r=mkRng('idle|'+b.code+'|'+s0),o=null,t=null,tries;
         for(tries=0;tries<14&&!t;tries++){
           var kind=tries<10?aW(r,AN_KIND):'manten',dest=tries<10?aW(r,AN_DEST[kind]):aPick(r,['Purwokerto','Kebumen','Majenang','Sidareja','Kroya']),who=aPick(r,AN_F)+' '+aPick(r,AN_L),kc=aPick(r,P.kec),mj=aPick(r,AN_MASJID),cust,pick,seat='s48',note='';
-          if(kind==='sekolah'){var jj=aW(r,[['SD',34],['MI',14],['SMP',22],['SMA',15],['SMK',15]]),sl=autoSchoolPick(r,P,jj,kc),sc=autoSchoolCust(r,sl,P);cust=sc.cust;pick=sc.pick;note=sc.note;if(jj==='MI'){if(tries<10)dest=autoMiDest(r);pick=kc}seat=aPick(r,['s50','s48'])}
+          if(kind==='sekolah'){var jj=aW(r,[['SD',34],['MI',14],['SMP',22],['SMA',15],['SMK',15]]),sl=autoSchoolPick(r,P,jj,kc),sc=autoSchoolCust(r,sl,P);cust=sc.cust;pick=sc.pick;note=sc.note;if(jj==='MI'){if(tries<10)dest=autoMiDest(r);pick=kc}else if(jj==='SD'&&tries<10)dest=aW(r,autoNear());seat=aPick(r,['s50','s48'])}
           else if(kind==='keluarga'){cust='Keluarga Bpk. '+who;pick=kc}
           else if(kind==='religi'){cust=aPick(r,['Majelis Taklim ','Pengajian Masjid '])+mj+' '+kc;pick=kc;seat='s50'}
           else if(kind==='instansi'){cust=aPick(r,AN_ORG);pick='Cilacap'}
@@ -2629,7 +2673,7 @@ function opsNext(t,code,oldRet,newRet,now,ev,ups){
   S.trips.filter(function(n){return n.id!==t.id&&n.status!=='batal'&&n.status!=='selesai'&&(n.buses||[]).indexOf(code)>=0}).forEach(function(n){
     var nw=tripWin(n);if(nw.dep<oldRet||nw.dep>=newRet+need)return;
     var cands=S.buses.filter(function(b){return b.type===bus.type&&b.code!==code&&b.status!=='bengkel'&&(n.buses||[]).indexOf(b.code)<0}),
-        av=cands.map(function(b){return availability(b,n,n.id)}),rc=recFor(cands,av,n,1),
+        av=cands.map(function(b){return availSeat(b,n,n.id,(n.buses||[]).filter(function(k){return k!==code}))}),rc=recFor(cands,av,n,1),
         free=rc.order.filter(function(k){var i=cands.findIndex(function(b){return b.code===k});return av[i].state==='free'});
     free.sort(function(x,y){var bx=cands.find(function(b){return b.code===x}),by=cands.find(function(b){return b.code===y});return (isPrem(by)===isPrem(bus)?1:0)-(isPrem(bx)===isPrem(bus)?1:0)});
     if(free.length){
