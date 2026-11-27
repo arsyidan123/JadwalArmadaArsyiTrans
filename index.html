@@ -501,7 +501,7 @@ button.code{cursor:pointer;font:inherit}
         <div class="fld"><label for="b-code">Kode unit *</label><input id="b-code" type="text" class="mono" placeholder="AT-013"></div>
         <div class="fld"><label for="b-type">Tipe</label><select id="b-type"><option value="big">Big bus</option><option value="medium">Medium bus</option></select></div>
         <div class="fld"><label for="b-cat">Kategori</label><select id="b-cat"><option value="standar">Standar Pariwisata</option><option value="premium">Premium (harga +Rp1.000.000)</option></select></div>
-        <div class="fld"><label for="b-model">Karoseri / model</label><input id="b-model" type="text" placeholder="Jetbus 5 SHD"></div>
+        <div class="fld"><label for="b-model">Karoseri / model</label><select id="b-model"><option value="Jetbus 5 SHD">Jetbus 5 SHD</option><option value="Jetbus 3+ SHD">Jetbus 3+ SHD (harga -Rp1.000.000)</option></select></div>
         <div class="fld"><label for="b-chassis">Sasis</label><input id="b-chassis" type="text" placeholder="Hino RM 280"></div>
         <div class="fld"><label for="b-seats">Jumlah kursi</label><input id="b-seats" type="number" min="0" max="80" inputmode="numeric"></div>
         <div class="fld"><label for="b-km">Odometer awal (km), belum termasuk order di sistem</label><input id="b-km" type="number" min="0" max="2000000" step="1" inputmode="numeric" placeholder="mis. 54000"></div>
@@ -569,7 +569,8 @@ var HUES=[172,212,28,282,342,96,48,252,8,194];
 var hash=function(s){var h=0;String(s).split('').forEach(function(c){h=(h*31+c.charCodeAt(0))>>>0});return h};
 var STATUS={tentatif:'Tentatif',pasti:'Terkonfirmasi',selesai:'Selesai',batal:'Dibatalkan'};
 var TYPE={big:'Big Bus',medium:'Medium Bus'};
-var PREM_ADD=1000000;
+var PREM_ADD=1000000,BODY_DISC=1000000;
+function isJ3(b){return !!b&&/jetbus\s*3\s*\+/i.test(b.model||'')}
 function isPrem(b){return !!b&&b.cat==='premium'}
 function catName(b){return isPrem(b)?'Premium':'Standar Pariwisata'}
 var SEAT={lr35:'35+1 TL (Leg Rest)',s48:'48+1 TL (2+2)',s50:'50+1 TL (2-2)'};
@@ -970,7 +971,7 @@ function openBus(code){
   B={code:b?b.code:null};
   $('#sb-title').textContent=b?'Ubah unit '+b.code:'Unit baru';
   var c=$('#b-code');c.value=b?b.code:'';c.readOnly=!!b;
-  $('#b-type').value=b?b.type:'big';$('#b-cat').value=b&&b.cat==='premium'?'premium':'standar';$('#b-model').value=b?(b.model||''):'';$('#b-chassis').value=b?(b.chassis||''):'';
+  $('#b-type').value=b?b.type:'big';$('#b-cat').value=b&&b.cat==='premium'?'premium':'standar';(function(){var m=b?(b.model||''):'Jetbus 5 SHD',el=$('#b-model');if(m&&!Array.from(el.options).some(function(o){return o.value===m})){var o=document.createElement('option');o.value=o.textContent=m;el.appendChild(o)}el.value=m||'Jetbus 5 SHD'})();$('#b-chassis').value=b?(b.chassis||''):'';
   $('#b-seats').value=b&&b.seats?b.seats:'';$('#b-km').value=b?Math.round(kmBase(b)):'';$('#b-status').value=b?(b.status||'aktif'):'aktif';$('#b-note').value=b?(b.note||''):'';
   $('#b-plate').value=b?(b.plate||''):'';$('#b-driver').value=b?(b.driver||''):'';$('#b-codriver').value=b?(b.codriver||''):'';
   $('#b-hint').textContent=b?'Kode unit tidak bisa diganti karena dipakai sebagai acuan di order. Untuk ganti kode, tambah unit baru lalu hapus yang lama.':'Unit yang berstatus "Di bengkel" tidak muncul sebagai pilihan saat plotting.';
@@ -1007,7 +1008,7 @@ async function saveBus(){
   if(!/^[A-Z0-9][A-Z0-9_-]{1,19}$/.test(code)){err.textContent='Kode unit wajib diisi: huruf, angka, atau tanda hubung (mis. AT-013).';return}
   if(!B.code&&S.buses.some(function(b){return b.code===code})){err.textContent='Kode '+code+' sudah dipakai unit lain.';return}
   var seats=parseInt($('#b-seats').value,10);
-  var doc={code:code,type:$('#b-type').value,cat:$('#b-cat').value,model:$('#b-model').value.trim(),chassis:$('#b-chassis').value.trim(),seats:seats>0?seats:null,status:$('#b-status').value,note:$('#b-note').value.trim(),plate:$('#b-plate').value.trim().toUpperCase().replace(/\s+/g,' '),driver:$('#b-driver').value.trim(),codriver:$('#b-codriver').value.trim()};
+  var doc={code:code,type:$('#b-type').value,cat:$('#b-cat').value,model:$('#b-model').value,chassis:$('#b-chassis').value.trim(),seats:seats>0?seats:null,status:$('#b-status').value,note:$('#b-note').value.trim(),plate:$('#b-plate').value.trim().toUpperCase().replace(/\s+/g,' '),driver:$('#b-driver').value.trim(),codriver:$('#b-codriver').value.trim()};
   var kmv=parseInt($('#b-km').value,10);if(kmv>=0)doc.km=kmv;
   if(B.photo)doc.photo=B.photo;
   try{await store.put('buses',code,doc);closeSheet();toast('Unit disimpan')}
@@ -2096,8 +2097,8 @@ function estimate(t){
   if(!t.destination||!t.start)return null;
   var r=routeOf(t),km=r?(r.pick?r.pick.km:0)+r.out.km:300,s=toDay(t.start),e=t.end?toDay(t.end):s,days=Math.max(1,e-s+1),inap=days>1,
       big=bigRate(km,inap),med=Math.round(big*MED_RATIO/50000)*50000,nb=+t.needBig||0,nm=+t.needMed||0;
-  var np=(t.buses||[]).filter(function(k){return isPrem(S.buses.find(function(b){return b.code===k}))}).length,mul=inap?days:1;
-  return {total:(nb*big+nm*med+np*PREM_ADD)*mul,days:days,inap:inap,km:km,big:big,med:med,nb:nb,nm:nm,np:np,guess:!r};
+  var bf=function(f){return (t.buses||[]).filter(function(k){return f(S.buses.find(function(b){return b.code===k}))}).length},np=bf(isPrem),nj=bf(isJ3),mul=inap?days:1;
+  return {total:Math.max(0,(nb*big+nm*med+np*PREM_ADD-nj*BODY_DISC)*mul),days:days,inap:inap,km:km,big:big,med:med,nb:nb,nm:nm,np:np,nj:nj,guess:!r};
 }
 /* skema uang jalan: 20% dari harga sewa untuk crew = 10% solar + 10% gaji crew (supir 60%, kernet 40%). Sisa 80% jadi pendapatan/keuntungan. */
 var UJ={solar:.10,crew:.10,driver:.60,kernet:.40};
@@ -2115,7 +2116,7 @@ function priceSync(){
   var el=$('#f-price');if(!el||!F)return;
   var e=estimate({pickup:$('#f-pickup').value,destination:$('#f-dest').value.trim(),start:$('#f-start').value,end:$('#f-end').value,needBig:+$('#f-big').value||0,needMed:+$('#f-med').value||0,buses:Array.from(F.sel)});
   if(!F.pm)el.value=e?e.total:'';
-  $('#f-price-hint').textContent=!e?'Isi tujuan dan tanggal untuk melihat estimasi harga.':'Estimasi '+rupiah(e.total)+' = '+[e.nb?e.nb+' big × '+rupiah(e.big):'',e.nm?e.nm+' medium × '+rupiah(e.med):'',e.np?e.np+' premium × +'+rupiah(PREM_ADD):''].filter(Boolean).join(' + ')
+  $('#f-price-hint').textContent=!e?'Isi tujuan dan tanggal untuk melihat estimasi harga.':'Estimasi '+rupiah(e.total)+' = '+[e.nb?e.nb+' big × '+rupiah(e.big):'',e.nm?e.nm+' medium × '+rupiah(e.med):'',e.np?e.np+' premium × +'+rupiah(PREM_ADD):'',e.nj?e.nj+' Jetbus 3+ SHD × -'+rupiah(BODY_DISC):''].filter(Boolean).join(' + ')
     +(e.inap?' per hari × '+e.days+' hari (inap)':' (pulang pergi 1 hari)')+' · jarak ±'+Math.round(e.km)+' km'+(e.guess?' (tujuan tidak dikenali, dipakai jarak menengah)':'')
     +'. Sudah termasuk BBM dan driver; belum termasuk tol, parkir, tiket wisata, ferry, dan tip kru.'
     +(F.pm&&+el.value!==e.total?' Kolom harga sudah diubah manual.':'');
@@ -2623,6 +2624,7 @@ function notaHtml(t){
    +'<span class="k-bg '+st[1]+'">'+st[0]+'</span><div class="k-rule"></div>'
    +'<div class="k-cols"><div><span class="k-pill">INFORMASI PELANGGAN</span><div class="k-box"><table class="kvt"><tbody><tr><td>TERIMA DARI</td><td>'+esc(String(t.customer||'').toUpperCase())+'</td></tr><tr><td>NO. HP</td><td>'+esc(t.phone||'-')+'</td></tr><tr><td>ALAMAT</td><td>'+esc(String(t.pickup||'Cilacap').toUpperCase())+'</td></tr></tbody></table></div></div>'
    +'<div><span class="k-pill">RINGKASAN PEMBAYARAN</span><div class="k-box"><table class="kvt k-am"><tbody><tr><td>HARGA PER UNIT</td><td>'+rupiah(perUnit)+'</td></tr>'
+   +(e&&e.nj&&!t.priceManual?'<tr><td>POTONGAN BODI JETBUS 3+ SHD</td><td>'+e.nj+' unit × -'+rupiah(BODY_DISC)+(e.inap?' × '+e.days+' hari':'')+'</td></tr>':'')
    +(e&&e.np&&!t.priceManual?'<tr><td>SUDAH TERMASUK PREMIUM</td><td>'+e.np+' unit × '+rupiah(PREM_ADD)+(e.inap?' × '+e.days+' hari':'')+'</td></tr>':'')
    +'<tr><td>SUB TOTAL</td><td>'+rupiah(total)+'</td></tr><tr><td>TOTAL PEMBAYARAN</td><td><b>'+rupiah(total)+'</b></td></tr></tbody></table>'
    +'<span class="k-pill k-s">RIWAYAT PEMBAYARAN</span><table class="k-hist"><thead><tr><th style="width:26px">NO</th><th>TANGGAL</th><th>METODE</th><th class="r">NOMINAL</th></tr></thead><tbody>'+hist+'</tbody></table>'
