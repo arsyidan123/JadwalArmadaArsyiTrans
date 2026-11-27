@@ -122,6 +122,11 @@ h1,h2,h3,h4,p{margin:0}
 .cell:hover{background:color-mix(in srgb,var(--accent) 14%,transparent)}
 .g-row.down .track{background:repeating-linear-gradient(135deg,transparent 0 8px,color-mix(in srgb,var(--fg) 8%,transparent) 8px 9px)}
 .g-row.down .cell{cursor:not-allowed}
+.ch{display:flex;flex-direction:column;max-width:760px;margin:0 auto;padding:12px}.ch-head{display:flex;gap:10px;align-items:center;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-bottom:0;border-radius:12px 12px 0 0}.ch-ava{width:38px;height:38px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:20px}.ch-sub{font-size:12px;color:var(--muted)}
+.ch-list{height:min(62vh,560px);overflow-y:auto;padding:12px 10px;border:1px solid var(--line);background:color-mix(in srgb,var(--accent) 7%,var(--surface-2));display:flex;flex-direction:column;gap:3px}.ch-row{display:flex}.ch-row.me{justify-content:flex-end}
+.ch-b{max-width:82%;padding:6px 9px 4px;border-radius:9px;background:var(--surface);border:1px solid var(--line);font-size:14px;line-height:1.35;word-wrap:break-word;overflow-wrap:anywhere}.ch-b.me{background:color-mix(in srgb,var(--accent) 22%,var(--surface));border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+.ch-b b{font-size:12.5px}.ch-bus{font-size:10.5px;color:var(--muted);font-family:var(--font-mono)}.ch-t{float:right;margin:6px 0 0 10px;font-size:10.5px;color:var(--muted)}.ch-day{text-align:center;margin:8px 0 4px}.ch-day span{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:2px 10px;font-size:11.5px;color:var(--muted)}
+.ch-in{display:flex;gap:8px;padding:8px;background:var(--surface);border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px}.ch-in input{flex:1;min-width:0;padding:9px 12px;border:1px solid var(--line-strong);border-radius:20px;background:var(--surface-2);color:inherit;font:inherit}.ch-empty{margin:auto;color:var(--muted);font-size:13px;text-align:center}
 .nbadge{display:inline-block;min-width:16px;padding:0 5px;margin-left:6px;border-radius:9px;background:var(--accent);color:#fff;font-size:10px;line-height:16px;text-align:center;vertical-align:1px}.nbadge[hidden]{display:none}
 .nf-f{flex-wrap:wrap}.chip-f{border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:5px 11px;font-size:12px;cursor:pointer;color:var(--fg)}.chip-f.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .nfl{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}.nf-day{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-top:8px}.nf{display:flex;gap:10px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px}.nf.new{border-color:var(--accent)}.nf .nd{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;background:#8a93a3}.nf.k-ok .nd{background:#2f9e5a}.nf.k-warn .nd{background:#e0a21b}.nf.k-bad .nd{background:#d44}.nf b{font-size:14px}.nf p{margin:3px 0;font-size:13px;color:var(--fg)}.nf small{color:var(--muted)}
@@ -424,6 +429,7 @@ button.code{cursor:pointer;font:inherit}
     <a href="#order" data-tab="order">Order</a>
     <a href="#pendapatan" data-tab="pendapatan">Pendapatan</a>
     <a href="#keuangan" data-tab="keuangan">Keuangan</a>
+    <a href="#grup" data-tab="grup">Grup Crew<span class="nbadge" id="cbadge" hidden></span></a>
     <a href="#notifikasi" data-tab="notifikasi">Notifikasi<span class="nbadge" id="nbadge" hidden></span></a>
   </nav>
   <div id="banner"></div>
@@ -747,7 +753,7 @@ function availSeat(bus,cand,ignoreId,sel){
 }
 /* ---------- render utama ---------- */
 function queueRender(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;render()})}
-function onData(){queueRender();autoFinish();autoKick();scanSoon();setTimeout(nfBadge,0);if(OPEN==='#sheet-order'&&F)renderPlot()}
+function onData(){queueRender();autoFinish();autoKick();scanSoon();setTimeout(nfBadge,0);setTimeout(chBadge,0);if(OPEN==='#sheet-order'&&F)renderPlot()}
 
 function render(){
   setTimeout(nfBadge,0);
@@ -765,6 +771,7 @@ function render(){
   else if(S.tab==='order')v.innerHTML=viewOrders();
   else if(S.tab==='pendapatan')v.innerHTML=viewRevenue();
   else if(S.tab==='keuangan')v.innerHTML=viewFin();
+  else if(S.tab==='grup')v.innerHTML=viewChat();
   else if(S.tab==='notifikasi'){S.nfSeenAt=nfSeen();v.innerHTML=viewNotif();lsSet('notif-seen',String(Date.now()))}
   else v.innerHTML=viewJadwal();
 }
@@ -2778,6 +2785,96 @@ function autoFillIdle(look,extra){
 var NF={t:0,busy:false,prev:null,prevTrip:{},t0:Date.now()};
 var NF_CAT={bus:'Kondisi bus',stut:'Stutan',ganti:'Ganti armada',telat:'Keterlambatan',order:'Order'};
 var NF_WHY=['rombongan terlambat kembali dari lokasi wisata','antrean keluar area parkir wisata','hujan deras, rombongan menunggu reda','macet saat keluar kota tujuan','makan malam rombongan molor','peserta ada yang sakit dan mampir klinik'];
+/* ---------- Grup Crew (simulasi grup WhatsApp: crew bus dan kamu) ----------
+   Semua pesan crew dibuat dari jadwal order yang ada (otomatis, deterministik) ditambah obrolan iseng harian.
+   Pesan yang kamu ketik disimpan di settings row 'chat'. Crew membalas otomatis (simulasi). */
+var CH_DRV=['Darto','Slamet','Sugeng','Rohmat','Supri','Tarno','Kasdi','Wahyu','Teguh','Joko','Parno','Sunarto','Yanto','Mulyadi','Karyo'],
+    CH_KER=['Dedi','Rizki','Ujang','Fajar','Bayu','Eko','Iwan','Anto','Agus','Heri','Doni','Rudi','Ade','Wawan','Bagas'],
+    CH_COL=['#1f8f6b','#b4531c','#6f42c1','#c2255c','#1971c2','#a6740a','#0b7285','#9c36b5','#d9480f','#2b8a3e'];
+function chCrew(code){
+  var i=Math.max(0,S.buses.findIndex(function(b){return b.code===code})),h=hash(code);
+  return [{n:'Pak '+CH_DRV[i%CH_DRV.length],bus:code,col:CH_COL[(i*3+h)%CH_COL.length],r:'sopir'},{n:'Mas '+CH_KER[(i*4+3)%CH_KER.length],bus:code,col:CH_COL[(i*7+h+4)%CH_COL.length],r:'kernet'}];
+}
+function chHM(ms){var d=new Date(ms);return pad(d.getHours())+':'+pad(d.getMinutes())}
+function chShort(c){return String(c||'').replace(/\s*\(.*?\)\s*/g,' ').replace(/^(Mudik (Gratis|Bareng) )/,'').trim().slice(0,38)}
+var CH_CHAT=['Pagi semua, kopi sudah siap belum? ☕','Solar naik lagi ya, dompet nangis 😅','Ada yang bawa charger cadangan? HP saya sekarat 🔋','Tadi ada penumpang nanya "ini bis kecepatan berapa pak?" Saya jawab: secukupnya 😂','Yang kemarin ninggalin sandal di bagasi, silakan diambil di garasi ya 🩴','Warung Mbok Yem di Wangon masih buka, enak soto ayamnya','Info: jalur Ajibarang ramai, mending lewat Wangon','Ban serep sudah dicek, aman bos','Saya baru ganti lagu playlist: dangdut koplo jilid 5 😎','Alhamdulillah hari ini lancar, tidak ada razia','Semoga besok cuaca cerah, kemarin hujan deras terus','Mas, jangan lupa isi air radiator ya','Ada yang tau bengkel las yang buka hari Minggu?','Selamat siang bos, unit aman dan bersih ✅','Kernet saya tadi ketiduran di kursi belakang, ketahuan penumpang 😂','Sore bos, baru selesai cuci bis, kinclong 🚌✨','Rombongan hari ini rame banget, nyanyi sepanjang jalan 🎤','Ada yang mau titip oleh-oleh? Saya mampir Wonosobo','Tol lancar, anginnya enak, tinggal ngantuknya yang susah dilawan','Mas, nanti malam siapa yang jaga pos garasi?','Hari ini makan siang pakai nasi padang, siapa yang mau ikut?','Maaf bos, tadi sinyal hilang di tanjakan','Pak, kalau ada order dadakan kabari ya, saya siap','Terima kasih bos, bonusnya sudah masuk 🙏','Wah, ada yang kena macet di Nagrek? Share info dong','Besok pagi saya mulai jam 4 ya, tolong dibangunin 😴','Saya baru lihat kucing tidur di bawah bis, hampir kelindas, Alhamdulillah selamat 🐈','Doakan lancar ya semua, besok jalur panjang','Bos, spion kiri tadi kesenggol ranting, cuma lecet tipis','Mas, bensin eh solar, jangan lupa struknya ya']
+ ,CH_PAGI=['Pagi bos, siap bertugas 🙏','Selamat pagi semua, semangat! 💪','Pagi, unit sudah dipanasin ☕🚌','Assalamualaikum, pagi semua, ada kabar hari ini?'],
+    CH_MALAM=['Selamat istirahat semua, besok lanjut 🙏','Malam bos, unit sudah terparkir aman','Alhamdulillah hari ini selesai, tidur dulu ya 😴','Sampai jumpa besok, jaga kesehatan semua'];
+function chJoke(r){return aPick(r,[' 😂',' 🙏',' 🚌',' 👍',' 😎',''])}
+function chBuild(now){
+  var out=[],from=now-3*864e5,DAY=864e5;
+  var add=function(id,ts,c,text){if(ts>from&&ts<=now)out.push({id:id,ts:ts,n:c.n,bus:c.bus,col:c.col,text:text})};
+  S.trips.forEach(function(t){
+    if(t.example||!t.start||t.status==='batal'||t.status==='tentatif'||!(t.buses||[]).length)return;
+    var w=tripWin(t);if(w.ret<from||w.dep-DAY>now)return;
+    var st=tripState(t,now);if(!st||!st.r)return;
+    var r=st.r,id=t.id,cr=chCrew(t.buses[0]),rg=mkRng('ch|'+id),pc=chShort(t.customer),dst=t.destination||'tujuan',pk=t.pickup||'garasi',
+        who=function(){return cr[rg()<.6?0:1]},mid=function(f){var P=r.out.pts,k=Math.max(1,Math.min(P.length-2,Math.round((P.length-1)*f)));return (P[k]&&P[k][2])||dst},
+        jit=function(){return Math.floor((rg()-.5)*16*6e4)};
+    add('e|'+id+'|cek',dayMs(toDay(t.start)-1)+(17+Math.floor(rg()*3))*36e5,who(),aPick(rg,['Bos, '+t.buses[0]+' sudah dicuci dan dicek, siap buat besok ('+pc+') ✅','Unit '+t.buses[0]+' sudah siap, solar penuh, besok jalan sesuai jadwal 🙏','Laporan: '+t.buses[0]+' kondisi aman, besok berangkat '+(t.startTime||'pagi')+' ya bos']));
+    if(r.pick&&st.pickStart)add('e|'+id+'|ps',st.pickStart+jit(),who(),'Otw titik jemput '+pk+', estimasi sampai jam '+chHM(st.pickEnd)+chJoke(rg));
+    if(r.pick&&st.pickEnd)add('e|'+id+'|pe',st.pickEnd+60000,who(),aPick(rg,['Sudah di '+pk+', rombongan belum kumpul, nunggu dulu ☕','Posisi sudah di titik jemput '+pk+'. Siap bos','Sampai di '+pk+', parkir dulu, tunggu panitia']));
+    add('e|'+id+'|dep',w.dep+jit(),who(),aPick(rg,['Rombongan '+pc+' sudah naik semua, berangkat jam '+chHM(w.dep)+' ke '+dst+', bismillah 🙏','Jalan ya bos, '+(t.buses.length>1?t.buses.length+' unit':'1 unit')+' tujuan '+dst+'. Doakan lancar','Berangkat! Penumpang '+pc+' lengkap, tujuan '+dst+' 🚌']));
+    if(t.buses.length>1){var c2=chCrew(t.buses[1])[0];add('e|'+id+'|dep2',w.dep+4*6e4+jit(),c2,aPick(rg,['Unit '+t.buses[1]+' ikut jalan, ngikut di belakang','Siap, '+t.buses[1]+' juga berangkat','Konvoi aman, saya di belakang unit depan']))}
+    var To=st.outEnd-w.dep;
+    if(To>2.2*36e5){add('e|'+id+'|m1',w.dep+To*.35+jit(),who(),aPick(rg,['Lewat '+mid(.35)+', lancar 👍','Posisi sekarang sekitar '+mid(.35)+', jalan lancar bos','Macet dikit di '+mid(.35)+', tapi masih aman'])+chJoke(rg));
+      add('e|'+id+'|m2',w.dep+To*.6+jit(),who(),aPick(rg,['Istirahat makan dulu di sekitar '+mid(.6)+', rombongan turun toilet 🍛','Isi solar dulu di '+mid(.6)+', sekalian ngopi ☕','Rombongan minta mampir beli oleh-oleh di '+mid(.6)+' 😅']))}
+    if(st.outEnd)add('e|'+id+'|oe',st.outEnd+jit(),who(),aPick(rg,['Alhamdulillah sudah sampai '+dst+'. Rombongan turun 🙏','Sampai di '+dst+' jam '+chHM(st.outEnd)+', aman semua bos','Tiba di '+dst+', penumpang sudah turun. Kami standby di parkiran']));
+    if(st.backStart-st.outEnd>3*36e5)add('e|'+id+'|wi',st.outEnd+3.2*36e5,who(),aPick(rg,['Rombongan lagi acara, kami istirahat di parkiran sambil ngopi ☕','Standby di '+dst+'. Kernet lagi nyuci bis 🧽','Panas banget di '+dst+', mesin dimatikan, AC off dulu 😅']));
+    if(st.backStart)add('e|'+id+'|bk',st.backStart+jit(),who(),aPick(rg,['Rombongan sudah naik lagi, jalan pulang ya bos 🙏','Mulai balik dari '+dst+', estimasi sampai garasi jam '+chHM(w.ret),'Pulang! Semua penumpang lengkap, tidak ada yang ketinggalan 😂']));
+    add('e|'+id+'|rt',w.ret+jit(),who(),aPick(rg,['Alhamdulillah sudah sampai garasi, unit masuk. Besok dicuci ya bos 🙏','Trip '+pc+' selesai, '+t.buses[0]+' sudah parkir aman ✅','Sampai garasi dengan selamat. Mohon istirahat dulu bos, capek 😴']));
+  });
+  var d,k;
+  for(d=Math.floor(now/DAY)-4;d<=Math.floor(now/DAY)+1;d++){
+    var base=dayMs(dayOf(d*DAY+12*36e5)),rr=mkRng('chat|'+base),n=3+Math.floor(rr()*3),bs=S.buses.slice(),sd=shutHit(dayOf(base),dayOf(base));
+    var pick=function(){var b=aPick(rr,bs);return b?chCrew(b.code)[rr()<.5?0:1]:null};
+    var c=pick();if(c)add('c|'+base+'|pg',base+(5.8+rr()*.8)*36e5,c,aPick(rr,CH_PAGI));
+    for(k=0;k<n;k++){c=pick();if(c)add('c|'+base+'|'+k,base+(7+rr()*14)*36e5,c,sd&&rr()<.5?aPick(rr,['Servis besar hari ini, bis lagi dibongkar semua 🔧','Bengkel antri, tapi tenang, selesai sebelum mudik','Ban baru sudah datang, mulai dipasang 🛞']):aPick(rr,CH_CHAT))}
+    c=pick();if(c)add('c|'+base+'|ml',base+(21.3+rr()*.6)*36e5,c,aPick(rr,CH_MALAM));
+  }
+  /* pesan kamu + balasan crew */
+  (S.chat||[]).forEach(function(m){
+    if(m.ts>from&&m.ts<=now)out.push({id:m.id,ts:m.ts,me:1,text:m.text});
+    var rr=mkRng('rep|'+m.id),nr=1+Math.floor(rr()*3),q=/\?/.test(m.text),low=m.text.toLowerCase(),i,used={};
+    for(i=0;i<nr;i++){
+      var b=aPick(rr,S.buses);if(!b||used[b.code])continue;used[b.code]=1;
+      var cc=chCrew(b.code)[rr()<.6?0:1],txt=/hati|selamat jalan|ati/.test(low)?aPick(rr,['Aamiin bos, matur nuwun 🙏','Siap bos, nuwun doanya','Aamiin, terima kasih pak']):/makan|kopi|istirahat/.test(low)?aPick(rr,['Siap bos, sekalian ngopi dulu ☕','Nggih pak, ini lagi istirahat','Wah mantap, terima kasih bos 🙏']):/ban|solar|servis|cek/.test(low)?aPick(rr,['Siap, nanti saya cek bos 🔧','Baik pak, segera dicek','Noted bos, nanti saya laporkan']):q?aPick(rr,['Nggih pak, saya cek dulu ya','Siap bos, nanti saya kabari','Kurang tau pak, saya tanya yang lain dulu 😅']):aPick(rr,['Siap bos 🙏','Siap, laksanakan!','Baik pak, noted','Siap 86 👍','Oke bos, aman']);
+      var ts=m.ts+(15+rr()*165)*1000+i*45e3;if(ts<=now)out.push({id:'r|'+m.id+'|'+i,ts:ts,n:cc.n,bus:cc.bus,col:cc.col,text:txt});
+    }
+  });
+  out.sort(function(a,b){return a.ts-b.ts||(a.id<b.id?-1:1)});
+  return out;
+}
+function chList(now){
+  var msgs=chBuild(now),h='',last='',i,today=dayMs(dayOf(now)),prevN='';
+  if(!msgs.length)return '<div class="ch-empty">Belum ada obrolan. Pesan crew muncul otomatis mengikuti jadwal order.</div>';
+  msgs.forEach(function(m){
+    var dk=dayMs(dayOf(m.ts));
+    if(dk!==last){last=dk;prevN='';h+='<div class="ch-day"><span>'+(dk===today?'Hari ini':dk===today-864e5?'Kemarin':fmtDay(dayOf(m.ts)))+'</span></div>'}
+    if(m.me){h+='<div class="ch-row me"><div class="ch-b me">'+esc(m.text)+'<span class="ch-t">'+chHM(m.ts)+' ✓✓</span></div></div>';prevN='';return}
+    h+='<div class="ch-row"><div class="ch-b">'+(prevN!==m.n?'<b style="color:'+m.col+'">'+esc(m.n)+'</b> <span class="ch-bus">'+esc(m.bus)+'</span><br>':'')+esc(m.text)+'<span class="ch-t">'+chHM(m.ts)+'</span></div></div>';prevN=m.n;
+  });
+  return h;
+}
+function chSeen(){var v=+lsGet('chat-seen');return v>0?v:0}
+function chBadge(){var el=$('#cbadge');if(!el)return;var n=0;if(S.tab!=='grup'&&S.buses.length){var s=chSeen()||Date.now()-36e5;n=chBuild(Date.now()).filter(function(m){return !m.me&&m.ts>s}).length}el.textContent=n>99?'99+':(n||'');el.hidden=!n}
+function chScroll(force){var el=$('#ch-list');if(!el)return;if(force||el.scrollHeight-el.scrollTop-el.clientHeight<140)el.scrollTop=el.scrollHeight}
+function viewChat(){
+  lsSet('chat-seen',String(Date.now()));
+  var nm=[],b;S.buses.slice(0,6).forEach(function(x){nm.push(chCrew(x.code)[0].n)});
+  setTimeout(function(){chScroll(true);var i=$('#ch-in');if(i&&window.matchMedia&&matchMedia('(pointer:fine)').matches)i.focus()},0);
+  return '<div class="ch"><div class="ch-head"><div class="ch-ava">🚌</div><div><b>Crew Arsyi Trans</b><br><span class="ch-sub">'+(S.buses.length*2+1)+' anggota: Kamu, '+esc(nm.join(', '))+(S.buses.length>3?', ...':'')+'</span></div></div><div class="ch-list" id="ch-list">'+chList(Date.now())+'</div>'
+   +'<div class="ch-in"><input id="ch-in" type="text" maxlength="400" placeholder="Ketik pesan ke crew..." autocomplete="off" aria-label="Pesan"><button type="button" class="btn primary" data-act="chat-send">Kirim</button></div><p class="hint" style="margin:6px 2px 0">Obrolan ini simulasi: pesan crew dibuat otomatis dari jadwal order dan obrolan iseng, bukan pesan dari crew asli.</p></div>';
+}
+function chSend(){
+  var el=$('#ch-in'),tx=el&&el.value.trim();if(!tx)return;
+  var m={id:'u'+Date.now().toString(36),ts:Date.now(),text:tx.slice(0,400)};
+  S.chat=(S.chat||[]).concat([m]).slice(-100);el.value='';
+  var l=$('#ch-list');if(l){l.innerHTML=chList(Date.now());chScroll(true)}
+  store.put('settings','chat',{items:S.chat}).catch(function(){});
+}
+document.addEventListener('keydown',function(ev){if(ev.target&&ev.target.id==='ch-in'&&ev.key==='Enter'){ev.preventDefault();chSend()}});
+setInterval(function(){if(!S.buses.length)return;if(S.tab==='grup'){var l=$('#ch-list');if(l){var near=l.scrollHeight-l.scrollTop-l.clientHeight<140;l.innerHTML=chList(Date.now());if(near)l.scrollTop=l.scrollHeight;lsSet('chat-seen',String(Date.now()))}}else chBadge()},30000);
 function nfSeen(){var v=+lsGet('notif-seen');return v>0?v:0}
 function nfBadge(){var el=$('#nbadge');if(!el)return;var s=nfSeen(),n=S.tab==='notifikasi'?0:(S.notif||[]).filter(function(x){return x.ts>s}).length;el.textContent=n>99?'99+':(n||'');el.hidden=!n}
 function nfSave(){return store.put('settings','notif',{items:S.notif||[],known:S.notifKnown||[]})}
@@ -3397,6 +3494,7 @@ document.addEventListener('click',function(ev){
     case 'new-bus':openBus(null);break;
     case 'del-bus':S.confirmKey='bus:'+d.code;render();break;
     case 'del-bus-yes':deleteBus(d.code);break;
+    case 'chat-send':chSend();break;
     case 'fin-pdf':finPdf();break;
     case 'fin-csv':case 'fin-addfix':case 'fin-delfix':case 'fin-addtx':case 'fin-deltx':case 'fin-saveset':finAct(act,d);break;
     case 'nf-filter':S.nfFilter=el.dataset.v;render();break;
@@ -3456,7 +3554,7 @@ document.addEventListener('change',function(ev){
   render();
 });
 document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&OPEN)closeSheet()});
-function syncTab(){var h=location.hash.replace('#','');if(h==='armada'){location.hash='#tracking';return}S.tab=['jadwal','tracking','order','pendapatan','keuangan','notifikasi'].indexOf(h)>=0?h:'jadwal';S.confirmKey=null;render()}
+function syncTab(){var h=location.hash.replace('#','');if(h==='armada'){location.hash='#tracking';return}S.tab=['jadwal','tracking','order','pendapatan','keuangan','grup','notifikasi'].indexOf(h)>=0?h:'jadwal';S.confirmKey=null;render()}
 window.addEventListener('hashchange',syncTab);
 
 /* ---------- boot ---------- */
@@ -3471,7 +3569,7 @@ async function boot(){
   store.start(
     function(b){S.buses=b.sort(busSort);S.ready.buses=true;clearTimeout(slow);S.slow=false;onData()},
     function(t){S.trips=t;S.ready.trips=true;onData()},
-    function(rows){var nr=rows.find(function(r){return r.id==='notif'});if(nr){S.notif=nr.items||[];S.notifKnown=nr.known||null}var fr=rows.find(function(r){return r.id==='fin'});if(fr){var fo=Object.assign({},fr);delete fo.id;S.fin=Object.assign(finDefault(),fo)}var a=rows.find(function(r){return r.id==='app'});S.setLoaded=true;if(a){S.settings=Object.assign({},a);delete S.settings.id;if(+a.gapHours>=0)S.gap=+a.gapHours}onData()},
+    function(rows){var nr=rows.find(function(r){return r.id==='notif'});if(nr){S.notif=nr.items||[];S.notifKnown=nr.known||null}var cr0=rows.find(function(r){return r.id==='chat'});if(cr0&&Array.isArray(cr0.items))S.chat=cr0.items;var fr=rows.find(function(r){return r.id==='fin'});if(fr){var fo=Object.assign({},fr);delete fo.id;S.fin=Object.assign(finDefault(),fo)}var a=rows.find(function(r){return r.id==='app'});S.setLoaded=true;if(a){S.settings=Object.assign({},a);delete S.settings.id;if(+a.gapHours>=0)S.gap=+a.gapHours}onData()},
     function(e){S.error=e;render()}
   );
   render();
