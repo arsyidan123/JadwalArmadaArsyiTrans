@@ -714,8 +714,8 @@ function availability(bus,cand,ignoreId){
   return {state:'free',note:'Tersedia'};
 }
 
-/* Libur semua armada + maintenance besar. Awal Ramadan 1448 H: 8 Feb 2027 (Muhammadiyah; pemerintah menetapkan lewat sidang isbat, kemungkinan 8 atau 9 Feb). Idul Fitri: libur nasional 10-11 Mar 2027, cuti bersama 9, 12, dan 15 Mar 2027 (SKB 3 Menteri). Jadi semua unit libur 8 Feb sampai 15 Mar 2027. Bisa diubah di panel Autopilot. */
-var SHUT_DEF=[{id:'ramadan-1448',label:'Libur Ramadan & Lebaran 1448 H',start:'2027-02-08',end:'2027-03-15'}];
+/* Libur semua armada + maintenance besar. Awal Ramadan 1448 H: 8 Feb 2027 (Muhammadiyah; pemerintah menetapkan lewat sidang isbat, kemungkinan 8 atau 9 Feb). Idul Fitri: libur nasional 10-11 Mar 2027, cuti bersama 9, 12, dan 15 Mar 2027 (SKB 3 Menteri). Libur maintenance besar dipakai 8 Feb sampai 2 Mar 2027, lalu unit dikerahkan untuk mudik gratis (mulai H-7 Lebaran). Bisa diubah di panel Autopilot. */
+var SHUT_DEF=[{id:'ramadan-1448',label:'Libur Ramadan: maintenance besar',start:'2027-02-08',end:'2027-03-02'}];
 function shutList(){var a=S.settings&&S.settings.shut;return Array.isArray(a)?a:SHUT_DEF}
 function shutHit(a,b){var l=shutList(),i;for(i=0;i<l.length;i++){if(a<=toDay(l[i].end)&&b>=toDay(l[i].start))return l[i]}return null}
 var BIG_JOBS=[
@@ -1174,6 +1174,12 @@ N('cmp',107.45,-6.40,'Cikampek',['cikampek','purwakarta']);
 N('krw',107.30,-6.30,'Karawang',['karawang']);
 N('bks',107.00,-6.24,'Bekasi',['bekasi']);
 N('jkt',106.83,-6.20,'Jakarta',['jakarta','dki jakarta']);
+N('tng',106.63,-6.18,'Tangerang',['tangerang','tangerang kota']);
+N('srg',106.15,-6.12,'Serang',['serang','banten']);
+N('mrk',106.00,-5.93,'Pelabuhan Merak',['merak','pelabuhan merak']);
+N('bkh',105.75,-5.87,'Pelabuhan Bakauheni',['bakauheni','pelabuhan bakauheni']);
+N('blp',105.26,-5.43,'Bandar Lampung',['lampung','bandar lampung','sumatera selatan lampung']);
+N('plg',104.75,-2.98,'Palembang',['palembang','sumatera selatan','sumsel']);
 N('jk_monas',106.8272,-6.1754,'Monas',['monas','monumen nasional'],1);
 N('jk_museum',106.8218,-6.1763,'Museum Nasional',['museum nasional','museum gajah'],1);
 N('jk_istiqlal',106.8312,-6.1702,'Masjid Istiqlal',['istiqlal','masjid istiqlal'],1);
@@ -1398,7 +1404,7 @@ var EDGE_SRC='cil-bpd cil-tlp cil-nus cil-srd cil-kry cil-wng cil-sdr srd-kry kr
  +'mlg-psr:t mjk-mlg:t mlg-btu mlg-brm:g prb-brm:g njk-kdr kdr-blt blt-mlg kdr-jbg mdn-pct:g sby-gsk gsk-lmg lmg-tbn tbn-rmb rmb-pti pti-kds '
  +'kds-mur:g kds-jpr dmk-jpr smg-dmk dmk-kds bwi-glm glm-dps dps-ubd dps-kta '
  +'bmy-prp prp-slw slw-tgl slw-guc:g prp-brs brs-tgl:t tgl-pml:t pml-pkl:t pkl-btg:t btg-smg:t brs-cbn:t brs-los los-cbn cbn-kng cbn-mjl kng-mjl '
- +'cbn-idm idm-sbg sbg-cmp cbn-cmp:t cmp-krw:t krw-bks:t bks-jkt:t cmp-jkt:t cmp-bdg:t sbg-bdg mjl-bdg:g bdg-lmb bdg-cjr cjr-pnc:g pnc-bgr bgr-jkt:t bgr-skb skb-cjr cil-cl_gml cl_gml-cl_krk cl_krk-cl_kls cl_kls-cl_kes cl_gml-cl_kes cl_kes-cl_mos cl_mos-kry cl_mos-cl_sam cl_sam-kry cil-cl_kpt cil-cl_sel';
+ +'cbn-idm idm-sbg sbg-cmp cbn-cmp:t cmp-krw:t krw-bks:t bks-jkt:t cmp-jkt:t cmp-bdg:t sbg-bdg mjl-bdg:g bdg-lmb bdg-cjr cjr-pnc:g pnc-bgr bgr-jkt:t bgr-skb skb-cjr jkt-tng:t tng-srg:t srg-mrk:t mrk-bkh:f bkh-blp:t blp-plg:t cil-cl_gml cl_gml-cl_krk cl_krk-cl_kls cl_kls-cl_kes cl_gml-cl_kes cl_kes-cl_mos cl_mos-kry cl_mos-cl_sam cl_sam-kry cil-cl_kpt cil-cl_sel';
 EDGE_SRC.split(/\s+/).forEach(function(s){
   var x=s.split(':'),ab=x[0].split('-'),a=ab[0],b=ab[1],t=x[1]||'a';
   if(!NODE[a]||!NODE[b]){if(window.console)console.warn('jalan tak dikenal',s);return}
@@ -1474,7 +1480,7 @@ function findPlaces(txt){
   acc.forEach(function(h){(Array.isArray(h.p)?h.p:[h.p]).forEach(function(id){if(ids[ids.length-1]!==id)ids.push(id)})});
   return ids;
 }
-function spd(t,sA,sT){return t==='t'?sT:(t==='g'?sA*.8:sA)}
+function spd(t,sA,sT){return t==='f'?12:(t==='t'?sT:(t==='g'?sA*.8:sA))}
 function sp(a,b,sA,sT){
   var dist={},prev={},done={},id;
   for(id in NODE)dist[id]=Infinity;
@@ -2532,6 +2538,41 @@ var MI_N=["Ma'arif NU",'Muhammadiyah','Al-Ikhlas','Nurul Huda','Miftahul Ulum','
 var MI_ZR=[['Ziarah Wali 4',20],['Ziarah Jawa Tengah',16],['Ziarah Wali 5',14],['Ziarah Wali 9',20],['Sunan Kalijaga',10],['Sunan Kudus',10],['Cirebon',10]];
 var MI_COMBO={'Yogyakarta':['Sunan Pandanaran'],'Borobudur':['Sunan Pandanaran'],'Solo':['Sunan Pandanaran'],'Semarang':['Sunan Kalijaga','Sunan Kudus'],'Jakarta':['Sunan Gunung Jati','Luar Batang'],'Tegal':['Sunan Gunung Jati'],'Surabaya':['Sunan Kalijaga','Sunan Kudus','Sunan Giri','Sunan Ampel'],'Malang':['Sunan Kalijaga','Sunan Kudus','Sunan Giri','Sunan Ampel'],'Bromo':['Sunan Kalijaga','Sunan Kudus','Sunan Giri','Sunan Ampel'],'Bali':['Sunan Kalijaga','Sunan Kudus','Sunan Giri','Sunan Ampel']};
 /* MI: bisa full study tour, full ziarah, atau study tour dengan 1-2 ziarah yang searah rute. Nama MI simulasi (belum ada data asli MI Cilacap). */
+/* Program mudik gratis dari Jakarta (acuan Lebaran 2026 = 21 Mar 2026; Lebaran 2027 diasumsikan 10 Mar 2027).
+   Pola 2026: Dompet Dhuafa H-7 (14 Mar); truk motor H-5 (16 Mar); bus DKI dari Monas, Kemenhub dari Pulogebang/Jatijajar, Sucofindo H-4 (17 Mar); Kemenhub dari Kampung Rambutan/Poris Plawad, Adira H-3 (18 Mar).
+   Arus balik: Kemenhub H+4 (25 Mar), Sucofindo H+7 (28 Mar). Tanggal penyelenggara lain dan arus balik DKI tidak ditemukan, jadi diasumsikan sama polanya. */
+var LEB='2027-03-10',MUDIK_VER=1;
+var MUDIK=[
+  {id:1,org:'Mudik Gratis Pemprov DKI Jakarta (Dishub)',dest:'Kroya',nb:2,nm:0,off:-4,st:'07:00',bo:4,pt:'Monas',note:'Kluster 1 (tujuan Cilacap, diturunkan di Kroya)'},
+  {id:2,org:'Mudik Gratis Pemprov DKI Jakarta (Dishub)',dest:'Purwokerto',nb:1,nm:0,off:-4,st:'07:30',bo:4,pt:'Monas',note:'Kluster 3'},
+  {id:3,org:'Mudik Gratis Pemprov DKI Jakarta (Dishub)',dest:'Lampung',nb:1,nm:0,off:-4,st:'06:00',bo:5,pt:'Monas',note:'Kluster 2, lewat Merak-Bakauheni'},
+  {id:4,org:'Mudik Gratis Kemenhub (Nusantara)',dest:'Yogyakarta',nb:2,nm:0,off:-4,st:'08:00',bo:4,pt:'Terminal Pulogebang',note:'Pendaftaran nusantara.kemenhub.go.id'},
+  {id:5,org:'Mudik Gratis Kemenhub (Nusantara)',dest:'Palembang',nb:1,nm:0,off:-3,st:'06:00',bo:4,pt:'Terminal Kampung Rambutan',note:'Sumatera, lewat Merak-Bakauheni'},
+  {id:6,org:'Mudik Gratis Bank Mandiri',dest:'Maos',nb:1,nm:0,off:-4,st:'09:00',bo:5,pt:'Jakarta',note:'Tujuan Cilacap (diturunkan di Maos). Tanggal diasumsikan'},
+  {id:7,org:'Mudik Gratis Dompet Dhuafa',dest:'Purwokerto',nb:1,nm:0,off:-7,st:'08:00',bo:5,pt:'Jakarta',note:'Pola 2026: H-7'},
+  {id:8,org:'Mudik Bareng Adira Finance',dest:'Solo',nb:0,nm:1,off:-3,st:'08:00',bo:4,pt:'Jakarta',note:'Pola 2026: H-3'},
+  {id:9,org:'Mudik Gratis Sucofindo',dest:'Surabaya',nb:1,nm:0,off:-4,st:'08:00',bo:7,pt:'Jakarta',note:'Pola 2026: berangkat H-4, balik H+7'},
+  {id:10,org:'Mudik Gratis Pelindo',dest:'Semarang',nb:0,nm:1,off:-4,st:'08:30',bo:4,pt:'Jakarta',note:'Tanggal diasumsikan'}
+];
+function mudikFor(D){
+  var L=toDay(LEB),out=[];
+  MUDIK.forEach(function(m){
+    var pr=m.pt==='Jakarta'?'Jakarta':'Jakarta ('+m.pt+')';
+    if(L+m.off===D)out.push({k:'md'+m.id+'p',kind:'mudik',cust:m.org,pick:'Jakarta',dest:m.dest,nb:m.nb,nm:m.nm,seat:'s50',st:m.st,note:'Mudik gratis: '+m.dest+', berangkat dari '+pr+' (H'+m.off+' Lebaran). '+m.note+'. Order simulasi, acuan jadwal Lebaran 2026.',r:mkRng('mudik|'+m.id+'p')});
+    if(L+m.bo===D)out.push({k:'md'+m.id+'b',kind:'mudik',cust:m.org,pick:m.dest,dest:'Jakarta',nb:m.nb,nm:m.nm,seat:'s50',st:'08:00',note:'Arus balik mudik gratis: '+m.dest+' ke Jakarta (H+'+m.bo+' Lebaran). Order simulasi.',r:mkRng('mudik|'+m.id+'b')});
+  });
+  return out;
+}
+function mudikBuild(o,D){
+  var t={customer:o.cust,phone:'0812-0000-'+String(aInt(o.r,0,9999)).padStart(4,'0'),start:toStr(D),end:toStr(D),startTime:o.st,endTime:'23:00',pickup:o.pick,destination:o.dest,needBig:o.nb,needMed:o.nm,seatBig:o.nb>0?o.seat:'',buses:[],status:'pasti',note:o.note,auto:true,mudik:1},i,r,h,e,dt;
+  for(i=0;i<3;i++){
+    r=routeOf(t);if(!r)return null;
+    h=(r.out.T+r.back.T)*1.2+(r.dw||0)+.75;
+    e=dayMs(D)+tmin(o.st)*60000+Math.ceil(h*2)/2*36e5;dt=new Date(e);
+    t.end=toStr(dayOf(e));t.endTime=pad(dt.getHours())+':'+pad(dt.getMinutes());
+  }
+  return t;
+}
 function autoSeatPick(r,base){
   if(S.buses.some(function(b){return b.type==='big'&&isJ3(b)})&&r()<.3)return aPick(r,['s59','s64']);
   return base;
@@ -2604,16 +2645,16 @@ function autoStatus(D,t,r,today){
   if(D<=today+2)return 'pasti';
   return r()<.85?'pasti':'tentatif';
 }
-function autoGenerate(from,to){
-  var cfg=autoCfg(),P=autoPools(),keep=S.trips,W=S.trips.slice(),made=[],today=nowDay(),D,j;
+function autoGenerate(from,to,onlyM,extra){
+  var cfg=autoCfg(),P=autoPools(),keep=S.trips,W=S.trips.slice().concat(extra||[]),made=[],today=nowDay(),D,j;
   S.trips=W;
   try{
     for(D=from;D<=to;D++){
-      var orders=autoOrdersFor(D,cfg,P);
+      var orders=(onlyM?[]:autoOrdersFor(D,cfg,P)).concat(mudikFor(D));
       for(j=0;j<orders.length;j++){
         var o=orders[j],id='a'+toStr(D).replace(/-/g,'')+o.k;
         if(W.some(function(x){return x.id===id}))continue;
-        var t=autoBuild(D,o,today);if(!t)continue;
+        var t=o.kind==='mudik'?mudikBuild(o,D):autoBuild(D,o,today);if(!t)continue;
         if(shutHit(toDay(t.start),toDay(t.end)))continue;
         t.status=autoStatus(D,t,o.r,today);
         if(t.status!=='batal'){
@@ -2636,7 +2677,7 @@ function autoGenerate(from,to){
           if(!t.needBig)t.seatBig='';
         }else{t.buses=[]}
         var e=estimate(t);t.price=e?e.total:0;
-        if(e&&o.r()<.4){t.price=Math.max(P_MIN,Math.round(e.total*(.9+o.r()*.12)/50000)*50000);t.priceManual=true}
+        if(e&&o.kind!=='mudik'&&o.r()<.4){t.price=Math.max(P_MIN,Math.round(e.total*(.9+o.r()*.12)/50000)*50000);t.priceManual=true}
         t.created=Math.min(Date.now(),Date.UTC(parts(D).y,parts(D).m,parts(D).d)-aInt(o.r,2,35)*DAY);
         t.id=id;W.push(t);made.push(t);
       }
@@ -2674,9 +2715,12 @@ async function autoRun(force,quiet){
     var today=nowDay(),from=cfg.upTo?toDay(cfg.upTo)+1:today-21,to=today+cfg.ahead,made=[],gen=false;
     if(from<today-60)from=today-60;
     if(from<=to){made=autoGenerate(from,to);gen=true}
+    var mdn=[];
+    if((+S.settings.mudikSeed||0)<MUDIK_VER){mdn=autoGenerate(toDay(LEB)-10,toDay(LEB)+10,true,made);made=made.concat(mdn);S.settings=Object.assign({},S.settings,{mudikSeed:MUDIK_VER});gen=true}
     var fill=autoFillIdle(10,made),all=made.concat(fill.map(function(x){return x.t})),i;
     for(i=0;i<all.length;i+=8){await Promise.all(all.slice(i,i+8).map(function(t){var d=Object.assign({},t);delete d.id;return store.put('trips',t.id,d)}))}
     if(gen)await autoSave({upTo:toStr(to)});
+    if(mdn.length)toast(mdn.length+' order mudik gratis (H-7 sampai H+7 Lebaran 2027) dijadwalkan');
     if(fill.length){var gb={};fill.forEach(function(x){var k=x.t.buses[0];(gb[k]=gb[k]||[]).push(x)});
       await nfAdd(Object.keys(gb).map(function(k){var g=gb[k],t0=g[0].t;return {id:'idle:'+k+':'+t0.id,ts:Date.now(),kind:'ok',cat:'order',title:k+' diisi '+g.length+' order otomatis',body:k+' kosong '+g[0].kosong+' hari berturut-turut'+', jadi langsung dibuatkan order: '+g.slice(0,3).map(function(x){return x.t.customer+' ke '+x.t.destination+' ('+fmtWhen(x.t)+')'}).join('; ')+(g.length>3?'; dan '+(g.length-3)+' lainnya':'')+'.',code:k,trip:t0.id}}))}
     if(all.length&&!quiet)toast('Autopilot membuat '+all.length+' order baru'+(fill.length?' ('+fill.length+' untuk unit kosong)':''));
@@ -2869,7 +2913,7 @@ function autoPanel(){
   +'<button class="btn sm" data-act="auto-run">Buat sekarang</button>'
   +(n?(armed?'<button class="btn sm danger" data-act="auto-clear-yes">Ya, hapus '+n+' order otomatis</button><button class="btn sm" data-act="auto-clear-no">Batal</button>':'<button class="btn sm" data-act="auto-clear">Hapus order otomatis</button>'):'')
   +'</div>'
-  +'<div class="ap-a" style="flex-direction:column;align-items:stretch"><b>Libur semua armada (maintenance besar)</b><p class="hint">Pada tanggal ini semua bus libur: tidak bisa diorder, autopilot tidak membuat order, dan unit masuk jadwal maintenance besar. Awal default: Ramadan sampai cuti bersama Lebaran 2027 (8 Feb sampai 15 Mar 2027).</p><div class="shutlist">'
+  +'<div class="ap-a" style="flex-direction:column;align-items:stretch"><b>Libur semua armada (maintenance besar)</b><p class="hint">Pada tanggal ini semua bus libur: tidak bisa diorder, autopilot tidak membuat order, dan unit masuk jadwal maintenance besar. Awal default: 8 Feb sampai 2 Mar 2027 (awal Ramadan sampai sebelum arus mudik; mulai 3 Mar unit dipakai untuk program mudik gratis).</p><div class="shutlist">'
   +shutList().map(function(x){return '<div class="sr"><span><b>'+esc(x.label)+'</b> · '+esc(fmtDay(toDay(x.start)))+' sampai '+esc(fmtDay(toDay(x.end)))+'</span><button class="btn sm" data-act="shut-del" data-id="'+esc(x.id)+'">Hapus</button></div>'}).join('')
   +'<div class="sr"><input id="sh-label" type="text" placeholder="Nama libur, mis. Libur Idul Adha" style="min-width:180px"><input id="sh-start" type="date" aria-label="Mulai"><input id="sh-end" type="date" aria-label="Sampai"><button class="btn sm primary" data-act="shut-add">Tambah</button></div></div></div></section>';
 }
