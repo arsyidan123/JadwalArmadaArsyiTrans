@@ -306,6 +306,7 @@ button.code{cursor:pointer;font:inherit}
 .revgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
 .revc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:2px}
 .revc span{font-size:12px;color:var(--muted)}
+.fin-add{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px}.fin-add input,.fin-add select{padding:7px 9px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:inherit;font:inherit;min-width:0;max-width:100%}.fin-add input[type=number]{width:130px}.fin-add input[type=checkbox]{width:auto}.rtbl input.fin-amt{width:120px}
 .revc b{font-size:18px;font-variant-numeric:tabular-nums}
 .revrow{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:13px;font-variant-numeric:tabular-nums}
 .revbar{height:10px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
@@ -420,6 +421,7 @@ button.code{cursor:pointer;font:inherit}
     <a href="#tracking" data-tab="tracking">Tracking</a>
     <a href="#order" data-tab="order">Order</a>
     <a href="#pendapatan" data-tab="pendapatan">Pendapatan</a>
+    <a href="#keuangan" data-tab="keuangan">Keuangan</a>
     <a href="#notifikasi" data-tab="notifikasi">Notifikasi<span class="nbadge" id="nbadge" hidden></span></a>
   </nav>
   <div id="banner"></div>
@@ -453,7 +455,7 @@ button.code{cursor:pointer;font:inherit}
         <legend>Kebutuhan</legend>
         <div class="fld"><label for="f-big">Jumlah big bus</label><input id="f-big" type="number" min="0" max="20" value="1" inputmode="numeric"></div>
         <div class="fld"><label for="f-med">Jumlah medium bus</label><input id="f-med" type="number" min="0" max="20" value="0" inputmode="numeric"></div>
-        <div class="fld"><label for="f-seat">Seat big bus</label><select id="f-seat"><option value="">Belum ditentukan</option><option value="lr35">35+1 TL (Leg Rest)</option><option value="s48">48+1 TL (2+2)</option><option value="s50">50+1 TL (2-2)</option></select></div>
+        <div class="fld"><label for="f-seat">Seat big bus</label><select id="f-seat"><option value="">Belum ditentukan</option><option value="lr35">35+1 TL (Leg Rest)</option><option value="s48">48+1 TL (2+2)</option><option value="s50">50+1 TL (2-2)</option><option value="s59">2-3 (59+1 TL)</option><option value="s64">2-3 (64+1 TL)</option></select></div>
         <div class="fld"><label for="f-status">Status order</label>
           <select id="f-status"><option value="tentatif">Tentatif</option><option value="pasti">Terkonfirmasi</option><option value="selesai">Selesai</option><option value="batal">Dibatalkan</option></select></div>
         <div class="fld full"><label for="f-note">Catatan</label><textarea id="f-note" placeholder="DP, jam jemput, titik jemput tambahan, dll."></textarea></div>
@@ -573,7 +575,7 @@ var PREM_ADD=1000000,BODY_DISC=1000000;
 function isJ3(b){return !!b&&/jetbus\s*3\s*\+/i.test(b.model||'')}
 function isPrem(b){return !!b&&b.cat==='premium'}
 function catName(b){return isPrem(b)?'Premium':'Standar Pariwisata'}
-var SEAT={lr35:'35+1 TL (Leg Rest)',s48:'48+1 TL (2+2)',s50:'50+1 TL (2-2)'};
+var SEAT={lr35:'35+1 TL (Leg Rest)',s48:'48+1 TL (2+2)',s50:'50+1 TL (2-2)',s59:'2-3 (59+1 TL)',s64:'2-3 (64+1 TL)'};
 var newId=function(){return 't'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)};
 var busSort=function(a,b){
   if(a.type!==b.type)return a.type==='big'?-1:1;
@@ -728,6 +730,7 @@ function render(){
   if(S.tab==='tracking'){v.innerHTML=viewTrack();mountSat()}
   else if(S.tab==='order')v.innerHTML=viewOrders();
   else if(S.tab==='pendapatan')v.innerHTML=viewRevenue();
+  else if(S.tab==='keuangan')v.innerHTML=viewFin();
   else if(S.tab==='notifikasi'){S.nfSeenAt=nfSeen();v.innerHTML=viewNotif();lsSet('notif-seen',String(Date.now()))}
   else v.innerHTML=viewJadwal();
 }
@@ -2127,6 +2130,144 @@ $('#f-price-auto').addEventListener('click',function(){F.pm=false;priceSync()});
 ['#f-big','#f-med','#f-pickup','#f-dest'].forEach(function(s){$(s).addEventListener('input',priceSync)});
 (function(){var dl=document.createElement('datalist');dl.id='dl-dest';dl.innerHTML=Object.keys(NODE).filter(function(id){return id!=='cil'}).map(function(id){return '<option value="'+esc(NODE[id].name)+'">'}).join('');document.body.appendChild(dl)})();
 document.addEventListener('change',function(ev){if(ev.target.id==='revyear'){S.revYear=+ev.target.value;render()}if(ev.target.id==='auto-level'){autoSave({level:ev.target.value}).then(function(){toast('Keramaian autopilot: '+ev.target.value)})}});
+/* ---------- tab Keuangan: laba rugi + arus kas ----------
+   Struktur mengikuti laporan keuangan entitas jasa (laba rugi dan arus kas metode langsung dengan tiga aktivitas: operasi, investasi, pendanaan; PSAK 2 / SAK EMKM).
+   Pemasukan dihitung dari order Terkonfirmasi dan Selesai, dicatat di bulan tanggal berangkat (sama seperti tab Pendapatan). Biaya perawatan otomatis dan biaya tetap awal adalah ASUMSI yang bisa diubah. */
+var FIN_C={
+  opOut:[['perawatan','Perawatan & perbaikan bus'],['gaji','Gaji admin & staf kantor'],['kantor','Operasional kantor & garasi (listrik, air, internet, sewa, ATK)'],['pajak','Pajak kendaraan, KIR & asuransi armada'],['pemasaran','Pemasaran & komisi'],['lain','Biaya lain-lain']],
+  opIn:[['pendapatan','Pendapatan lain di luar order']],
+  invOut:[['aset','Pembelian bus / aset']],invIn:[['jualaset','Penjualan aset']],
+  finIn:[['modal','Setoran modal'],['pinjaman','Pinjaman diterima']],finOut:[['angsuran','Angsuran pinjaman / leasing'],['prive','Penarikan pemilik / dividen']]
+};
+function finCatName(k){var r='';Object.keys(FIN_C).forEach(function(g){FIN_C[g].forEach(function(c){if(c[0]===k)r=c[1]})});return r||k}
+function finCatSec(k){return FIN_C.invOut.concat(FIN_C.invIn).some(function(c){return c[0]===k})?'inv':FIN_C.finIn.concat(FIN_C.finOut).some(function(c){return c[0]===k})?'fin':'op'}
+function ymOf(day){var p=parts(day);return p.y*12+p.m}
+function ymStr(i){return Math.floor(i/12)+'-'+pad(i%12+1)}
+function ymParse(s){var m=/^(\d{4})-(\d{2})$/.exec(s||'');return m?(+m[1])*12+(+m[2]-1):null}
+function finDefault(){
+  var ym=ymStr(ymOf(TODAY));
+  return {seeded:true,open:{amt:0,ym:ym},mon:true,mr:600,
+    fixed:[{id:'s1',name:'Gaji admin & staf kantor',cat:'gaji',amt:3000000,per:0,from:ym,seed:1},{id:'s2',name:'Listrik, air & internet kantor/garasi',cat:'kantor',amt:1500000,per:0,from:ym,seed:1},{id:'s3',name:'Pajak, KIR & asuransi armada (dicicil per bulan)',cat:'pajak',amt:1000000,per:1,from:ym,seed:1}],
+    tx:[]};
+}
+function finGet(){if(!S.fin)S.fin=finDefault();return S.fin}
+function finSave(){var f=finGet();f.seeded=false;return store.put('settings','fin',f).catch(function(){toast('Gagal menyimpan data keuangan.',true)})}
+function finTripKm(t){
+  var r=routeOf(t);if(!r)return 0;
+  var one=(r.pick?r.pick.km:0)+r.out.km+r.back.km,n=(t.buses||[]).length||((+t.needBig||0)+(+t.needMed||0))||1;
+  return one*n;
+}
+/* hitung satu bulan (indeks y*12+m) */
+function finMonth(i,cache){
+  if(cache[i])return cache[i];
+  var f=finGet(),o={inc:0,solar:0,crew:0,km:0,orders:0,exp:{},oth:{},invIn:0,invOut:0,finIn:0,finOut:0,opIn:0};
+  S.trips.forEach(function(t){
+    if(t.example||!t.start||!(t.status==='pasti'||t.status==='selesai'))return;
+    if(ymOf(toDay(t.start))!==i)return;
+    var u=ujOf(t);o.inc+=u.price;o.solar+=u.solar;o.crew+=u.crew;o.orders++;o.km+=finTripKm(t);
+  });
+  var add=function(c,v){o.exp[c]=(o.exp[c]||0)+v};
+  if(f.mon!==false){o.mAuto=Math.round(o.km*(+f.mr||0));if(o.mAuto)add('perawatan',o.mAuto)}else o.mAuto=0;
+  var nb=S.buses.length;
+  f.fixed.forEach(function(x){var s=ymParse(x.from),e=ymParse(x.until);if(s!==null&&i<s)return;if(e!==null&&i>e)return;add(x.cat,(+x.amt||0)*(x.per?nb:1))});
+  f.tx.forEach(function(x){
+    if(!x.date||ymOf(toDay(x.date))!==i)return;
+    var a=+x.amt||0,sec=finCatSec(x.cat);
+    if(sec==='op'){if(x.type==='in')o.opIn+=a;else add(x.cat,a)}
+    else if(sec==='inv'){if(x.type==='in')o.invIn+=a;else o.invOut+=a}
+    else{if(x.type==='in')o.finIn+=a;else o.finOut+=a}
+  });
+  o.expT=Object.keys(o.exp).reduce(function(n,k){return n+o.exp[k]},0);
+  o.gross=o.inc+o.opIn-o.solar-o.crew;o.profit=o.gross-o.expT;
+  o.opCash=o.inc+o.opIn-o.solar-o.crew-o.expT;o.invCash=o.invIn-o.invOut;o.finCash=o.finIn-o.finOut;o.net=o.opCash+o.invCash+o.finCash;
+  return (cache[i]=o);
+}
+function finSum(a,b,cache){
+  var t={inc:0,solar:0,crew:0,km:0,orders:0,exp:{},invIn:0,invOut:0,finIn:0,finOut:0,opIn:0,mAuto:0},i,k;
+  for(i=a;i<=b;i++){var m=finMonth(i,cache);
+    ['inc','solar','crew','km','orders','invIn','invOut','finIn','finOut','opIn','mAuto'].forEach(function(x){t[x]+=m[x]});
+    for(k in m.exp)t.exp[k]=(t.exp[k]||0)+m.exp[k];}
+  t.expT=Object.keys(t.exp).reduce(function(n,k){return n+t.exp[k]},0);
+  t.gross=t.inc+t.opIn-t.solar-t.crew;t.profit=t.gross-t.expT;
+  t.opCash=t.profit;t.invCash=t.invIn-t.invOut;t.finCash=t.finIn-t.finOut;t.net=t.opCash+t.invCash+t.finCash;
+  return t;
+}
+function viewFin(){
+  var f=finGet(),py=parts(TODAY),y=S.finY||py.y,mo=S.finM==null?-1:S.finM,cache={},a=mo<0?y*12:y*12+mo,b=mo<0?y*12+11:a,
+      T=finSum(a,b,cache),op=ymParse(f.open.ym);if(op===null)op=ymOf(TODAY);
+  var pre=0,i;for(i=op;i<a;i++)pre+=finMonth(i,cache).net;
+  var before=a>op?(f.open.amt||0)+pre:(a===op?(f.open.amt||0):0),after=before+T.net;
+  if(a<op){before=0;after=T.net;}
+  var yrs=[py.y],c=function(l,v,s,cls){return '<div class="revc"><span>'+l+'</span><b'+(cls?' style="color:'+cls+'"':'')+'>'+rupiah(v)+'</b><span>'+s+'</span></div>'},
+      td=function(l,v,bold,ind){return '<tr><td'+(ind?' style="padding-left:'+(8+ind*14)+'px"':'')+'>'+(bold?'<b>'+l+'</b>':l)+'</td><td style="text-align:right;white-space:nowrap">'+(bold?'<b>'+(v<0?'('+rupiah(-v)+')':rupiah(v))+'</b>':(v<0?'('+rupiah(-v)+')':rupiah(v)))+'</td></tr>'},
+      neg=function(v){return v<0?'var(--danger,#c0392b)':''};
+  S.trips.forEach(function(t){if(t.start){var yy=parts(toDay(t.start)).y;if(yrs.indexOf(yy)<0)yrs.push(yy)}});if(yrs.indexOf(y)<0)yrs.push(y);yrs.sort();
+  var per=mo<0?'Tahun '+y:MONTHS[mo]+' '+y;
+  var lr='<table><tbody>'+td('Pendapatan jasa sewa bus ('+T.orders+' order)',T.inc,0,0)+(T.opIn?td('Pendapatan lain',T.opIn,0,0):'')+td('Total pendapatan',T.inc+T.opIn,1)
+    +td('Solar (10% dari sewa)',-T.solar,0,1)+td('Gaji supir dan kernet (10% dari sewa)',-T.crew,0,1)+td('Laba kotor',T.gross,1)
+    +FIN_C.opOut.map(function(c){var v=T.exp[c[0]]||0;return v||c[0]==='perawatan'?td(c[1]+(c[0]==='perawatan'&&T.mAuto?' <span class="hint">(termasuk estimasi '+rupiah(T.mAuto)+' dari ±'+Math.round(T.km).toLocaleString('id-ID')+' km)</span>':''),-v,0,1):''}).join('')
+    +td('Total beban operasional',-T.expT,1)+'<tr><td><b>Laba (rugi) bersih</b><br><span class="hint">sebelum pajak penghasilan dan penyusutan</span></td><td style="text-align:right;color:'+neg(T.profit)+'"><b>'+rupiah(T.profit)+'</b></td></tr></tbody></table>';
+  var ak='<table><tbody><tr><td colspan="2"><b>Aktivitas operasi</b></td></tr>'+td('Penerimaan dari pelanggan',T.inc+T.opIn,0,1)+td('Pembayaran solar dan gaji crew',-(T.solar+T.crew),0,1)
+    +FIN_C.opOut.map(function(c){var v=T.exp[c[0]]||0;return v?td('Pembayaran: '+c[1],-v,0,1):''}).join('')+td('Kas bersih dari aktivitas operasi',T.opCash,1)
+    +'<tr><td colspan="2"><b>Aktivitas investasi</b></td></tr>'+td('Penjualan aset',T.invIn,0,1)+td('Pembelian bus / aset',-T.invOut,0,1)+td('Kas bersih dari aktivitas investasi',T.invCash,1)
+    +'<tr><td colspan="2"><b>Aktivitas pendanaan</b></td></tr>'+td('Setoran modal dan pinjaman diterima',T.finIn,0,1)+td('Angsuran dan penarikan pemilik',-T.finOut,0,1)+td('Kas bersih dari aktivitas pendanaan',T.finCash,1)
+    +td('Kenaikan (penurunan) kas bersih',T.net,1)+td('Saldo kas awal periode',before,0)+td('Saldo kas akhir periode',after,1)+'</tbody></table>';
+  var bm=[],mx=1;for(i=0;i<12;i++){var m=finMonth(y*12+i,cache);bm.push(m);mx=Math.max(mx,Math.abs(m.net),m.inc)}
+  var bars=bm.map(function(m,i){return '<div class="revrow"><span>'+MON3[i]+'</span><div class="revbar"><i style="width:'+Math.round(Math.abs(m.net)/mx*100)+'%'+(m.net<0?';background:var(--danger,#c0392b)':'')+'"></i></div><span>kas '+(m.net<0?'-':'')+rupiah(Math.abs(m.net))+' · laba '+rupiah(m.profit)+'</span></div>'}).join('');
+  var catOpts=function(arr){return arr.map(function(c){return '<option value="'+c[0]+'">'+esc(c[1])+'</option>'}).join('')};
+  var fx=f.fixed.map(function(x){return '<tr><td>'+esc(x.name)+(x.seed?' <span class="tag">perkiraan awal</span>':'')+'<br><span class="hint">'+esc(finCatName(x.cat))+' · mulai '+esc(x.from||'-')+(x.per?' · dikali jumlah unit ('+S.buses.length+')':'')+'</span></td><td style="text-align:right"><input class="sp fin-amt" data-id="'+esc(x.id)+'" type="number" min="0" step="50000" value="'+(+x.amt||0)+'" aria-label="Jumlah per bulan"></td><td><button type="button" class="btn ghost sm" data-act="fin-delfix" data-id="'+esc(x.id)+'">Hapus</button></td></tr>'}).join('');
+  var txs=f.tx.filter(function(x){var v=x.date?ymOf(toDay(x.date)):-1;return v>=a&&v<=b}).sort(function(p,q){return q.date.localeCompare(p.date)}).map(function(x){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.desc||finCatName(x.cat))+'<br><span class="hint">'+esc(finCatName(x.cat))+'</span></td><td style="text-align:right;white-space:nowrap">'+(x.type==='in'?'+':'-')+rupiah(x.amt)+'</td><td><button type="button" class="btn ghost sm" data-act="fin-deltx" data-id="'+esc(x.id)+'">Hapus</button></td></tr>'}).join('');
+  var nowM=ymStr(ymOf(TODAY));
+  return '<div class="trk"><div class="revbox"><div class="revtop"><b>Laporan keuangan · '+per+'</b><span><select id="finy" aria-label="Tahun">'+yrs.map(function(k){return '<option'+(k===y?' selected':'')+'>'+k+'</option>'}).join('')+'</select> <select id="finm" aria-label="Bulan"><option value="-1">Setahun penuh</option>'+MONTHS.map(function(n,i){return '<option value="'+i+'"'+(i===mo?' selected':'')+'>'+n+'</option>'}).join('')+'</select> <button type="button" class="btn ghost sm" data-act="fin-csv">Unduh CSV</button></span></div></div>'
+   +'<div class="revgrid">'+c('Pendapatan',T.inc+T.opIn,T.orders+' order')+c('Total biaya',T.solar+T.crew+T.expT,'crew '+rupiah(T.solar+T.crew)+' · operasional '+rupiah(T.expT))+c('Laba (rugi) bersih',T.profit,'sebelum pajak',neg(T.profit))
+   +c('Kas masuk',T.inc+T.opIn+T.invIn+T.finIn,'semua aktivitas')+c('Kas keluar',T.solar+T.crew+T.expT+T.invOut+T.finOut,'semua aktivitas')+c('Saldo kas akhir',after,'awal '+rupiah(before),neg(after))+'</div>'
+   +'<div class="revbox"><b>Laporan laba rugi · '+per+'</b><div class="rtbl" style="border:0;padding:0"><div class="tw">'+lr+'</div></div></div>'
+   +'<div class="revbox"><b>Laporan arus kas · '+per+'</b><div class="rtbl" style="border:0;padding:0"><div class="tw">'+ak+'</div></div></div>'
+   +'<div class="revbox"><b>Arus kas per bulan '+y+'</b>'+bars+'</div>'
+   +'<div class="revbox"><b>Biaya tetap bulanan</b><p class="hint">Gaji admin, listrik, pajak/KIR, dan sejenisnya. Otomatis masuk tiap bulan sejak bulan mulai. Ubah angkanya langsung di tabel. Angka "perkiraan awal" hanya tebakan awalku, ganti dengan angka perusahaan yang sebenarnya.</p><div class="rtbl" style="border:0;padding:0"><div class="tw"><table><tbody>'+(fx||'<tr><td class="hint">Belum ada biaya tetap.</td></tr>')+'</tbody></table></div></div>'
+   +'<div class="fin-add"><input id="fx-name" type="text" placeholder="Nama biaya, mis. Gaji mekanik"><select id="fx-cat">'+catOpts(FIN_C.opOut)+'</select><input id="fx-amt" type="number" min="0" step="50000" placeholder="Rp per bulan"><input id="fx-from" type="month" value="'+nowM+'" aria-label="Mulai bulan"><label class="hint"><input id="fx-per" type="checkbox"> dikali jumlah unit bus</label><button type="button" class="btn primary sm" data-act="fin-addfix">Tambah</button></div></div>'
+   +'<div class="revbox"><b>Catat pemasukan / pengeluaran</b><p class="hint">Untuk servis bus, ganti ban, beli sparepart, bayar pajak, setor modal, cicilan, dan lainnya.</p><div class="fin-add"><input id="tx-date" type="date" value="'+toStr(TODAY)+'"><select id="tx-type"><option value="out">Pengeluaran</option><option value="in">Pemasukan</option></select><select id="tx-cat">'+catOpts(FIN_C.opOut)+catOpts(FIN_C.opIn)+catOpts(FIN_C.invOut)+catOpts(FIN_C.invIn)+catOpts(FIN_C.finIn)+catOpts(FIN_C.finOut)+'</select><input id="tx-desc" type="text" placeholder="Keterangan, mis. Servis AT-004 ganti oli"><input id="tx-amt" type="number" min="0" step="50000" placeholder="Rp"><button type="button" class="btn primary sm" data-act="fin-addtx">Catat</button></div>'
+   +(txs?'<div class="rtbl" style="border:0;padding:0"><div class="tw"><table><tbody>'+txs+'</tbody></table></div></div>':'<p class="hint">Belum ada catatan di '+per+'.</p>')+'</div>'
+   +'<div class="revbox"><b>Pengaturan</b><div class="fin-add"><label class="hint">Saldo kas awal Rp <input id="fs-open" type="number" step="50000" value="'+(+f.open.amt||0)+'"></label><label class="hint">per bulan <input id="fs-ym" type="month" value="'+esc(f.open.ym||nowM)+'"></label></div>'
+   +'<div class="fin-add"><label class="hint"><input id="fs-mon" type="checkbox"'+(f.mon!==false?' checked':'')+'> Estimasi perawatan otomatis (oli, ban, kampas, sparepart)</label><label class="hint">Rp <input id="fs-mr" type="number" min="0" step="50" value="'+(+f.mr||0)+'"> per km tempuh</label><button type="button" class="btn primary sm" data-act="fin-saveset">Simpan</button></div>'
+   +'<p class="hint">Angka Rp600/km adalah asumsiku, bukan data perusahaan. Kalau kamu mencatat servis asli lewat "Catat pengeluaran", matikan estimasi otomatis supaya tidak dobel.</p></div>'
+   +'<details class="rtbl"><summary>Cara hitung dan keterbatasan</summary><p class="hint">Pendapatan: harga sewa order Terkonfirmasi/Selesai, dicatat di bulan tanggal berangkat (belum memisahkan DP dan pelunasan, jadi dianggap kas diterima saat berangkat). Solar 10% dan gaji crew 10% dari sewa memakai skema uang jalan di tab Pendapatan. Jarak perawatan dihitung dari rute jemput, berangkat, dan pulang tiap unit (tanpa keliling lokal). Tol, parkir, tiket wisata, dan tip tidak dihitung karena tidak termasuk harga sewa. Laporan ini belum memuat penyusutan bus, pajak penghasilan, maupun neraca. Struktur mengikuti laporan laba rugi dan laporan arus kas metode langsung (operasi, investasi, pendanaan).</p></details></div>';
+}
+function finCsv(){
+  var f=finGet(),py=parts(TODAY),y=S.finY||py.y,mo=S.finM==null?-1:S.finM,cache={},a=mo<0?y*12:y*12+mo,b=mo<0?y*12+11:a,rows=[['Periode',mo<0?'Tahun '+y:MONTHS[mo]+' '+y],[]],i;
+  rows.push(['Bulan','Pendapatan','Solar','Gaji crew','Beban operasional','Laba bersih','Kas operasi','Kas investasi','Kas pendanaan','Kenaikan kas']);
+  for(i=a;i<=b;i++){var m=finMonth(i,cache);rows.push([ymStr(i),m.inc+m.opIn,m.solar,m.crew,m.expT,m.profit,m.opCash,m.invCash,m.finCash,m.net])}
+  rows.push([]);rows.push(['Tanggal','Jenis','Kategori','Keterangan','Jumlah']);
+  f.tx.forEach(function(x){var v=x.date?ymOf(toDay(x.date)):-1;if(v>=a&&v<=b)rows.push([x.date,x.type==='in'?'Masuk':'Keluar',finCatName(x.cat),x.desc||'',x.amt])});
+  var csv='﻿'+rows.map(function(r){return r.map(function(v){v=String(v==null?'':v);return /[",;\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(',')}).join('\n');
+  try{var u=URL.createObjectURL(new Blob([csv],{type:'text/csv'})),el=document.createElement('a');el.href=u;el.download='keuangan-'+(mo<0?y:y+'-'+pad(mo+1))+'.csv';document.body.appendChild(el);el.click();el.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000)}catch(e){toast('Gagal mengunduh CSV.',true)}
+}
+document.addEventListener('change',function(ev){
+  var t=ev.target;
+  if(t.id==='finy'){S.finY=+t.value;render()}
+  else if(t.id==='finm'){S.finM=+t.value<0?null:+t.value;render()}
+  else if(t.classList&&t.classList.contains('fin-amt')){var x=finGet().fixed.find(function(z){return z.id===t.dataset.id});if(x){x.amt=Math.max(0,+t.value||0);x.seed=0;finSave().then(render)}}
+});
+function finAct(act,d){
+  var f=finGet();
+  if(act==='fin-csv'){finCsv();return true}
+  if(act==='fin-addfix'){
+    var nm=$('#fx-name').value.trim(),am=+$('#fx-amt').value;
+    if(!nm||!(am>0)){toast('Isi nama dan jumlah biaya.',true);return true}
+    f.fixed.push({id:'f'+Date.now().toString(36),name:nm,cat:$('#fx-cat').value,amt:am,per:$('#fx-per').checked?1:0,from:$('#fx-from').value||ymStr(ymOf(TODAY))});
+    finSave().then(function(){render();toast('Biaya tetap ditambahkan.')});return true;
+  }
+  if(act==='fin-delfix'){if(!confirm('Hapus biaya tetap ini?'))return true;f.fixed=f.fixed.filter(function(x){return x.id!==d.id});finSave().then(render);return true}
+  if(act==='fin-addtx'){
+    var am2=+$('#tx-amt').value,dt=$('#tx-date').value;
+    if(!dt||!(am2>0)){toast('Isi tanggal dan jumlah.',true);return true}
+    f.tx.push({id:'t'+Date.now().toString(36),date:dt,type:$('#tx-type').value,cat:$('#tx-cat').value,desc:$('#tx-desc').value.trim(),amt:am2});
+    finSave().then(function(){render();toast('Tercatat.')});return true;
+  }
+  if(act==='fin-deltx'){if(!confirm('Hapus catatan ini?'))return true;f.tx=f.tx.filter(function(x){return x.id!==d.id});finSave().then(render);return true}
+  if(act==='fin-saveset'){f.open={amt:+$('#fs-open').value||0,ym:$('#fs-ym').value||ymStr(ymOf(TODAY))};f.mon=$('#fs-mon').checked;f.mr=Math.max(0,+$('#fs-mr').value||0);finSave().then(function(){render();toast('Pengaturan disimpan.')});return true}
+  return false;
+}
 function viewRevenue(){
   var rows=S.trips.filter(function(t){return !t.example&&t.status!=='batal'&&t.start}).map(function(t){var p=parts(toDay(t.start)),u=ujOf(t);return {t:t,y:p.y,m:p.m,v:u.price,u:u,ok:t.status==='pasti'||t.status==='selesai'}}),
       ok=rows.filter(function(x){return x.ok}),pot=rows.filter(function(x){return !x.ok}),py=parts(TODAY),y=S.revYear||py.y,ys=[py.y];
@@ -3031,6 +3172,7 @@ document.addEventListener('click',function(ev){
     case 'new-bus':openBus(null);break;
     case 'del-bus':S.confirmKey='bus:'+d.code;render();break;
     case 'del-bus-yes':deleteBus(d.code);break;
+    case 'fin-csv':case 'fin-addfix':case 'fin-delfix':case 'fin-addtx':case 'fin-deltx':case 'fin-saveset':finAct(act,d);break;
     case 'nf-filter':S.nfFilter=el.dataset.v;render();break;
     case 'seed-fleet':seedFleet();break;
     case 'auto-toggle':autoSave({on:!autoCfg().on}).then(function(){toast(autoCfg().on?'Autopilot aktif':'Autopilot dimatikan');if(autoCfg().on)autoRun(false);queueRender()}).catch(function(e){toast('Gagal menyimpan: '+(e&&(e.message||e.code)||'coba lagi'),true)});break;
@@ -3086,7 +3228,7 @@ document.addEventListener('change',function(ev){
   render();
 });
 document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&OPEN)closeSheet()});
-function syncTab(){var h=location.hash.replace('#','');if(h==='armada'){location.hash='#tracking';return}S.tab=['jadwal','tracking','order','pendapatan','notifikasi'].indexOf(h)>=0?h:'jadwal';S.confirmKey=null;render()}
+function syncTab(){var h=location.hash.replace('#','');if(h==='armada'){location.hash='#tracking';return}S.tab=['jadwal','tracking','order','pendapatan','keuangan','notifikasi'].indexOf(h)>=0?h:'jadwal';S.confirmKey=null;render()}
 window.addEventListener('hashchange',syncTab);
 
 /* ---------- boot ---------- */
@@ -3101,7 +3243,7 @@ async function boot(){
   store.start(
     function(b){S.buses=b.sort(busSort);S.ready.buses=true;clearTimeout(slow);S.slow=false;onData()},
     function(t){S.trips=t;S.ready.trips=true;onData()},
-    function(rows){var nr=rows.find(function(r){return r.id==='notif'});if(nr){S.notif=nr.items||[];S.notifKnown=nr.known||null}var a=rows.find(function(r){return r.id==='app'});S.setLoaded=true;if(a){S.settings=Object.assign({},a);delete S.settings.id;if(+a.gapHours>=0)S.gap=+a.gapHours}onData()},
+    function(rows){var nr=rows.find(function(r){return r.id==='notif'});if(nr){S.notif=nr.items||[];S.notifKnown=nr.known||null}var fr=rows.find(function(r){return r.id==='fin'});if(fr){var fo=Object.assign({},fr);delete fo.id;S.fin=Object.assign(finDefault(),fo)}var a=rows.find(function(r){return r.id==='app'});S.setLoaded=true;if(a){S.settings=Object.assign({},a);delete S.settings.id;if(+a.gapHours>=0)S.gap=+a.gapHours}onData()},
     function(e){S.error=e;render()}
   );
   render();
