@@ -323,6 +323,7 @@ body[data-div=akap] .ws-only,body[data-div=wisata] .ak-only{display:none}
 .aks{display:flex;flex-direction:column;gap:4px;max-width:300px}.aks-front{text-align:center;font-size:11px;color:var(--muted);border-bottom:2px solid var(--line-strong);padding-bottom:3px}.aks-r{display:flex;gap:4px;align-items:center}.aks-n{width:16px;font-size:10px;color:var(--muted);text-align:right}.aks-gap{width:16px}
 .aks-s{display:inline-block;min-width:36px;padding:5px 0;border-radius:6px;border:1px solid var(--line-strong);font:600 11px var(--font-mono);text-align:center;background:var(--surface);color:var(--fg)}button.aks-s{cursor:pointer}.aks-s.sim{background:var(--line);color:var(--muted);border-color:var(--line)}.aks-s.man{background:var(--ok-soft);color:var(--ok);border-color:transparent}.aks-s.pick{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .aform{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;align-items:end}.aform label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}.aform input,.aform select{padding:7px 9px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--fg);font:inherit;min-width:0}
+.akwk{display:flex;gap:8px;align-items:flex-end}.akw{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted)}.akw b{color:var(--fg);font-size:12px}.akw-bar{width:100%;height:70px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;display:flex;align-items:flex-end;overflow:hidden}.akw-bar i{display:block;width:100%;background:var(--accent)}
 .rtbl td input.ak-i{padding:5px 7px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);color:inherit;font:inherit;max-width:200px}
 
 .revc span{font-size:12px;color:var(--muted)}
@@ -2395,7 +2396,7 @@ function finPdf(scope){scope=scope||'b';
       else{doc.setFont('helvetica','italic');doc.setFontSize(9);doc.text('Tidak ada paket pada periode ini.',M,y+8);y+=26}
       title('Catatan dan Asumsi AKAP');
       doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(60);
-      var anotes=['Penjualan tiket di sistem ini '+(AX.sim?'sebagian besar SIMULASI (dibuat otomatis dari hari dan jam, bukan transaksi nyata), ditambah tiket yang diinput manual.':'berasal dari tiket yang diinput manual.')+' Hanya keberangkatan yang sudah berjalan yang dihitung.','Tarif flat Rp'+(+AX.tarif).toLocaleString('id-ID')+' per kursi, ditambah '+AX.peakPct+'% pada musim Lebaran. Komisi agen mengikuti persentase tiap agen dan dipotong dari penjualan.','Solar memakai asumsi '+AX.c.kmpl+' km per liter dengan porsi Biosolar '+AX.c.bio+'% (Rp'+(+AX.c.pBio).toLocaleString('id-ID')+') dan sisanya Dexlite (Rp'+(+AX.c.pDex).toLocaleString('id-ID')+'). Harga BBM Pertamina per 1 November 2026. Selisih harganya sangat besar, jadi laba sangat sensitif terhadap porsi Biosolar.','Tol, upah kru, perawatan, dan biaya tetap adalah asumsi yang bisa diubah di tab Keuangan. Biaya tetap bertanda "perkiraan awal" hanyalah tebakan, termasuk cicilan atau penyusutan unit.','Paket/kargo adalah pendapatan tambahan crew dan tidak dihitung sebagai pendapatan perusahaan. Laporan belum memuat penyusutan, pajak penghasilan, dan neraca.'];
+      var anotes=['Penjualan tiket di sistem ini '+(AX.sim?'sebagian besar SIMULASI (dibuat otomatis dari hari dan jam, bukan transaksi nyata), ditambah tiket yang diinput manual.':'berasal dari tiket yang diinput manual.')+' Hanya keberangkatan yang sudah berjalan yang dihitung.','Tarif flat Rp'+(+AX.tarif).toLocaleString('id-ID')+' per kursi, ditambah '+AX.peakPct+'% pada musim Lebaran. Komisi agen mengikuti persentase tiap agen dan dipotong dari penjualan.','Solar memakai asumsi '+AX.c.kmpl+' km per liter dengan porsi Biosolar subsidi '+AX.c.bio+'% (Rp'+(+AX.c.pBio).toLocaleString('id-ID')+' per liter, harga Pertamina 1 November 2026)'+(+AX.c.bio<100?' dan sisanya Dexlite (Rp'+(+AX.c.pDex).toLocaleString('id-ID')+')':'')+'. Laba sangat sensitif terhadap ketersediaan Biosolar subsidi.','Tol memakai tarif golongan I (bus dua gandar): Jakarta-Kanci Rp172.500, sampai Pejagan diperkirakan Rp'+(+AX.c.tol).toLocaleString('id-ID')+' per perjalanan.','Upah kru, perawatan, dan biaya tetap adalah asumsi yang bisa diubah di tab Keuangan. Biaya tetap bertanda "perkiraan awal" hanyalah tebakan, termasuk cicilan atau penyusutan unit.','Paket/kargo adalah pendapatan tambahan crew dan tidak dihitung sebagai pendapatan perusahaan. Laporan belum memuat penyusutan, pajak penghasilan, dan neraca.'];
       anotes.forEach(function(n,k){var ls=doc.splitTextToSize((k+1)+'. '+n,W-2*M);if(y+ls.length*10>770){doc.addPage();y=50}doc.text(ls,M,y+10);y+=ls.length*10+4});
       doc.setTextColor(0);
     }
@@ -2864,6 +2865,7 @@ var AK_SL=[{dir:'B',time:'07:00'},{dir:'B',time:'17:00'},{dir:'T',time:'07:00'},
 var AK_STOP={B:['Pulo Gebang','Kampung Rambutan','Lebak Bulus'],T:['Cilacap','Maos','Kroya','Wangon']};
 var AK_TABS=['akap','tiket','unit','agen'],WS_TABS=['jadwal','tracking','order'];
 var AK_SEATS=(function(){var o=[],r;for(r=1;r<=12;r++)['A','B','C','D'].forEach(function(l){o.push(r+l)});return o})();
+var AK_FN=['Budi','Siti','Agus','Ani','Joko','Rina','Eko','Dewi','Bambang','Sri','Hadi','Yuni','Rudi','Lina','Andi','Fitri','Dedi','Wati','Slamet','Nur','Tono','Ratna','Wahyu','Indah','Yanto','Lestari','Aris','Maya','Heri','Tuti'],AK_LN=['Santoso','Wijaya','Pratama','Hidayat','Setiawan','Kurniawan','Rahayu','Saputra','Utami','Nugroho','Susanto','Purnomo','Handayani','Lestari','Wibowo','Fauzi','Permana','Yulianto','Astuti','Mulyadi'];
 var AK_LFB=[.55,.42,.38,.38,.48,.88,.76],AK_LFT=[.88,.72,.40,.36,.38,.44,.52];
 var AKC={rev:-1},akNoKeep=0;
 if(!S.div)S.div=lsGet('div')==='akap'?'akap':'wisata';
@@ -2872,14 +2874,14 @@ S.akPick=[];
 function akDefault(){
   var dn=['Haryono','Sutrisno','Mulyono','Bambang','Purwanto','Sukirman','Widodo','Suharto','Marsudi','Ngadiman'],kn=['Tohir','Sodikin','Yusuf','Imam','Khoirul'],u=[],i;
   for(i=0;i<5;i++)u.push({code:'AS-'+String(i+1).padStart(3,'0'),spare:i===4,status:'aktif',from:'',until:'',model:'Jetbus 5 SHD',year:2024,seat:48,crew:[dn[i*2],dn[i*2+1],kn[i]]});
-  return {v:1,units:u,tarif:170000,peakPct:20,peakOn:true,refund1:100,refund0:50,sim:true,dur:8,rest:40,start:'2026-11-01',
-    c:{kmpl:3.8,bio:80,pBio:6800,pDex:23700,tol:310000,sopir:150000,kernet:100000,makan:25000,maint:600,misc:100000},
+  return {v:2,units:u,tarif:170000,peakPct:20,peakOn:true,refund1:100,refund0:50,sim:true,dur:8,rest:40,start:'2026-11-01',
+    c:{kmpl:3.8,bio:100,pBio:6800,pDex:23700,tol:185000,sopir:150000,kernet:100000,makan:25000,maint:600,misc:100000},
     agents:[{id:'a1',name:'Agen Cilacap (Sampang)',loc:'Cilacap',side:'T',comm:10},{id:'a2',name:'Agen Kroya',loc:'Kroya',side:'T',comm:10},{id:'a3',name:'Agen Maos',loc:'Maos',side:'T',comm:10},{id:'a4',name:'Agen Wangon',loc:'Wangon',side:'T',comm:10},
       {id:'a5',name:'Agen Pulo Gebang',loc:'Jakarta',side:'B',comm:10},{id:'a6',name:'Agen Kampung Rambutan',loc:'Jakarta',side:'B',comm:10},{id:'a7',name:'Agen Lebak Bulus',loc:'Jakarta',side:'B',comm:10}],
     tix:[],cargo:[],
     fixed:[{id:'f1',name:'Cicilan / penyusutan unit AKAP',amt:25000000,per:1,seed:1},{id:'f2',name:'Asuransi, pajak, dan KIR unit',amt:4000000,per:1,seed:1},{id:'f3',name:'Gaji admin dan koordinator AKAP',amt:8000000,per:0,seed:1},{id:'f4',name:'Sewa pool, kantor, dan listrik AKAP',amt:5000000,per:0,seed:1}]};
 }
-function akMerge(o){var d=akDefault(),r=Object.assign(d,o||{});r.c=Object.assign(akDefault().c,(o&&o.c)||{});['units','agents','tix','cargo','fixed'].forEach(function(k){if(!Array.isArray(r[k]))r[k]=akDefault()[k]});return r}
+function akMerge(o){var d=akDefault(),r=Object.assign(d,o||{});r.c=Object.assign(akDefault().c,(o&&o.c)||{});if(!o||!o.v||o.v<2){if(r.c.tol===310000)r.c.tol=185000;if(r.c.bio===80)r.c.bio=100;r.v=2}['units','agents','tix','cargo','fixed'].forEach(function(k){if(!Array.isArray(r[k]))r[k]=akDefault()[k]});return r}
 function AK(){if(!S.ak)S.ak=akDefault();return S.ak}
 function akCache(){if(AKC.rev!==S.akRev)AKC={rev:S.akRev};return AKC}
 function akSave(){S.akRev++;var o=Object.assign({},AK());return store.put('settings','akap',o).catch(function(){toast('Gagal menyimpan data AKAP.',true)}).then(function(){render()})}
@@ -2923,7 +2925,8 @@ function akSim(d){
     if(!ags.length)ags=A.agents;
     for(i=seats.length-1;i>0;i--){j=Math.floor(r()*(i+1));t=seats[i];seats[i]=seats[j];seats[j]=t}
     n=Math.round(n*ratio);
-    for(i=0;i<n&&ags.length;i++){var a=ags[Math.floor(r()*ags.length)],pv=r();out.push({seat:seats[i],agent:a.id,pay:pv<.5?'tunai':pv<.72?'transfer':'qris',price:pr,sim:1})}
+    var fr=AK_STOP[d.dir],to=AK_STOP[d.dir==='B'?'T':'B'];
+    for(i=0;i<n&&ags.length;i++){var a=ags[Math.floor(r()*ags.length)],pv=r(),nm=AK_FN[Math.floor(r()*AK_FN.length)]+' '+AK_LN[Math.floor(r()*AK_LN.length)];out.push({seat:seats[i],agent:a.id,pay:pv<.5?'tunai':pv<.72?'transfer':'qris',price:pr,sim:1,name:nm,from:fr[Math.floor(r()*fr.length)],to:to[Math.floor(r()*to.length)]})}
   }
   return C[k]=out;
 }
@@ -3004,7 +3007,7 @@ function akSeatMap(d,sel){
   var sim={},man={},pk=S.akPick||[],h='<div class="aks"><div class="aks-front">Depan</div>';
   akSim(d).forEach(function(t){sim[t.seat]=t});akMan(d).forEach(function(t){if(t.status==='aktif')man[t.seat]=t});
   var cell=function(s){
-    var c=man[s]?'man':sim[s]?'sim':pk.indexOf(s)>=0?'pick':'free',tt=man[s]?man[s].name+' ('+akAgent(man[s].agent).name+')':sim[s]?'Terjual lewat '+akAgent(sim[s].agent).name+' (simulasi)':'Kosong';
+    var c=man[s]?'man':sim[s]?'sim':pk.indexOf(s)>=0?'pick':'free',tt=man[s]?man[s].name+' ('+akAgent(man[s].agent).name+')':sim[s]?sim[s].name+' · '+akAgent(sim[s].agent).name+' (simulasi)':'Kosong';
     return (sel&&(c==='free'||c==='pick'))?'<button type="button" class="aks-s '+c+'" data-act="ak-seat" data-s="'+s+'" title="'+esc(tt)+'">'+s+'</button>':'<span class="aks-s '+c+'" title="'+esc(tt)+'">'+s+'</span>';
   };
   for(var r=1;r<=12;r++)h+='<div class="aks-r">'+cell(r+'A')+cell(r+'B')+'<span class="aks-gap"></span>'+cell(r+'C')+cell(r+'D')+'</div>';
@@ -3013,6 +3016,7 @@ function akSeatMap(d,sel){
 function akDaySel(){if(!S.akDay)S.akDay=TODAY;return S.akDay}
 function akNav(){return '<div class="fin-add"><button type="button" class="btn ghost sm" data-act="ak-prev">‹</button><input id="ak-day" type="date" value="'+toStr(akDaySel())+'" aria-label="Tanggal"><button type="button" class="btn ghost sm" data-act="ak-next">›</button><button type="button" class="btn sm" data-act="ak-today">Hari ini</button><b>'+esc(akDayLbl(akDaySel()))+'</b></div>'}
 function akSelDep(day){var ds=akDeps(day);if(!ds.length)return null;var f=ds.find(function(d){return d.key===S.akSel});if(f)return f;var now=Date.now();return ds.find(function(d){return d.ms>now&&d.u})||ds[0]}
+function akWeek(){var now=Date.now(),h='',i,tp=0,tc=0;for(i=6;i>=0;i--){var dd=TODAY-i,pax=0,cap=0;akDeps(dd).forEach(function(d){if(d.u&&d.ms<=now){pax+=akSum(d).pax;cap+=48}});tp+=pax;tc+=cap;var pc=cap?Math.round(pax/cap*100):0;h+='<div class="akw"><div class="akw-bar"><i style="height:'+pc+'%"></i></div><b>'+(cap?pc+'%':'-')+'</b><span>'+AK_DN[parts(dd).w]+' '+parts(dd).d+'</span></div>'}return '<div class="akwk">'+h+'</div><p class="hint">Rata-rata 7 hari: <b>'+(tc?Math.round(tp/tc*100):0)+'%</b> ('+tp+' penumpang). Dihitung otomatis dari keberangkatan yang sudah jalan.</p>'}
 function viewAkMon(){
   var day=akDaySel(),ds=akDeps(day),now=Date.now(),A=AK(),pax=0,cap=0,gross=0,legs=0,sel=akSelDep(day);
   ds.forEach(function(d){if(d.u){var s=akSum(d);legs++;pax+=s.pax;cap+=48;gross+=s.gross}});
@@ -3035,11 +3039,13 @@ function viewAkMon(){
       +'<div class="akdet"><div>'+akSeatMap(sel,false)+'</div><div>'
       +'<div class="rtbl" style="border:0;padding:0"><div class="tw"><table><thead><tr><th>Agen</th><th style="text-align:right">Tiket</th><th style="text-align:right">Penjualan</th></tr></thead><tbody>'+(ag||'<tr><td class="hint" colspan="3">Belum ada tiket.</td></tr>')+'</tbody></table></div></div>'
       +(man.length?'<p class="hint" style="margin-top:8px"><b>Tiket manual:</b> '+man.map(function(t){return esc(t.name)+' ('+t.seat+')'}).join(', ')+'</p>':'')
+      +'<details style="margin-top:8px"><summary><b>Daftar penumpang ('+s.pax+')</b></summary><div class="rtbl" style="border:0;padding:0"><div class="tw"><table><tbody>'+akSim(sel).concat(man.map(function(t){return {seat:t.seat,name:t.name,from:t.from,to:t.to,agent:t.agent}})).sort(function(a,b){return parseInt(a.seat)-parseInt(b.seat)||(a.seat>b.seat?1:-1)}).map(function(t){return '<tr><td>'+t.seat+'</td><td>'+esc(t.name||'-')+'</td><td class="hint">'+esc(t.from||'-')+' → '+esc(t.to||'-')+' · '+esc(akAgent(t.agent).name)+'</td></tr>'}).join('')+'</tbody></table></div></div></details>'
       +(cg.length?'<p class="hint"><b>Paket:</b> '+cg.map(function(g){return esc(g.desc)+' ('+rupiah(g.fee)+')'}).join(', ')+'</p>':'')
       +'</div></div></div>';
   }else if(sel)det='<div class="revbox"><b>'+esc(akRoute(sel))+' · '+sel.time+'</b><p class="hint">Keberangkatan ini tidak berangkat karena tidak ada unit tersedia ('+esc(sel.note)+'). Pertimbangkan memajukan jadwal servis atau menyewa unit.</p></div>';
   return '<div class="trk"><div class="revbox"><b>Monitor AKAP Jakarta – Cilacap</b><p class="hint">Data penjualan tiket di sini simulasi, supaya kamu bisa melihat bagaimana sistem bekerja. Tiket yang kamu input di tab Tiket ikut dihitung. Posisi bus adalah perkiraan linier berdasarkan jam, bukan GPS.</p>'+akNav()
     +'<div class="akk"><div><span>Keberangkatan</span><b>'+legs+'</b></div><div><span>Penumpang</span><b>'+pax+'/'+cap+'</b></div><div><span>Okupansi</span><b>'+(cap?Math.round(pax/cap*100):0)+'%</b></div><div><span>Penjualan tiket</span><b>'+rupiah(gross)+'</b></div></div></div>'
+    +'<div class="revbox"><b>Okupansi 7 hari terakhir</b>'+akWeek()+'</div>'
     +(ds.length?'<div class="akg">'+cards+'</div>':'<div class="empty"><strong>Tidak ada jadwal di tanggal ini.</strong><span>AKAP mulai beroperasi '+esc(fmtDay(toDay(A.start)))+' '+parts(toDay(A.start)).y+'. Ubah di Keuangan, bagian Pengaturan AKAP.</span></div>')
     +det+'</div>';
 }
@@ -3101,7 +3107,7 @@ function akFinBox(){
     +'<div class="fin-add">'+n('tarif','Tarif per kursi Rp',A.tarif,5000)+n('peakPct','Tambahan tarif Lebaran',A.peakPct,1,'%')+'<label class="hint"><input class="ak-i" type="checkbox" data-akf="s" data-p="peakOn"'+(A.peakOn?' checked':'')+'> tarif dan unit tambahan musim Lebaran (H-7 sampai H-1 arah Cilacap, H+2 sampai H+7 arah Jakarta)</label></div>'
     +'<div class="fin-add">'+n('refund1','Refund batal sebelum hari-H',A.refund1,5,'%')+n('refund0','Refund batal di hari-H',A.refund0,5,'%')+'<label class="hint">Mulai beroperasi <input class="ak-i" type="date" data-akf="s" data-p="start" value="'+esc(A.start)+'"></label></div>'
     +'<div class="fin-add">'+n('dur','Lama perjalanan (jam)',A.dur,.5)+n('rest','Istirahat Pejagan (menit)',A.rest,5)+'<label class="hint"><input class="ak-i" type="checkbox" data-akf="s" data-p="sim"'+(A.sim?' checked':'')+'> penjualan tiket otomatis (simulasi)</label></div></div>'
-    +'<div class="revbox"><b>Divisi AKAP: asumsi biaya per perjalanan</b><p class="hint">Harga BBM per 1 Nov 2026: Biosolar subsidi Rp6.800, Dexlite Rp23.700 per liter (detikOto). Selisihnya sangat besar, jadi porsi Biosolar sangat menentukan laba. Tol Jakarta–Kanci golongan II Rp277.500 (Fortune IDN), angka Rp310.000 sampai Pejagan adalah perkiraanku. Upah sopir ±Rp250–300 ribu per pulang-pergi dan kernet ±Rp150 ribu (detikOto, 2024). Pembagian per perjalanan dan sisanya asumsiku. Ganti dengan angka sebenarnya.</p>'
+    +'<div class="revbox"><b>Divisi AKAP: asumsi biaya per perjalanan</b><p class="hint">Bus AKAP memakai Biosolar subsidi (Rp6.800 per liter per 1 Nov 2026, detikOto), jadi porsi Biosolar default 100%. Dexlite (Rp23.700) hanya terpakai kalau porsinya kamu turunkan, misalnya kalau Biosolar sulit didapat di jalan. Tol: bus masuk golongan I. Jakarta–Kanci golongan I Rp172.500 (Fortune IDN), angka Rp185.000 sampai Pejagan adalah perkiraanku karena tarif Kanci–Pejagan belum kutemukan. Upah sopir ±Rp250–300 ribu per pulang-pergi dan kernet ±Rp150 ribu (detikOto, 2024). Pembagian per perjalanan dan sisanya asumsiku. Ganti dengan angka sebenarnya.</p>'
     +'<div class="fin-add">'+n('c.kmpl','Konsumsi solar (km/liter)',c.kmpl,.1)+n('c.bio','Porsi Biosolar',c.bio,5,'%')+n('c.pBio','Biosolar Rp/liter',c.pBio,100)+n('c.pDex','Dexlite Rp/liter',c.pDex,100)+'</div>'
     +'<div class="fin-add">'+n('c.tol','Tol per perjalanan Rp',c.tol,5000)+n('c.sopir','Upah per sopir (2 orang)',c.sopir,5000)+n('c.kernet','Upah kernet',c.kernet,5000)+n('c.makan','Uang makan per orang',c.makan,5000)+n('c.maint','Perawatan Rp/km',c.maint,50)+n('c.misc','Terminal, parkir, cuci Rp',c.misc,5000)+'</div></div>'
     +'<div class="revbox"><b>Divisi AKAP: biaya tetap bulanan</b><p class="hint">Dibebankan tiap bulan sejak bulan mulai beroperasi. Angka "perkiraan awal" hanya tebakan, ganti dengan angka perusahaan (cicilan unit bekas, premi asuransi, pajak, KIR, gaji).</p><div class="rtbl" style="border:0;padding:0"><div class="tw"><table><tbody>'+fx+'</tbody></table></div></div></div>';
