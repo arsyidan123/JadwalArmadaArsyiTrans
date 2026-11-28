@@ -316,7 +316,7 @@ button.code{cursor:pointer;font:inherit}
 .divsw{display:inline-flex;border:1px solid var(--line-strong);border-radius:9px;overflow:hidden;margin:0 8px}.divsw button{border:0;background:var(--surface);color:var(--muted);padding:7px 12px;font:inherit;font-weight:600;cursor:pointer}.divsw button[aria-pressed=true]{background:var(--accent);color:var(--accent-fg)}
 body[data-div=akap] .ws-only,body[data-div=wisata] .ak-only{display:none}
 .akk{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:6px}.akk div{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column}.akk span{font-size:11.5px;color:var(--muted)}.akk b{font-size:17px}
-.akg{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px}.akc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}.akc.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}.akc-h{display:flex;justify-content:space-between;gap:8px;margin-bottom:2px}.akc-f{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
+.akg{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px}.akc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}.akc{cursor:pointer}.akc:hover{border-color:var(--line-strong)}.akc:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.akc.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}.akc-h{display:flex;justify-content:space-between;gap:8px;margin-bottom:2px}.akc-f{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
 .aks-trk{position:relative;height:8px;border-radius:4px;background:var(--surface-2);border:1px solid var(--line);margin:10px 0 2px}.aks-bar{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--accent)}.aks-tk{position:absolute;top:-3px;width:2px;height:12px;background:var(--line-strong);margin-left:-1px}.aks-tk.pej{background:var(--warn);width:3px}
 .aks-lbl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted)}.aks-b{font-size:12px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line)}.aks-b.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}.aks-b.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}.aks-b.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
 .akdet{display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:14px;align-items:start}@media(max-width:640px){.akdet{grid-template-columns:1fr}}
@@ -3023,7 +3023,7 @@ function viewAkMon(){
   var cards=ds.map(function(d){
     var s=akSum(d),pos=akPos(d,now),lf=d.u?Math.round(s.pax/48*100):0,tk='';
     AK_WP.forEach(function(w){var l=d.dir==='T'?w[1]/AK_KM:1-w[1]/AK_KM;tk+='<i class="aks-tk'+(w[0]==='Pejagan'?' pej':'')+'" style="left:'+(l*100).toFixed(1)+'%" title="'+esc(w[0])+'"></i>'});
-    return '<div class="akc'+(sel&&sel.key===d.key?' on':'')+'"><div class="akc-h"><b>'+esc(akRoute(d))+'</b><span>'+d.time+(d.extra?' <span class="tag">tambahan</span>':'')+'</span></div>'
+    return '<div class="akc'+(sel&&sel.key===d.key?' on':'')+'" data-act="ak-sel" data-k="'+esc(d.key)+'" role="button" tabindex="0" aria-label="Lihat detail '+esc(akRoute(d))+' '+d.time+'"><div class="akc-h"><b>'+esc(akRoute(d))+'</b><span>'+d.time+(d.extra?' <span class="tag">tambahan</span>':'')+'</span></div>'
       +'<div class="hint">'+(d.u?esc(d.u)+(d.unit&&d.unit.spare?' (cadangan)':'')+' · '+akCrewTxt(d.unit):'<b>Tidak ada unit</b>')+(d.note?' · '+esc(d.note):'')+'</div>'
       +'<div class="aks-trk"><div class="aks-bar" style="width:'+Math.round((pos.p||0)*100)+'%"></div>'+tk+'</div>'
       +'<div class="aks-lbl"><span>'+(d.dir==='T'?'Cilacap':'Jakarta')+'</span><span>Pejagan</span><span>'+(d.dir==='T'?'Jakarta':'Cilacap')+'</span></div>'
@@ -3181,6 +3181,7 @@ document.addEventListener('change',function(ev){
   else if(f==='s'){if(p.indexOf('c.')===0)A.c[p.slice(2)]=v;else A[p]=v}
   akSave();
 });
+document.addEventListener('keydown',function(ev){if((ev.key==='Enter'||ev.key===' ')&&ev.target&&ev.target.classList&&ev.target.classList.contains('akc')){ev.preventDefault();ev.target.click()}});
 /* isian form tiket tidak hilang saat tampilan dimuat ulang otomatis */
 var AK_FF=['#ak-name','#ak-phone','#ak-from','#ak-to','#ak-agent','#ak-pay'];
 function akKeep(){if(akNoKeep){akNoKeep=0;return null}if(S.tab!=='tiket')return null;var o={},any=false;AK_FF.forEach(function(k){var e=$(k);if(e){o[k]=e.value;any=true}});return any?o:null}
