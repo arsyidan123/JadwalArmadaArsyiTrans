@@ -313,6 +313,18 @@ button.code{cursor:pointer;font:inherit}
 .revgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
 .revc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:2px}
 .ch-typing{font-style:italic;opacity:.65;font-size:.85em}
+.divsw{display:inline-flex;border:1px solid var(--line-strong);border-radius:9px;overflow:hidden;margin:0 8px}.divsw button{border:0;background:var(--surface);color:var(--muted);padding:7px 12px;font:inherit;font-weight:600;cursor:pointer}.divsw button[aria-pressed=true]{background:var(--accent);color:var(--accent-fg)}
+body[data-div=akap] .ws-only,body[data-div=wisata] .ak-only{display:none}
+.akk{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:6px}.akk div{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column}.akk span{font-size:11.5px;color:var(--muted)}.akk b{font-size:17px}
+.akg{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px}.akc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}.akc.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}.akc-h{display:flex;justify-content:space-between;gap:8px;margin-bottom:2px}.akc-f{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
+.aks-trk{position:relative;height:8px;border-radius:4px;background:var(--surface-2);border:1px solid var(--line);margin:10px 0 2px}.aks-bar{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--accent)}.aks-tk{position:absolute;top:-3px;width:2px;height:12px;background:var(--line-strong);margin-left:-1px}.aks-tk.pej{background:var(--warn);width:3px}
+.aks-lbl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted)}.aks-b{font-size:12px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line)}.aks-b.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}.aks-b.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}.aks-b.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.akdet{display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:14px;align-items:start}@media(max-width:640px){.akdet{grid-template-columns:1fr}}
+.aks{display:flex;flex-direction:column;gap:4px;max-width:300px}.aks-front{text-align:center;font-size:11px;color:var(--muted);border-bottom:2px solid var(--line-strong);padding-bottom:3px}.aks-r{display:flex;gap:4px;align-items:center}.aks-n{width:16px;font-size:10px;color:var(--muted);text-align:right}.aks-gap{width:16px}
+.aks-s{display:inline-block;min-width:36px;padding:5px 0;border-radius:6px;border:1px solid var(--line-strong);font:600 11px var(--font-mono);text-align:center;background:var(--surface);color:var(--fg)}button.aks-s{cursor:pointer}.aks-s.sim{background:var(--line);color:var(--muted);border-color:var(--line)}.aks-s.man{background:var(--ok-soft);color:var(--ok);border-color:transparent}.aks-s.pick{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.aform{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;align-items:end}.aform label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}.aform input,.aform select{padding:7px 9px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--fg);font:inherit;min-width:0}
+.rtbl td input.ak-i{padding:5px 7px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);color:inherit;font:inherit;max-width:200px}
+
 .revc span{font-size:12px;color:var(--muted)}
 .fin-add{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px}.fin-add input,.fin-add select{padding:7px 9px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:inherit;font:inherit;min-width:0;max-width:100%}.fin-add input[type=number]{width:130px}.fin-add input[type=checkbox]{width:auto}.rtbl input.fin-amt{width:120px}
 .revc b{font-size:18px;font-variant-numeric:tabular-nums}
@@ -422,12 +434,17 @@ button.code{cursor:pointer;font:inherit}
       <span class="brand-mark">AT</span>
       <div><h1>Arsyi Trans</h1><p>Jadwal armada &amp; plotting unit</p></div>
     </div>
-    <button type="button" class="btn primary" id="btn-new-order">+ Order baru</button>
+    <div class="divsw" role="group" aria-label="Divisi"><button type="button" data-act="div" data-v="wisata" id="dv-w">Pariwisata</button><button type="button" data-act="div" data-v="akap" id="dv-a">AKAP</button></div>
+    <button type="button" class="btn primary ws-only" id="btn-new-order">+ Order baru</button>
   </header>
   <nav class="tabs" id="tabs" aria-label="Menu">
-    <a href="#jadwal" data-tab="jadwal">Jadwal</a>
-    <a href="#tracking" data-tab="tracking">Tracking</a>
-    <a href="#order" data-tab="order">Order</a>
+    <a href="#jadwal" data-tab="jadwal" class="ws-only">Jadwal</a>
+    <a href="#tracking" data-tab="tracking" class="ws-only">Tracking</a>
+    <a href="#order" data-tab="order" class="ws-only">Order</a>
+    <a href="#akap" data-tab="akap" class="ak-only">Monitor AKAP</a>
+    <a href="#tiket" data-tab="tiket" class="ak-only">Tiket</a>
+    <a href="#unit" data-tab="unit" class="ak-only">Unit &amp; Kru</a>
+    <a href="#agen" data-tab="agen" class="ak-only">Agen &amp; Paket</a>
     <a href="#pendapatan" data-tab="pendapatan">Pendapatan</a>
     <a href="#keuangan" data-tab="keuangan">Keuangan</a>
     <a href="#grup" data-tab="grup">Grup Crew<span class="nbadge" id="cbadge" hidden></span></a>
@@ -756,8 +773,10 @@ function availSeat(bus,cand,ignoreId,sel){
 function queueRender(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;render()})}
 function onData(){queueRender();autoFinish();autoKick();scanSoon();setTimeout(nfBadge,0);setTimeout(chBadge,0);if(OPEN==='#sheet-order'&&F)renderPlot()}
 
-function render(){
+function render(){var kp=akKeep();render0();akRestore(kp)}
+function render0(){
   setTimeout(nfBadge,0);
+  document.body.setAttribute('data-div',S.div||'wisata');var dw=$('#dv-w'),da=$('#dv-a');if(dw){dw.setAttribute('aria-pressed',S.div!=='akap');da.setAttribute('aria-pressed',S.div==='akap')}
   $$('#tabs a').forEach(function(a){if(a.dataset.tab===S.tab)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
   var banner='';
   if(S.mode==='local')banner='<p class="note">Mode lokal: Supabase belum terhubung, data hanya tersimpan di browser ini.</p>';
@@ -772,6 +791,10 @@ function render(){
   else if(S.tab==='order')v.innerHTML=viewOrders();
   else if(S.tab==='pendapatan')v.innerHTML=viewRevenue();
   else if(S.tab==='keuangan')v.innerHTML=viewFin();
+  else if(S.tab==='akap')v.innerHTML=viewAkMon();
+  else if(S.tab==='tiket')v.innerHTML=viewAkTix();
+  else if(S.tab==='unit')v.innerHTML=viewAkUnit();
+  else if(S.tab==='agen')v.innerHTML=viewAkAgen();
   else if(S.tab==='grup')v.innerHTML=viewChat();
   else if(S.tab==='notifikasi'){S.nfSeenAt=nfSeen();v.innerHTML=viewNotif();lsSet('notif-seen',String(Date.now()))}
   else v.innerHTML=viewJadwal();
@@ -2255,14 +2278,15 @@ function finData(){
   var txs=f.tx.filter(function(x){var v=x.date?ymOf(toDay(x.date)):-1;return v>=a&&v<=b}).sort(function(p,q){return p.date.localeCompare(q.date)});
   return {f:f,y:y,mo:mo,a:a,b:b,T:T,before:before,after:before+T.net,months:months,orders:orders,txs:txs,per:mo<0?'Tahun '+y:MONTHS[mo]+' '+y};
 }
-function viewFin(){
+function viewFin(){return viewFin0()+'<div class="trk">'+akFinBox()+'</div>'}
+function viewFin0(){
   var f=finGet(),py=parts(TODAY),y=S.finY||py.y,mo=S.finM==null?-1:S.finM,yrs=[py.y],D=finData(),per=D.per,nowM=ymStr(ymOf(TODAY));
   S.trips.forEach(function(t){if(t.start){var yy=parts(toDay(t.start)).y;if(yrs.indexOf(yy)<0)yrs.push(yy)}});if(yrs.indexOf(y)<0)yrs.push(y);yrs.sort();
   var catOpts=function(arr){return arr.map(function(c){return '<option value="'+c[0]+'">'+esc(c[1])+'</option>'}).join('')};
   var fx=f.fixed.map(function(x){return '<tr><td>'+esc(x.name)+(x.seed?' <span class="tag">perkiraan awal</span>':'')+'<br><span class="hint">'+esc(finCatName(x.cat))+' · mulai '+esc(x.from||'-')+(x.per?' · dikali jumlah unit ('+S.buses.length+')':'')+'</span></td><td style="text-align:right"><input class="sp fin-amt" data-id="'+esc(x.id)+'" type="number" min="0" step="50000" value="'+(+x.amt||0)+'" aria-label="Jumlah per bulan"></td><td><button type="button" class="btn ghost sm" data-act="fin-delfix" data-id="'+esc(x.id)+'">Hapus</button></td></tr>'}).join('');
   var txs=D.txs.slice().reverse().map(function(x){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.desc||finCatName(x.cat))+'<br><span class="hint">'+esc(finCatName(x.cat))+'</span></td><td style="text-align:right;white-space:nowrap">'+(x.type==='in'?'+':'-')+rupiah(x.amt)+'</td><td><button type="button" class="btn ghost sm" data-act="fin-deltx" data-id="'+esc(x.id)+'">Hapus</button></td></tr>'}).join('');
   return '<div class="trk"><div class="revbox"><b>Laporan keuangan</b><p class="hint">Laporan tidak ditampilkan di layar. Pilih periode, lalu ekspor ke PDF (ringkasan, laba rugi, arus kas, rekap bulanan, rincian order, dan catatan kas). Data di bawah ini yang menjadi bahan laporan.</p>'
-   +'<div class="fin-add"><select id="finy" aria-label="Tahun">'+yrs.map(function(k){return '<option'+(k===y?' selected':'')+'>'+k+'</option>'}).join('')+'</select><select id="finm" aria-label="Bulan"><option value="-1">Setahun penuh</option>'+MONTHS.map(function(n,i){return '<option value="'+i+'"'+(i===mo?' selected':'')+'>'+n+'</option>'}).join('')+'</select><button type="button" class="btn primary sm" data-act="fin-pdf">Ekspor PDF</button><button type="button" class="btn sm" data-act="fin-csv">Unduh CSV</button></div></div>'
+   +'<div class="fin-add"><select id="finy" aria-label="Tahun">'+yrs.map(function(k){return '<option'+(k===y?' selected':'')+'>'+k+'</option>'}).join('')+'</select><select id="finm" aria-label="Bulan"><option value="-1">Setahun penuh</option>'+MONTHS.map(function(n,i){return '<option value="'+i+'"'+(i===mo?' selected':'')+'>'+n+'</option>'}).join('')+'</select><select id="finscope" aria-label="Isi laporan"><option value="b"'+((S.finScope||'b')==='b'?' selected':'')+'>Gabungan (2 laporan dalam 1 PDF)</option><option value="w"'+(S.finScope==='w'?' selected':'')+'>Pariwisata saja</option><option value="a"'+(S.finScope==='a'?' selected':'')+'>AKAP saja</option></select><button type="button" class="btn primary sm" data-act="fin-pdf">Ekspor PDF</button><button type="button" class="btn sm" data-act="fin-csv">Unduh CSV</button></div></div>'
    +'<div class="revbox"><b>Biaya tetap bulanan</b><p class="hint">Gaji admin, listrik, pajak/KIR, dan sejenisnya. Otomatis masuk tiap bulan sejak bulan mulai. Ubah angkanya langsung di tabel. Angka "perkiraan awal" hanya tebakan awalku, ganti dengan angka perusahaan yang sebenarnya.</p><div class="rtbl" style="border:0;padding:0"><div class="tw"><table><tbody>'+(fx||'<tr><td class="hint">Belum ada biaya tetap.</td></tr>')+'</tbody></table></div></div>'
    +'<div class="fin-add"><input id="fx-name" type="text" placeholder="Nama biaya, mis. Gaji mekanik"><select id="fx-cat">'+catOpts(FIN_C.opOut)+'</select><input id="fx-amt" type="number" min="0" step="50000" placeholder="Rp per bulan"><input id="fx-from" type="month" value="'+nowM+'" aria-label="Mulai bulan"><label class="hint"><input id="fx-per" type="checkbox"> dikali jumlah unit bus</label><button type="button" class="btn primary sm" data-act="fin-addfix">Tambah</button></div></div>'
    +'<div class="revbox"><b>Catat pemasukan / pengeluaran</b><p class="hint">Untuk servis bus, ganti ban, beli sparepart, bayar pajak, setor modal, cicilan, dan lainnya.</p><div class="fin-add"><input id="tx-date" type="date" value="'+toStr(TODAY)+'"><select id="tx-type"><option value="out">Pengeluaran</option><option value="in">Pemasukan</option></select><select id="tx-cat">'+catOpts(FIN_C.opOut)+catOpts(FIN_C.opIn)+catOpts(FIN_C.invOut)+catOpts(FIN_C.invIn)+catOpts(FIN_C.finIn)+catOpts(FIN_C.finOut)+'</select><input id="tx-desc" type="text" placeholder="Keterangan, mis. Servis AT-004 ganti oli"><input id="tx-amt" type="number" min="0" step="50000" placeholder="Rp"><button type="button" class="btn primary sm" data-act="fin-addtx">Catat</button></div>'
@@ -2286,7 +2310,7 @@ function pdfLib(){
   if(window.jspdf&&window.jspdf.jsPDF&&window.jspdf.jsPDF.API.autoTable)return Promise.resolve();
   return loadJs(window.__PDFJS||'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js').then(function(){return loadJs(window.__PDFAT||'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js')});
 }
-function finPdf(){
+function finPdf(scope){scope=scope||'b';
   toast('Menyiapkan PDF...');
   pdfLib().then(function(){
     var D=finData(),T=D.T,J=window.jspdf.jsPDF,doc=new J({unit:'pt',format:'a4'}),W=doc.internal.pageSize.getWidth(),M=40,G=[15,110,86],y=0;
@@ -2302,9 +2326,17 @@ function finPdf(){
     doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text(CO.pt.toUpperCase(),M,38);
     doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(90);doc.text(CO.name+' | Garasi & kantor pusat: '+CO.pusat+' | Cabang: '+CO.cabang,M,51);
     doc.setDrawColor(20);doc.setLineWidth(1);doc.line(M,58,W-M,58);doc.setTextColor(0);
-    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text('LAPORAN KEUANGAN',W/2,82,{align:'center'});
+    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text(scope==='a'?'LAPORAN KEUANGAN DIVISI AKAP':scope==='b'?'LAPORAN KEUANGAN GABUNGAN':'LAPORAN KEUANGAN',W/2,82,{align:'center'});
     doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text('Periode: '+D.per+'   |   Dicetak: '+toStr(TODAY),W/2,97,{align:'center'});
     y=118;
+    if(scope==='b'){
+      title('RINGKASAN GABUNGAN: PARIWISATA DAN AKAP');
+      var AR0=akRange(D.a,D.b),wR=T.inc+T.opIn,wC=T.solar+T.crew+T.expT,aC=AR0.comm+AR0.direct+AR0.fixed;
+      tbl({head:[['Keterangan','Pariwisata','AKAP','Total']],body:[['Pendapatan',R(rupiah(wR)),R(rupiah(AR0.rev)),R(rupiah(wR+AR0.rev),1)],['Total biaya',R(rupiah(wC)),R(rupiah(aC)),R(rupiah(wC+aC),1)],[B('Laba (rugi) bersih sebelum pajak'),R(rp(T.profit),1),R(rp(AR0.profit),1),R(rp(T.profit+AR0.profit),1)]],columnStyles:{0:{cellWidth:190}}});
+      doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(90);doc.text('Bagian berikut: laporan Divisi Pariwisata, kemudian laporan Divisi AKAP. Data AKAP sebagian besar simulasi.',M,y);doc.setTextColor(0);y+=18;
+      title('DIVISI PARIWISATA');y+=22;
+    }
+    if(scope!=='a'){
     title('1. Ringkasan');
     tbl({body:[['Pendapatan (sewa bus + lainnya)',R(rupiah(T.inc+T.opIn))],['Total biaya (crew + operasional)',R(rupiah(T.solar+T.crew+T.expT))],[B('Laba (rugi) bersih sebelum pajak'),R(rp(T.profit),1)],['Kas masuk (semua aktivitas)',R(rupiah(T.inc+T.opIn+T.invIn+T.finIn))],['Kas keluar (semua aktivitas)',R(rupiah(T.solar+T.crew+T.expT+T.invOut+T.finOut))],[B('Saldo kas akhir periode'),R(rp(D.after),1)]],columnStyles:{0:{cellWidth:300}}});
     title('2. Laporan Laba Rugi');
@@ -2331,10 +2363,46 @@ function finPdf(){
     var notes=['Pendapatan adalah harga sewa order berstatus Terkonfirmasi/Selesai, dicatat pada bulan tanggal berangkat. DP dan pelunasan belum dipisah, sehingga kas dianggap diterima saat berangkat.','Solar 10% dan gaji crew 10% dari sewa mengikuti skema uang jalan. Tol, parkir, tiket wisata, dan tip kru tidak dihitung karena tidak termasuk harga sewa.','Estimasi perawatan'+(D.f.mon!==false?' otomatis memakai asumsi Rp'+(+D.f.mr||0).toLocaleString('id-ID')+' per km tempuh (rute jemput, berangkat, dan pulang), bukan data servis nyata.':' otomatis dimatikan; perawatan hanya dari catatan manual.'),'Biaya tetap yang ditandai "perkiraan awal" adalah angka tebakan dan perlu diganti dengan angka perusahaan.','Laporan ini belum memuat penyusutan bus, pajak penghasilan, dan neraca. Struktur mengikuti laporan laba rugi dan laporan arus kas metode langsung (operasi, investasi, pendanaan).'];
     notes.forEach(function(n,k){var ls=doc.splitTextToSize((k+1)+'. '+n,W-2*M);if(y+ls.length*10>770){doc.addPage();y=50}doc.text(ls,M,y+10);y+=ls.length*10+4});
     doc.setTextColor(0);
+    }
+    if(scope!=='w'){
+      var AR=akRange(D.a,D.b),AX=AK(),fm=0,ii,aRevS=AR.rev,aDirS=AR.direct;
+      for(ii=D.a;ii<=D.b;ii++)if(akFixedMonth(ii)>0)fm++;
+      if(scope==='b'){doc.addPage();y=50}
+      title('DIVISI AKAP JAKARTA - CILACAP'+(scope==='a'?': 1. Ringkasan':': 1. Ringkasan'));
+      tbl({body:[['Keberangkatan (yang sudah jalan)',R(String(AR.legs))],['Penumpang',R(AR.pax.toLocaleString('id-ID'))],['Okupansi rata-rata',R((AR.cap?Math.round(AR.pax/AR.cap*100):0)+'%')],['Pendapatan tiket (kotor)',R(rupiah(AR.gross))],['Pendapatan pembatalan tiket',R(rupiah(AR.cancel))],['Komisi agen',R(rp(-AR.comm))],['Biaya langsung per perjalanan',R(rp(-AR.direct))],['Biaya tetap',R(rp(-AR.fixed))],[B('Laba (rugi) bersih sebelum pajak'),R(rp(AR.profit),1)]],columnStyles:{0:{cellWidth:300}}});
+      title('2. Laporan Laba Rugi AKAP');
+      var fxr=AX.fixed.map(function(f){var v=(+f.amt||0)*(f.per?AX.units.length:1)*fm;return [I(f.name+(f.seed?' (perkiraan awal)':'')),R(rp(-v))]});
+      tbl({head:[['Keterangan','Jumlah (Rp)']],body:[[H('PENDAPATAN')],[I('Penjualan tiket (lewat agen)'),R(rp(AR.gross))],[I('Pendapatan pembatalan'),R(rp(AR.cancel))],[B('Total pendapatan'),R(rp(AR.rev),1)],[H('BEBAN PENJUALAN')],[I('Komisi agen'),R(rp(-AR.comm))],[H('BEBAN LANGSUNG PER PERJALANAN')],[I('Solar'),R(rp(-AR.solar))],[I('Tol'),R(rp(-AR.tol))],[I('Upah sopir, kernet, dan uang makan'),R(rp(-AR.crew))],[I('Perawatan (estimasi per km)'),R(rp(-AR.maint))],[I('Terminal, parkir, dan cuci'),R(rp(-AR.misc))],[B('LABA KOTOR'),R(rp(AR.rev-AR.comm-AR.direct),1)],[H('BEBAN TETAP')]].concat(fxr,[[B('LABA (RUGI) BERSIH'),R(rp(AR.profit),1)]]),columnStyles:{1:{cellWidth:130}}});
+      if(D.mo<0){
+        title('3. Rekap AKAP per Bulan '+D.y);
+        var mrows=[],mt=[0,0,0,0,0],mi;
+        for(mi=0;mi<12;mi++){var mm=akMonth(D.y*12+mi);mrows.push([MONTHS[mi],R(String(mm.legs)),R((mm.cap?Math.round(mm.pax/mm.cap*100):0)+'%'),R(rupiah(mm.rev)),R(rupiah(mm.comm+mm.direct+mm.fixed)),R(rp(mm.profit))]);mt[0]+=mm.legs;mt[1]+=mm.pax;mt[2]+=mm.rev;mt[3]+=mm.comm+mm.direct+mm.fixed;mt[4]+=mm.profit}
+        tbl({head:[['Bulan','Jalan','Okupansi','Pendapatan','Biaya','Laba bersih']],body:mrows.concat([[B('Total'),R(String(mt[0]),1),R('',1),R(rupiah(mt[2]),1),R(rupiah(mt[3]),1),R(rp(mt[4]),1)]]),columnStyles:{0:{cellWidth:70}}});
+      }
+      title((D.mo<0?'4':'3')+'. Okupansi per Jadwal');
+      var sn={'B|07:00':'Jakarta - Cilacap 07.00','B|17:00':'Jakarta - Cilacap 17.00','T|07:00':'Cilacap - Jakarta 07.00','T|17:00':'Cilacap - Jakarta 17.00','B|tambahan':'Jakarta - Cilacap tambahan (Lebaran)','T|tambahan':'Cilacap - Jakarta tambahan (Lebaran)'};
+      var srows=Object.keys(sn).filter(function(k){return AR.bySl[k]&&AR.bySl[k].legs}).map(function(k){var q=AR.bySl[k];return [sn[k],R(String(q.legs)),R(String(q.pax)),R(Math.round(q.pax/(q.legs*48)*100)+'%'),R(rupiah(q.gross))]});
+      if(srows.length)tbl({head:[['Jadwal','Jalan','Penumpang','Okupansi','Penjualan']],body:srows,columnStyles:{0:{cellWidth:190}}});
+      else{doc.setFont('helvetica','italic');doc.setFontSize(9);doc.text('Belum ada keberangkatan pada periode ini.',M,y+8);y+=26}
+      title((D.mo<0?'5':'4')+'. Laporan Agen dan Setoran');
+      var arows=AX.agents.map(function(a){var q=AR.byAg[a.id]||{n:0,gross:0,comm:0};return [a.name,R(String(q.n||0)),R(rupiah(q.gross||0)),R((+a.comm||0)+'%'),R(rupiah(q.comm||0)),R(rupiah((q.gross||0)-(q.comm||0)))]});
+      arows.push([B('Total'),R(String(AR.pax),1),R(rupiah(AR.gross),1),R('',1),R(rupiah(AR.comm),1),R(rupiah(AR.gross-AR.comm),1)]);
+      tbl({head:[['Agen','Tiket','Penjualan','Komisi','Komisi (Rp)','Setoran ke kantor']],body:arows,styles:{fontSize:8,cellPadding:3,lineColor:[210,214,212],lineWidth:.4,textColor:20},columnStyles:{0:{cellWidth:150}}});
+      tbl({head:[['Metode pembayaran','Tiket','Jumlah']],body:['tunai','transfer','qris'].map(function(k){var q=AR.byPay[k]||{n:0,amt:0};return [AK_PAY[k],R(String(q.n||0)),R(rupiah(q.amt||0))]})});
+      title((D.mo<0?'6':'5')+'. Paket / Kargo (dilaporkan, hak crew)');
+      var cgs=AX.cargo.filter(function(g){var v=ymOf(toDay(String(g.dep).split('|')[0]));return v>=D.a&&v<=D.b}).sort(function(p,q){return p.dep<q.dep?-1:1}),cgTot=cgs.reduce(function(s2,g){return s2+(+g.fee||0)},0);
+      if(cgs.length)tbl({head:[['Tanggal','Rute','Isi paket','Crew penerima','Ongkos']],body:cgs.map(function(g){var pp=String(g.dep).split('|');return [pp[0]+' '+(pp[2]||''),pp[1]==='B'?'Jakarta - Cilacap':'Cilacap - Jakarta',g.desc,g.crew||'-',R(rupiah(g.fee))]}).concat([[B('Total dilaporkan'),'','','',R(rupiah(cgTot),1)]]),styles:{fontSize:8,cellPadding:3,lineColor:[210,214,212],lineWidth:.4,textColor:20}});
+      else{doc.setFont('helvetica','italic');doc.setFontSize(9);doc.text('Tidak ada paket pada periode ini.',M,y+8);y+=26}
+      title('Catatan dan Asumsi AKAP');
+      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(60);
+      var anotes=['Penjualan tiket di sistem ini '+(AX.sim?'sebagian besar SIMULASI (dibuat otomatis dari hari dan jam, bukan transaksi nyata), ditambah tiket yang diinput manual.':'berasal dari tiket yang diinput manual.')+' Hanya keberangkatan yang sudah berjalan yang dihitung.','Tarif flat Rp'+(+AX.tarif).toLocaleString('id-ID')+' per kursi, ditambah '+AX.peakPct+'% pada musim Lebaran. Komisi agen mengikuti persentase tiap agen dan dipotong dari penjualan.','Solar memakai asumsi '+AX.c.kmpl+' km per liter dengan porsi Biosolar '+AX.c.bio+'% (Rp'+(+AX.c.pBio).toLocaleString('id-ID')+') dan sisanya Dexlite (Rp'+(+AX.c.pDex).toLocaleString('id-ID')+'). Harga BBM Pertamina per 1 November 2026. Selisih harganya sangat besar, jadi laba sangat sensitif terhadap porsi Biosolar.','Tol, upah kru, perawatan, dan biaya tetap adalah asumsi yang bisa diubah di tab Keuangan. Biaya tetap bertanda "perkiraan awal" hanyalah tebakan, termasuk cicilan atau penyusutan unit.','Paket/kargo adalah pendapatan tambahan crew dan tidak dihitung sebagai pendapatan perusahaan. Laporan belum memuat penyusutan, pajak penghasilan, dan neraca.'];
+      anotes.forEach(function(n,k){var ls=doc.splitTextToSize((k+1)+'. '+n,W-2*M);if(y+ls.length*10>770){doc.addPage();y=50}doc.text(ls,M,y+10);y+=ls.length*10+4});
+      doc.setTextColor(0);
+    }
     if(y>690){doc.addPage();y=50}y+=22;
     doc.setFontSize(9);doc.text('Dibuat oleh,',M+20,y);doc.text('Disetujui oleh,',W-M-120,y);doc.line(M,y+55,M+130,y+55);doc.line(W-M-140,y+55,W-M-10,y+55);doc.setFontSize(8);doc.text('Admin / Keuangan',M+20,y+66);doc.text('Direktur',W-M-120,y+66);
     var n=doc.getNumberOfPages(),k;for(k=1;k<=n;k++){doc.setPage(k);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(120);doc.text(CO.name+' | Laporan Keuangan '+D.per,M,doc.internal.pageSize.getHeight()-22);doc.text('Halaman '+k+' dari '+n,W-M,doc.internal.pageSize.getHeight()-22,{align:'right'})}
-    doc.save('laporan-keuangan-arsyi-trans-'+(D.mo<0?D.y:D.y+'-'+pad(D.mo+1))+'.pdf');
+    doc.save('laporan-keuangan-arsyi-trans-'+(scope==='a'?'akap-':scope==='b'?'gabungan-':'')+(D.mo<0?D.y:D.y+'-'+pad(D.mo+1))+'.pdf');
     toast('PDF laporan keuangan diunduh.');
   }).catch(function(e){console.error(e);toast('Gagal membuat PDF. Cek koneksi internet lalu coba lagi.',true)});
 }
@@ -2418,7 +2486,8 @@ function revAdvice(rows,ok,byM,y){
    +out.slice(0,8).map(function(o){return '<li><b>'+esc(o[1])+'</b><br><span class="hint">'+esc(o[2])+'</span></li>'}).join('')+'</ol>'
    +'<p class="hint">Rujukan: <a href="https://ekonomi.bisnis.com/read/20240208/98/1739333/pengusaha-bus-pariwisata-ketiban-berkah-kampanye-pemilu-hingga-libur-panjang" target="_blank" rel="noopener">Bisnis.com: permintaan bus pariwisata naik saat libur panjang dan event</a> · <a href="https://industri.kontan.co.id/news/libur-sekolah-dongkrak-penumpang-bus-okupansi-tembus-80-100" target="_blank" rel="noopener">Kontan: libur sekolah dongkrak okupansi bus</a> · <a href="https://kemenkopmk.go.id/node/6444" target="_blank" rel="noopener">Kemenko PMK: libur nasional dan cuti bersama 2027</a>.</p></div>';
 }
-function viewRevenue(){
+function viewRevenue(){return '<div class="trk">'+akRevBox()+'</div>'+viewRevenue0()}
+function viewRevenue0(){
   var rows=S.trips.filter(function(t){return !t.example&&t.status!=='batal'&&t.start}).map(function(t){var p=parts(toDay(t.start)),u=ujOf(t);return {t:t,y:p.y,m:p.m,v:u.price,u:u,ok:t.status==='pasti'||t.status==='selesai'}}),
       ok=rows.filter(function(x){return x.ok}),pot=rows.filter(function(x){return !x.ok}),py=parts(TODAY),y=S.revYear||py.y,ys=[py.y];
   rows.forEach(function(x){if(ys.indexOf(x.y)<0)ys.push(x.y)});ys.sort();
@@ -2786,6 +2855,346 @@ function autoFillIdle(look,extra){
 var NF={t:0,busy:false,prev:null,prevTrip:{},t0:Date.now()};
 var NF_CAT={bus:'Kondisi bus',stut:'Stutan',ganti:'Ganti armada',telat:'Keterlambatan',order:'Order'};
 var NF_WHY=['rombongan terlambat kembali dari lokasi wisata','antrean keluar area parkir wisata','hujan deras, rombongan menunggu reda','macet saat keluar kota tujuan','makan malam rombongan molor','peserta ada yang sakit dan mampir klinik'];
+/* ---------- Divisi AKAP: Jakarta - Cilacap (jadwal tetap, tiket lewat agen, kru khusus) ----------
+   Penjualan tiket otomatis adalah SIMULASI (deterministik dari hari dan jam), bukan data nyata. Tiket yang kamu input sendiri disimpan di settings row 'akap'.
+   Rotasi 4 unit: tiap hari 4 keberangkatan (Jakarta 07.00 dan 17.00, Cilacap 07.00 dan 17.00), tiap unit 1 leg sehari bergantian arah; unit ke-5 cadangan. */
+var AK_KM=385,AK_PEJ=123,AK_DN=['Min','Sen','Sel','Rab','Kam','Jum','Sab'],AK_PAY={tunai:'Tunai',transfer:'Transfer',qris:'QRIS'};
+var AK_WP=[['Cilacap',0],['Wangon',38],['Ajibarang',55],['Bumiayu',100],['Pejagan',123],['Palimanan',191],['Cikampek',307],['Jakarta',385]];
+var AK_SL=[{dir:'B',time:'07:00'},{dir:'B',time:'17:00'},{dir:'T',time:'07:00'},{dir:'T',time:'17:00'}];
+var AK_STOP={B:['Pulo Gebang','Kampung Rambutan','Lebak Bulus'],T:['Cilacap','Maos','Kroya','Wangon']};
+var AK_TABS=['akap','tiket','unit','agen'],WS_TABS=['jadwal','tracking','order'];
+var AK_SEATS=(function(){var o=[],r;for(r=1;r<=12;r++)['A','B','C','D'].forEach(function(l){o.push(r+l)});return o})();
+var AK_LFB=[.55,.42,.38,.38,.48,.88,.76],AK_LFT=[.88,.72,.40,.36,.38,.44,.52];
+var AKC={rev:-1},akNoKeep=0;
+if(!S.div)S.div=lsGet('div')==='akap'?'akap':'wisata';
+if(!S.akRev)S.akRev=0;
+S.akPick=[];
+function akDefault(){
+  var dn=['Haryono','Sutrisno','Mulyono','Bambang','Purwanto','Sukirman','Widodo','Suharto','Marsudi','Ngadiman'],kn=['Tohir','Sodikin','Yusuf','Imam','Khoirul'],u=[],i;
+  for(i=0;i<5;i++)u.push({code:'AS-'+String(i+1).padStart(3,'0'),spare:i===4,status:'aktif',from:'',until:'',model:'Jetbus 5 SHD',year:2024,seat:48,crew:[dn[i*2],dn[i*2+1],kn[i]]});
+  return {v:1,units:u,tarif:170000,peakPct:20,peakOn:true,refund1:100,refund0:50,sim:true,dur:8,rest:40,start:'2026-11-01',
+    c:{kmpl:3.8,bio:80,pBio:6800,pDex:23700,tol:310000,sopir:150000,kernet:100000,makan:25000,maint:600,misc:100000},
+    agents:[{id:'a1',name:'Agen Cilacap (Sampang)',loc:'Cilacap',side:'T',comm:10},{id:'a2',name:'Agen Kroya',loc:'Kroya',side:'T',comm:10},{id:'a3',name:'Agen Maos',loc:'Maos',side:'T',comm:10},{id:'a4',name:'Agen Wangon',loc:'Wangon',side:'T',comm:10},
+      {id:'a5',name:'Agen Pulo Gebang',loc:'Jakarta',side:'B',comm:10},{id:'a6',name:'Agen Kampung Rambutan',loc:'Jakarta',side:'B',comm:10},{id:'a7',name:'Agen Lebak Bulus',loc:'Jakarta',side:'B',comm:10}],
+    tix:[],cargo:[],
+    fixed:[{id:'f1',name:'Cicilan / penyusutan unit AKAP',amt:25000000,per:1,seed:1},{id:'f2',name:'Asuransi, pajak, dan KIR unit',amt:4000000,per:1,seed:1},{id:'f3',name:'Gaji admin dan koordinator AKAP',amt:8000000,per:0,seed:1},{id:'f4',name:'Sewa pool, kantor, dan listrik AKAP',amt:5000000,per:0,seed:1}]};
+}
+function akMerge(o){var d=akDefault(),r=Object.assign(d,o||{});r.c=Object.assign(akDefault().c,(o&&o.c)||{});['units','agents','tix','cargo','fixed'].forEach(function(k){if(!Array.isArray(r[k]))r[k]=akDefault()[k]});return r}
+function AK(){if(!S.ak)S.ak=akDefault();return S.ak}
+function akCache(){if(AKC.rev!==S.akRev)AKC={rev:S.akRev};return AKC}
+function akSave(){S.akRev++;var o=Object.assign({},AK());return store.put('settings','akap',o).catch(function(){toast('Gagal menyimpan data AKAP.',true)}).then(function(){render()})}
+function akAgent(id){return AK().agents.find(function(a){return a.id===id})||{id:id,name:'Agen',comm:10}}
+function akUnit(c){return AK().units.find(function(u){return u.code===c})}
+function akSvc(u,day){return !!u&&u.status==='servis'&&day>=toDay(u.from||toStr(TODAY))&&(!u.until||day<=toDay(u.until))}
+function akPeak(day,dir){var L=toDay(LEB);return (dir==='B'&&day>=L-7&&day<=L-1)||(dir==='T'&&day>=L+2&&day<=L+7)}
+function akTarif(day,dir){var A=AK();return Math.round(A.tarif*(A.peakOn&&akPeak(day,dir)?1+A.peakPct/100:1)/1000)*1000}
+function akDep(day,dir,time,u,note,extra){var A=AK(),ms=dayMs(day)+tmin(time)*6e4;return {key:toStr(day)+'|'+dir+'|'+time,day:day,dir:dir,time:time,u:u?u.code:null,unit:u,note:note,extra:extra,ms:ms,end:ms+(+A.dur||8)*36e5}}
+function akDeps(day){
+  var A=AK(),C=akCache(),ck='D'+day;if(C[ck])return C[ck];
+  var reg=A.units.filter(function(u){return !u.spare}),sp=A.units.find(function(u){return u.spare}),out=[],par=((day%2)+2)%2,L=toDay(LEB),spUsed=false;
+  if(day<toDay(A.start))return C[ck]=out;
+  AK_SL.forEach(function(s,si){
+    var i=((si-2*par)%4+4)%4,u=reg[i],note='';
+    if(!u)return;
+    if(akSvc(u,day)){if(sp&&!akSvc(sp,day)&&!spUsed){spUsed=true;note='cadangan menggantikan '+u.code;u=sp}else{note='tidak ada unit ('+u.code+' servis)';u=null}}
+    out.push(akDep(day,s.dir,s.time,u,note,false));
+  });
+  if(A.peakOn&&sp&&!spUsed&&!akSvc(sp,day)){
+    if(day>=L-7&&day<=L-1)out.push(akDep(day,'B','12:00',sp,'tambahan arus mudik',true));
+    else if(day>=L+2&&day<=L+7)out.push(akDep(day,'T','12:00',sp,'tambahan arus balik',true));
+  }
+  out.sort(function(a,b){return a.ms-b.ms});
+  return C[ck]=out;
+}
+function akDepByKey(k){var p=String(k||'').split('|');if(p.length<3)return null;return akDeps(toDay(p[0])).find(function(d){return d.key===k})||null}
+function akLF(d){
+  var r=mkRng('aklf|'+d.key),x=r(),w=parts(d.day).w,L=toDay(LEB);
+  if(akPeak(d.day,d.dir))return Math.min(1,.92+x*.08);
+  var b=(d.dir==='B'?AK_LFB:AK_LFT)[w]*(d.extra?1:d.time==='07:00'?.92:1.06);
+  if((d.dir==='T'&&d.day>=L-7&&d.day<=L-1)||(d.dir==='B'&&d.day>=L+2&&d.day<=L+7))b*=.4;
+  return Math.max(.1,Math.min(1,b+(x-.5)*.18));
+}
+function akSim(d){
+  var C=akCache(),k='s'+d.key;if(C[k])return C[k];
+  var A=AK(),out=[];
+  if(A.sim&&d.u){
+    var r=mkRng('akseat|'+d.key),seats=AK_SEATS.slice(),i,j,t,n=Math.round(akLF(d)*48),ratio=d.day>TODAY?Math.max(0,1-.14*(d.day-TODAY)):1,
+        ags=A.agents.filter(function(a){return a.side===d.dir}),pr=akTarif(d.day,d.dir);
+    if(!ags.length)ags=A.agents;
+    for(i=seats.length-1;i>0;i--){j=Math.floor(r()*(i+1));t=seats[i];seats[i]=seats[j];seats[j]=t}
+    n=Math.round(n*ratio);
+    for(i=0;i<n&&ags.length;i++){var a=ags[Math.floor(r()*ags.length)],pv=r();out.push({seat:seats[i],agent:a.id,pay:pv<.5?'tunai':pv<.72?'transfer':'qris',price:pr,sim:1})}
+  }
+  return C[k]=out;
+}
+function akMan(d){return AK().tix.filter(function(t){return t.dep===d.key})}
+function akCost(d){
+  var c=AK().c,solarP=(c.bio/100)*c.pBio+(1-c.bio/100)*c.pDex,solar=AK_KM/(c.kmpl||3.8)*solarP,crew=2*c.sopir+c.kernet+3*c.makan,maint=c.maint*AK_KM;
+  return {solar:solar,tol:+c.tol||0,crew:crew,maint:maint,misc:+c.misc||0,total:solar+(+c.tol||0)+crew+maint+(+c.misc||0)};
+}
+function akSum(d){
+  var C=akCache(),k='m'+d.key;if(C[k])return C[k];
+  var A=AK(),o={pax:0,sim:0,man:0,gross:0,cancel:0,comm:0,cargo:0,byAg:{},byPay:{},cost:null,run:!!d.u},taken={};
+  if(!d.u)return C[k]=o;
+  var addT=function(t,isSim){
+    var ag=akAgent(t.agent),cm=Math.round(t.price*(+ag.comm||0)/100);
+    o.pax++;o.gross+=t.price;o.comm+=cm;if(isSim)o.sim++;else o.man++;
+    var b=o.byAg[t.agent]||(o.byAg[t.agent]={n:0,gross:0,comm:0});b.n++;b.gross+=t.price;b.comm+=cm;
+    var p=o.byPay[t.pay]||(o.byPay[t.pay]={n:0,amt:0});p.n++;p.amt+=t.price;
+  };
+  akSim(d).forEach(function(t){taken[t.seat]=1;addT(t,true)});
+  akMan(d).forEach(function(t){if(t.status==='aktif'){taken[t.seat]=1;addT(t,false)}else if(t.status==='batal')o.cancel+=Math.max(0,t.price-(+t.refund||0))});
+  AK().cargo.forEach(function(g){if(g.dep===d.key)o.cargo+=+g.fee||0});
+  o.cost=akCost(d);
+  return C[k]=o;
+}
+function akFixedMonth(ym){var A=AK(),st=ymOf(toDay(A.start));if(ym<st||ym>ymOf(TODAY))return 0;return A.fixed.reduce(function(s,f){return s+(+f.amt||0)*(f.per?A.units.length:1)},0)}
+function akMonth(ym){
+  var C=akCache(),k='M'+ym;if(C[k])return C[k];
+  var y=Math.floor(ym/12),m=ym%12,dim=new Date(Date.UTC(y,m+1,0)).getUTCDate(),d0=toDay(y+'-'+pad(m+1)+'-01'),now=Date.now(),i,
+      o={legs:0,pax:0,cap:0,gross:0,cancel:0,comm:0,solar:0,tol:0,crew:0,maint:0,misc:0,cargo:0,byAg:{},byPay:{},bySl:{}};
+  for(i=0;i<dim;i++)akDeps(d0+i).forEach(function(d){
+    if(d.ms>now||!d.u)return;
+    var s=akSum(d);
+    o.legs++;o.pax+=s.pax;o.cap+=48;o.gross+=s.gross;o.cancel+=s.cancel;o.comm+=s.comm;o.cargo+=s.cargo;
+    ['solar','tol','crew','maint','misc'].forEach(function(f){o[f]+=s.cost[f]});
+    Object.keys(s.byAg).forEach(function(a){var b=o.byAg[a]||(o.byAg[a]={n:0,gross:0,comm:0});b.n+=s.byAg[a].n;b.gross+=s.byAg[a].gross;b.comm+=s.byAg[a].comm});
+    Object.keys(s.byPay).forEach(function(a){var b=o.byPay[a]||(o.byPay[a]={n:0,amt:0});b.n+=s.byPay[a].n;b.amt+=s.byPay[a].amt});
+    var sk=d.dir+'|'+(d.extra?'tambahan':d.time),sl=o.bySl[sk]||(o.bySl[sk]={legs:0,pax:0,gross:0});sl.legs++;sl.pax+=s.pax;sl.gross+=s.gross;
+  });
+  o.fixed=akFixedMonth(ym);o.rev=o.gross+o.cancel;o.direct=o.solar+o.tol+o.crew+o.maint+o.misc;o.profit=o.rev-o.comm-o.direct-o.fixed;
+  return C[k]=o;
+}
+function akRange(a,b){
+  var o={legs:0,pax:0,cap:0,gross:0,cancel:0,comm:0,solar:0,tol:0,crew:0,maint:0,misc:0,cargo:0,fixed:0,byAg:{},byPay:{},bySl:{}},i;
+  for(i=a;i<=b;i++){
+    var m=akMonth(i);
+    ['legs','pax','cap','gross','cancel','comm','solar','tol','crew','maint','misc','cargo','fixed'].forEach(function(f){o[f]+=m[f]});
+    ['byAg','byPay','bySl'].forEach(function(g){Object.keys(m[g]).forEach(function(k){var t=o[g][k]||(o[g][k]={});Object.keys(m[g][k]).forEach(function(f){t[f]=(t[f]||0)+m[g][k][f]})})});
+  }
+  o.rev=o.gross+o.cancel;o.direct=o.solar+o.tol+o.crew+o.maint+o.misc;o.profit=o.rev-o.comm-o.direct-o.fixed;
+  return o;
+}
+/* posisi bus (simulasi linier, bukan GPS) */
+function akPos(d,now){
+  var A=AK(),dur=(+A.dur||8)*36e5,rest=(+A.rest||40)*6e4,mv=dur-rest,pP=d.dir==='T'?AK_PEJ/AK_KM:1-AK_PEJ/AK_KM,t=now-d.ms,p,st='jalan';
+  if(!d.u)return {st:'batal',p:0};
+  if(t<0)return {st:t>-36e5?'naik':'belum',p:0,km:d.dir==='T'?0:AK_KM};
+  if(t>=dur)return {st:'tiba',p:1,km:d.dir==='T'?AK_KM:0};
+  var tP=pP*mv;
+  if(t<tP)p=t/mv;else if(t<tP+rest){p=pP;st='istirahat'}else p=(t-rest)/mv;
+  p=Math.min(1,p);
+  var km=d.dir==='T'?p*AK_KM:AK_KM-p*AK_KM,last=null,next=null;
+  AK_WP.forEach(function(w){if(d.dir==='T'){if(w[1]<=km+.001)last=w;else if(!next)next=w}else{if(w[1]>=km-.001&&!last)last=w}});
+  if(d.dir==='B'){var rev=AK_WP.slice().reverse();next=rev.find(function(w){return w[1]<km-.001})}
+  return {st:st,p:p,km:km,last:last&&last[0],next:next&&next[0]};
+}
+function akStTxt(d,pos){
+  if(pos.st==='batal')return '<span class="aks-b bad">Tidak berangkat</span>';
+  if(pos.st==='belum')return '<span class="aks-b">Belum berangkat</span>';
+  if(pos.st==='naik')return '<span class="aks-b warn">Penumpang naik</span>';
+  if(pos.st==='istirahat')return '<span class="aks-b ok">Istirahat di Pejagan (Resto Pangeran)</span>';
+  if(pos.st==='tiba')return '<span class="aks-b ok">Tiba di '+(d.dir==='T'?'Jakarta':'Cilacap')+' '+chHM(d.end)+'</span>';
+  return '<span class="aks-b ok">Berjalan '+Math.round(pos.p*100)+'%</span> <span class="hint">lewat '+esc(pos.last||'-')+(pos.next?', menuju '+esc(pos.next):'')+'</span>';
+}
+function akRoute(d){return d.dir==='B'?'Jakarta → Cilacap':'Cilacap → Jakarta'}
+function akDayLbl(day){var p=parts(day);return AK_DN[p.w]+', '+p.d+' '+MON3[p.m]+' '+p.y}
+function akCrewTxt(u){return u?'Sopir '+esc(u.crew[0]||'-')+' dan '+esc(u.crew[1]||'-')+' · Kernet '+esc(u.crew[2]||'-'):'-'}
+function akSeatMap(d,sel){
+  var sim={},man={},pk=S.akPick||[],h='<div class="aks"><div class="aks-front">Depan</div>';
+  akSim(d).forEach(function(t){sim[t.seat]=t});akMan(d).forEach(function(t){if(t.status==='aktif')man[t.seat]=t});
+  var cell=function(s){
+    var c=man[s]?'man':sim[s]?'sim':pk.indexOf(s)>=0?'pick':'free',tt=man[s]?man[s].name+' ('+akAgent(man[s].agent).name+')':sim[s]?'Terjual lewat '+akAgent(sim[s].agent).name+' (simulasi)':'Kosong';
+    return (sel&&(c==='free'||c==='pick'))?'<button type="button" class="aks-s '+c+'" data-act="ak-seat" data-s="'+s+'" title="'+esc(tt)+'">'+s+'</button>':'<span class="aks-s '+c+'" title="'+esc(tt)+'">'+s+'</span>';
+  };
+  for(var r=1;r<=12;r++)h+='<div class="aks-r">'+cell(r+'A')+cell(r+'B')+'<span class="aks-gap"></span>'+cell(r+'C')+cell(r+'D')+'</div>';
+  return h+'</div><p class="hint"><span class="aks-s free">&nbsp;</span> kosong <span class="aks-s sim">&nbsp;</span> terjual (simulasi) <span class="aks-s man">&nbsp;</span> tiket input manual <span class="aks-s pick">&nbsp;</span> dipilih</p>';
+}
+function akDaySel(){if(!S.akDay)S.akDay=TODAY;return S.akDay}
+function akNav(){return '<div class="fin-add"><button type="button" class="btn ghost sm" data-act="ak-prev">‹</button><input id="ak-day" type="date" value="'+toStr(akDaySel())+'" aria-label="Tanggal"><button type="button" class="btn ghost sm" data-act="ak-next">›</button><button type="button" class="btn sm" data-act="ak-today">Hari ini</button><b>'+esc(akDayLbl(akDaySel()))+'</b></div>'}
+function akSelDep(day){var ds=akDeps(day);if(!ds.length)return null;var f=ds.find(function(d){return d.key===S.akSel});if(f)return f;var now=Date.now();return ds.find(function(d){return d.ms>now&&d.u})||ds[0]}
+function viewAkMon(){
+  var day=akDaySel(),ds=akDeps(day),now=Date.now(),A=AK(),pax=0,cap=0,gross=0,legs=0,sel=akSelDep(day);
+  ds.forEach(function(d){if(d.u){var s=akSum(d);legs++;pax+=s.pax;cap+=48;gross+=s.gross}});
+  var cards=ds.map(function(d){
+    var s=akSum(d),pos=akPos(d,now),lf=d.u?Math.round(s.pax/48*100):0,tk='';
+    AK_WP.forEach(function(w){var l=d.dir==='T'?w[1]/AK_KM:1-w[1]/AK_KM;tk+='<i class="aks-tk'+(w[0]==='Pejagan'?' pej':'')+'" style="left:'+(l*100).toFixed(1)+'%" title="'+esc(w[0])+'"></i>'});
+    return '<div class="akc'+(sel&&sel.key===d.key?' on':'')+'"><div class="akc-h"><b>'+esc(akRoute(d))+'</b><span>'+d.time+(d.extra?' <span class="tag">tambahan</span>':'')+'</span></div>'
+      +'<div class="hint">'+(d.u?esc(d.u)+(d.unit&&d.unit.spare?' (cadangan)':'')+' · '+akCrewTxt(d.unit):'<b>Tidak ada unit</b>')+(d.note?' · '+esc(d.note):'')+'</div>'
+      +'<div class="aks-trk"><div class="aks-bar" style="width:'+Math.round((pos.p||0)*100)+'%"></div>'+tk+'</div>'
+      +'<div class="aks-lbl"><span>'+(d.dir==='T'?'Cilacap':'Jakarta')+'</span><span>Pejagan</span><span>'+(d.dir==='T'?'Jakarta':'Cilacap')+'</span></div>'
+      +'<div style="margin:6px 0">'+akStTxt(d,pos)+'</div>'
+      +'<div class="akc-f"><span>'+(d.u?s.pax+'/48 kursi ('+lf+'%)':'-')+'</span><span>'+(d.u?rupiah(s.gross):'')+'</span><button type="button" class="btn ghost sm" data-act="ak-sel" data-k="'+esc(d.key)+'">Detail</button></div></div>';
+  }).join('');
+  var det='';
+  if(sel&&sel.u){
+    var s=akSum(sel),ag=Object.keys(s.byAg).map(function(id){var b=s.byAg[id];return '<tr><td>'+esc(akAgent(id).name)+'</td><td style="text-align:right">'+b.n+'</td><td style="text-align:right">'+rupiah(b.gross)+'</td></tr>'}).join(''),
+        man=akMan(sel).filter(function(t){return t.status==='aktif'}),cg=A.cargo.filter(function(g){return g.dep===sel.key});
+    det='<div class="revbox"><b>Detail: '+esc(akRoute(sel))+' · '+sel.time+' · '+esc(sel.u)+'</b>'
+      +'<p class="hint">Tarif Rp'+akTarif(sel.day,sel.dir).toLocaleString('id-ID')+' per kursi'+(akPeak(sel.day,sel.dir)?' (tarif musim Lebaran)':'')+'. Sopir: '+esc(sel.unit.crew[0]||'-')+', '+esc(sel.unit.crew[1]||'-')+'. Kernet: '+esc(sel.unit.crew[2]||'-')+'. Istirahat di Resto Pangeran, Pejagan.</p>'
+      +'<div class="akdet"><div>'+akSeatMap(sel,false)+'</div><div>'
+      +'<div class="rtbl" style="border:0;padding:0"><div class="tw"><table><thead><tr><th>Agen</th><th style="text-align:right">Tiket</th><th style="text-align:right">Penjualan</th></tr></thead><tbody>'+(ag||'<tr><td class="hint" colspan="3">Belum ada tiket.</td></tr>')+'</tbody></table></div></div>'
+      +(man.length?'<p class="hint" style="margin-top:8px"><b>Tiket manual:</b> '+man.map(function(t){return esc(t.name)+' ('+t.seat+')'}).join(', ')+'</p>':'')
+      +(cg.length?'<p class="hint"><b>Paket:</b> '+cg.map(function(g){return esc(g.desc)+' ('+rupiah(g.fee)+')'}).join(', ')+'</p>':'')
+      +'</div></div></div>';
+  }else if(sel)det='<div class="revbox"><b>'+esc(akRoute(sel))+' · '+sel.time+'</b><p class="hint">Keberangkatan ini tidak berangkat karena tidak ada unit tersedia ('+esc(sel.note)+'). Pertimbangkan memajukan jadwal servis atau menyewa unit.</p></div>';
+  return '<div class="trk"><div class="revbox"><b>Monitor AKAP Jakarta – Cilacap</b><p class="hint">Data penjualan tiket di sini simulasi, supaya kamu bisa melihat bagaimana sistem bekerja. Tiket yang kamu input di tab Tiket ikut dihitung. Posisi bus adalah perkiraan linier berdasarkan jam, bukan GPS.</p>'+akNav()
+    +'<div class="akk"><div><span>Keberangkatan</span><b>'+legs+'</b></div><div><span>Penumpang</span><b>'+pax+'/'+cap+'</b></div><div><span>Okupansi</span><b>'+(cap?Math.round(pax/cap*100):0)+'%</b></div><div><span>Penjualan tiket</span><b>'+rupiah(gross)+'</b></div></div></div>'
+    +(ds.length?'<div class="akg">'+cards+'</div>':'<div class="empty"><strong>Tidak ada jadwal di tanggal ini.</strong><span>AKAP mulai beroperasi '+esc(fmtDay(toDay(A.start)))+' '+parts(toDay(A.start)).y+'. Ubah di Keuangan, bagian Pengaturan AKAP.</span></div>')
+    +det+'</div>';
+}
+function viewAkTix(){
+  var day=akDaySel(),ds=akDeps(day),A=AK(),d=akSelDep(day);
+  if(!ds.length)return '<div class="trk"><div class="revbox"><b>Pesan tiket</b>'+akNav()+'<p class="hint">Tidak ada jadwal di tanggal ini.</p></div></div>';
+  var opts=ds.map(function(x){return '<option value="'+esc(x.key)+'"'+(d&&d.key===x.key?' selected':'')+'>'+x.time+' '+esc(akRoute(x))+(x.u?' ('+x.u+')':' (tidak ada unit)')+'</option>'}).join('');
+  var fr=AK_STOP[d.dir==='B'?'B':'T'],to=AK_STOP[d.dir==='B'?'T':'B'],ags=A.agents.slice().sort(function(x,y){return (y.side===d.dir)-(x.side===d.dir)}).map(function(a){return '<option value="'+a.id+'">'+esc(a.name)+'</option>'}).join('');
+  var s=akSum(d),left=48-s.pax,man=akMan(d).slice().sort(function(a,b){return b.ts-a.ts});
+  var rows=man.map(function(t){return '<tr><td><b>'+esc(t.name)+'</b><br><span class="hint">'+esc(t.from||'-')+' → '+esc(t.to||'-')+' · '+esc(akAgent(t.agent).name)+' · '+esc(AK_PAY[t.pay]||t.pay)+(t.phone?' · '+esc(t.phone):'')+'</span></td><td>'+t.seat+'</td><td style="text-align:right">'+(t.status==='batal'?'<span class="tag">batal, refund '+rupiah(t.refund||0)+'</span>':rupiah(t.price))+'</td><td>'+(t.status==='aktif'&&d.ms>Date.now()?'<button type="button" class="btn ghost sm" data-act="ak-cancel" data-id="'+esc(t.id)+'">Batalkan</button>':'')+'</td></tr>'}).join('');
+  return '<div class="trk"><div class="revbox"><b>Pesan tiket (lewat agen/loket)</b><p class="hint">Pilih keberangkatan, klik kursi kosong, isi data penumpang, lalu pesan. Kursi abu-abu sudah terjual (simulasi).</p>'+akNav()
+    +'<div class="fin-add"><select id="ak-dep" aria-label="Keberangkatan">'+opts+'</select>'+(d.u?'<span class="hint">Sisa '+left+' kursi · Tarif <b>'+rupiah(akTarif(d.day,d.dir))+'</b>'+(akPeak(d.day,d.dir)?' (tarif Lebaran)':'')+'</span>':'')+'</div>'
+    +(d.u&&d.ms<=Date.now()?'<div class="akdet"><div>'+akSeatMap(d,false)+'</div><div><p class="hint">Keberangkatan ini sudah berangkat, tiket tidak bisa dipesan lagi. Pilih keberangkatan berikutnya.</p></div></div>':d.u?'<div class="akdet"><div>'+akSeatMap(d,true)+'</div><div class="aform">'
+      +'<label>Nama penumpang<input id="ak-name" type="text" maxlength="60" placeholder="Nama sesuai identitas"></label><label>No. HP<input id="ak-phone" type="tel" maxlength="20" placeholder="08xxxxxxxxxx"></label>'
+      +'<label>Naik di<select id="ak-from">'+fr.map(function(x){return '<option>'+x+'</option>'}).join('')+'</select></label><label>Turun di<select id="ak-to">'+to.map(function(x){return '<option>'+x+'</option>'}).join('')+'</select></label>'
+      +'<label>Agen / loket<select id="ak-agent">'+ags+'</select></label><label>Pembayaran<select id="ak-pay"><option value="tunai">Tunai</option><option value="transfer">Transfer</option><option value="qris">QRIS</option></select></label>'
+      +'<button type="button" class="btn primary" id="ak-bookbtn" data-act="ak-book">Pesan '+((S.akPick||[]).length||'')+' kursi</button></div></div>':'<p class="hint">Keberangkatan ini tidak punya unit, tiket tidak bisa dijual.</p>')+'</div>'
+    +'<div class="revbox"><b>Tiket manual untuk keberangkatan ini</b>'+(rows?'<div class="rtbl" style="border:0;padding:0"><div class="tw"><table><tbody>'+rows+'</tbody></table></div></div>':'<p class="hint">Belum ada tiket manual.</p>')
+    +'<p class="hint">Pembatalan: refund '+A.refund1+'% jika dibatalkan sebelum hari keberangkatan, '+A.refund0+'% jika di hari keberangkatan (sebelum jam berangkat). Atur di Keuangan, Pengaturan AKAP.</p></div></div>';
+}
+function viewAkUnit(){
+  var A=AK(),day=akDaySel(),h='',sl=function(d){return d.time+' '+(d.dir==='B'?'Jakarta→Cilacap':'Cilacap→Jakarta')};
+  var cards=A.units.map(function(u){
+    var st=akSvc(u,TODAY);
+    return '<div class="revbox"><b>'+esc(u.code)+'</b> '+(u.spare?'<span class="tag">cadangan</span>':'<span class="tag">reguler</span>')+(st?' <span class="tag">sedang servis</span>':'')
+     +'<div class="aform"><label>Sopir 1<input class="ak-i" data-akf="u" data-c="'+u.code+'" data-p="crew0" value="'+esc(u.crew[0]||'')+'"></label><label>Sopir 2<input class="ak-i" data-akf="u" data-c="'+u.code+'" data-p="crew1" value="'+esc(u.crew[1]||'')+'"></label><label>Kernet<input class="ak-i" data-akf="u" data-c="'+u.code+'" data-p="crew2" value="'+esc(u.crew[2]||'')+'"></label>'
+     +'<label>Status<select class="ak-i" data-akf="u" data-c="'+u.code+'" data-p="status"><option value="aktif"'+(u.status==='aktif'?' selected':'')+'>Aktif</option><option value="servis"'+(u.status==='servis'?' selected':'')+'>Servis / tidak tersedia</option></select></label>'
+     +(u.status==='servis'?'<label>Servis sampai<input class="ak-i" type="date" data-akf="u" data-c="'+u.code+'" data-p="until" value="'+esc(u.until||'')+'"></label>':'')
+     +'<label>Model<input class="ak-i" data-akf="u" data-c="'+u.code+'" data-p="model" value="'+esc(u.model||'')+'"></label><label>Tahun<input class="ak-i" type="number" min="2000" max="2030" data-akf="u" data-c="'+u.code+'" data-p="year" value="'+(+u.year||'')+'"></label></div></div>';
+  }).join('');
+  var rot=[day,day+1].map(function(dd){return '<tr><td><b>'+esc(akDayLbl(dd))+'</b></td><td>'+akDeps(dd).map(function(d){return '<div>'+sl(d)+': <b>'+esc(d.u||'tidak ada unit')+'</b>'+(d.note?' <span class="hint">('+esc(d.note)+')</span>':'')+'</div>'}).join('')+'</td></tr>'}).join('');
+  return '<div class="trk"><div class="revbox"><b>Armada dan kru AKAP</b><p class="hint">Kru AKAP khusus: 2 sopir dan 1 kernet per unit. Kode unit AS-001 sampai AS-005. 4 unit reguler berputar, 1 unit cadangan menggantikan kalau ada yang servis. Nama kru di bawah adalah nama awal (karangan), ganti dengan nama kru yang sebenarnya.</p>'+akNav()
+    +'<div class="rtbl" style="border:0;padding:0"><div class="tw"><table><tbody>'+rot+'</tbody></table></div></div>'
+    +'<p class="hint">Rotasi: tiap unit menjalani satu perjalanan per hari dan bergantian arah. Setelah tiba, unit istirahat sekitar 16 jam sebelum jalan lagi. Itu nyaman buat kru, tapi pemakaian unit rendah: tiap unit hanya ±385 km per hari. Pertimbangkan efisiensinya saat menghitung biaya tetap.</p></div>'+cards+'</div>';
+}
+function akPeriod(){var py=parts(TODAY),y=S.akY||py.y,m=S.akM==null?py.m:S.akM;return {y:y,m:m,a:y*12+(m<0?0:m),b:y*12+(m<0?11:m),lbl:(m<0?'Tahun '+y:MONTHS[m]+' '+y)}}
+function akPerSel(){var P=akPeriod(),py=parts(TODAY),yrs=[py.y,py.y-1,py.y+1];return '<div class="fin-add"><select id="akpy" aria-label="Tahun">'+yrs.sort().map(function(k){return '<option'+(k===P.y?' selected':'')+'>'+k+'</option>'}).join('')+'</select><select id="akpm" aria-label="Bulan"><option value="-1"'+(P.m<0?' selected':'')+'>Setahun penuh</option>'+MONTHS.map(function(n,i){return '<option value="'+i+'"'+(i===P.m?' selected':'')+'>'+n+'</option>'}).join('')+'</select></div>'}
+function viewAkAgen(){
+  var A=AK(),P=akPeriod(),R=akRange(P.a,P.b),day=akDaySel(),ds=akDeps(day).filter(function(d){return d.u});
+  var ar=A.agents.map(function(a){var b=R.byAg[a.id]||{n:0,gross:0,comm:0};return '<tr><td><input class="ak-i" data-akf="ag" data-id="'+a.id+'" data-p="name" value="'+esc(a.name)+'" aria-label="Nama agen"></td><td style="text-align:right">'+(b.n||0)+'</td><td style="text-align:right">'+rupiah(b.gross||0)+'</td><td style="text-align:right"><input class="sp ak-i" type="number" min="0" max="50" step="0.5" data-akf="ag" data-id="'+a.id+'" data-p="comm" value="'+(+a.comm||0)+'" aria-label="Komisi persen">%</td><td style="text-align:right">'+rupiah(b.comm||0)+'</td><td style="text-align:right"><b>'+rupiah((b.gross||0)-(b.comm||0))+'</b></td></tr>'}).join('');
+  var pay=['tunai','transfer','qris'].map(function(k){var p=R.byPay[k]||{n:0,amt:0};return '<tr><td>'+AK_PAY[k]+'</td><td style="text-align:right">'+(p.n||0)+'</td><td style="text-align:right">'+rupiah(p.amt||0)+'</td></tr>'}).join('');
+  var cg=A.cargo.filter(function(g){var d=akDepByKey(g.dep);var ym=d?ymOf(d.day):ymOf(toDay(String(g.dep).split('|')[0]));return ym>=P.a&&ym<=P.b}).sort(function(a,b){return a.dep<b.dep?1:-1}),cgT=cg.reduce(function(s,g){return s+(+g.fee||0)},0);
+  var cr=cg.map(function(g){return '<tr><td>'+esc(String(g.dep).split('|')[0])+' '+esc(String(g.dep).split('|')[2]||'')+'<br><span class="hint">'+esc(g.dep.split('|')[1]==='B'?'Jakarta → Cilacap':'Cilacap → Jakarta')+'</span></td><td>'+esc(g.desc)+'<br><span class="hint">Diterima '+esc(g.crew||'-')+'</span></td><td style="text-align:right">'+rupiah(g.fee)+'</td><td><button type="button" class="btn ghost sm" data-act="ak-cargo-del" data-id="'+esc(g.id)+'">Hapus</button></td></tr>'}).join('');
+  var dop=ds.map(function(d){return '<option value="'+esc(d.key)+'">'+esc(akRoute(d))+' '+d.time+' ('+d.u+')</option>'}).join('');
+  return '<div class="trk"><div class="revbox"><b>Laporan agen dan setoran</b><p class="hint">Semua tiket dijual lewat agen. Komisi dipotong dari penjualan, sisanya disetor ke kantor. Periode: '+esc(P.lbl)+'. Hanya keberangkatan yang sudah jalan yang dihitung.</p>'+akPerSel()
+    +'<div class="rtbl" style="border:0;padding:0"><div class="tw"><table><thead><tr><th>Agen</th><th style="text-align:right">Tiket</th><th style="text-align:right">Penjualan</th><th style="text-align:right">Komisi</th><th style="text-align:right">Komisi (Rp)</th><th style="text-align:right">Setoran</th></tr></thead><tbody>'+ar+'<tr><td><b>Total</b></td><td style="text-align:right"><b>'+R.pax+'</b></td><td style="text-align:right"><b>'+rupiah(R.gross)+'</b></td><td></td><td style="text-align:right"><b>'+rupiah(R.comm)+'</b></td><td style="text-align:right"><b>'+rupiah(R.gross-R.comm)+'</b></td></tr></tbody></table></div></div>'
+    +'<div class="rtbl" style="border:0;padding:0"><div class="tw"><table><thead><tr><th>Metode bayar</th><th style="text-align:right">Tiket</th><th style="text-align:right">Jumlah</th></tr></thead><tbody>'+pay+'</tbody></table></div></div>'
+    +'<div class="fin-add"><button type="button" class="btn sm" data-act="ak-csv">Unduh CSV laporan agen</button></div>'
+    +'<div class="fin-add"><input id="ak-agn" type="text" placeholder="Nama agen baru, mis. Agen Brebes"><select id="ak-ags"><option value="B">Jual dari Jakarta</option><option value="T">Jual dari Cilacap</option></select><input id="ak-agc" type="number" min="0" max="50" step="0.5" value="10" aria-label="Komisi"><button type="button" class="btn primary sm" data-act="ak-agent-add">Tambah agen</button></div></div>'
+    +'<div class="revbox"><b>Paket / kargo</b><p class="hint">Pendapatan paket adalah tambahan penghasilan crew, bukan pendapatan perusahaan. Tetap dicatat di sini supaya kantor menerima laporannya. Periode: '+esc(P.lbl)+'. Total dilaporkan: <b>'+rupiah(cgT)+'</b>.</p>'
+    +(cr?'<div class="rtbl" style="border:0;padding:0"><div class="tw"><table><tbody>'+cr+'</tbody></table></div></div>':'<p class="hint">Belum ada paket di periode ini.</p>')
+    +(ds.length?'<div class="fin-add"><select id="ak-cgd" aria-label="Keberangkatan">'+dop+'</select><input id="ak-cgt" type="text" maxlength="80" placeholder="Isi paket, mis. 2 dus oleh-oleh"><input id="ak-cgf" type="number" min="0" step="5000" placeholder="Ongkos Rp"><input id="ak-cgc" type="text" maxlength="40" placeholder="Crew penerima"><button type="button" class="btn primary sm" data-act="ak-cargo-add">Catat paket</button></div><p class="hint">Keberangkatan di atas mengikuti tanggal di tab Monitor/Tiket ('+esc(akDayLbl(day))+').</p>':'<p class="hint">Pilih tanggal yang punya jadwal di tab Monitor untuk mencatat paket.</p>')+'</div></div>';
+}
+/* pengaturan AKAP (ada di tab Keuangan) */
+function akFinBox(){
+  var A=AK(),c=A.c,n=function(p,l,v,st,u){return '<label class="hint">'+l+' <input class="sp ak-i" type="number" min="0" step="'+(st||1)+'" data-akf="s" data-p="'+p+'" value="'+v+'">'+(u||'')+'</label>'};
+  var fx=A.fixed.map(function(x){return '<tr><td>'+esc(x.name)+(x.seed?' <span class="tag">perkiraan awal</span>':'')+'<br><span class="hint">'+(x.per?'dikali jumlah unit ('+A.units.length+')':'sekali per bulan')+'</span></td><td style="text-align:right"><input class="sp ak-i" type="number" min="0" step="500000" data-akf="fx" data-id="'+esc(x.id)+'" data-p="amt" value="'+(+x.amt||0)+'" aria-label="Jumlah per bulan"></td></tr>'}).join('');
+  return '<div class="revbox"><b>Divisi AKAP: tarif dan aturan</b><p class="hint">Tarif flat Jakarta – Cilacap. Jadwal: Jakarta dan Cilacap, masing-masing 07.00 dan 17.00. Perubahan di sini langsung ikut ke tab Tiket, Monitor, dan laporan PDF.</p>'
+    +'<div class="fin-add">'+n('tarif','Tarif per kursi Rp',A.tarif,5000)+n('peakPct','Tambahan tarif Lebaran',A.peakPct,1,'%')+'<label class="hint"><input class="ak-i" type="checkbox" data-akf="s" data-p="peakOn"'+(A.peakOn?' checked':'')+'> tarif dan unit tambahan musim Lebaran (H-7 sampai H-1 arah Cilacap, H+2 sampai H+7 arah Jakarta)</label></div>'
+    +'<div class="fin-add">'+n('refund1','Refund batal sebelum hari-H',A.refund1,5,'%')+n('refund0','Refund batal di hari-H',A.refund0,5,'%')+'<label class="hint">Mulai beroperasi <input class="ak-i" type="date" data-akf="s" data-p="start" value="'+esc(A.start)+'"></label></div>'
+    +'<div class="fin-add">'+n('dur','Lama perjalanan (jam)',A.dur,.5)+n('rest','Istirahat Pejagan (menit)',A.rest,5)+'<label class="hint"><input class="ak-i" type="checkbox" data-akf="s" data-p="sim"'+(A.sim?' checked':'')+'> penjualan tiket otomatis (simulasi)</label></div></div>'
+    +'<div class="revbox"><b>Divisi AKAP: asumsi biaya per perjalanan</b><p class="hint">Harga BBM per 1 Nov 2026: Biosolar subsidi Rp6.800, Dexlite Rp23.700 per liter (detikOto). Selisihnya sangat besar, jadi porsi Biosolar sangat menentukan laba. Tol Jakarta–Kanci golongan II Rp277.500 (Fortune IDN), angka Rp310.000 sampai Pejagan adalah perkiraanku. Upah sopir ±Rp250–300 ribu per pulang-pergi dan kernet ±Rp150 ribu (detikOto, 2024). Pembagian per perjalanan dan sisanya asumsiku. Ganti dengan angka sebenarnya.</p>'
+    +'<div class="fin-add">'+n('c.kmpl','Konsumsi solar (km/liter)',c.kmpl,.1)+n('c.bio','Porsi Biosolar',c.bio,5,'%')+n('c.pBio','Biosolar Rp/liter',c.pBio,100)+n('c.pDex','Dexlite Rp/liter',c.pDex,100)+'</div>'
+    +'<div class="fin-add">'+n('c.tol','Tol per perjalanan Rp',c.tol,5000)+n('c.sopir','Upah per sopir (2 orang)',c.sopir,5000)+n('c.kernet','Upah kernet',c.kernet,5000)+n('c.makan','Uang makan per orang',c.makan,5000)+n('c.maint','Perawatan Rp/km',c.maint,50)+n('c.misc','Terminal, parkir, cuci Rp',c.misc,5000)+'</div></div>'
+    +'<div class="revbox"><b>Divisi AKAP: biaya tetap bulanan</b><p class="hint">Dibebankan tiap bulan sejak bulan mulai beroperasi. Angka "perkiraan awal" hanya tebakan, ganti dengan angka perusahaan (cicilan unit bekas, premi asuransi, pajak, KIR, gaji).</p><div class="rtbl" style="border:0;padding:0"><div class="tw"><table><tbody>'+fx+'</tbody></table></div></div></div>';
+}
+function akRevBox(){
+  var py=parts(TODAY),cache={},rows='',i,A=AK(),st=ymOf(toDay(A.start));
+  for(i=ymOf(TODAY)-5;i<=ymOf(TODAY);i++){
+    var w=finMonth(i,cache),a=akMonth(i),wv=(w.inc||0)+(w.opIn||0),av=i>=st?a.gross+a.cancel:0;
+    rows+='<tr><td>'+MONTHS[i%12]+' '+Math.floor(i/12)+'</td><td style="text-align:right">'+rupiah(wv)+'</td><td style="text-align:right">'+(i>=st?rupiah(av):'-')+'</td><td style="text-align:right"><b>'+rupiah(wv+av)+'</b></td></tr>';
+  }
+  return '<div class="revbox"><b>Pendapatan per divisi (6 bulan terakhir)</b><p class="hint">Pariwisata: harga sewa order. AKAP: penjualan tiket kotor sebelum komisi agen (sebagian besar simulasi). Pendapatan paket tidak dihitung karena hak crew.</p><div class="rtbl" style="border:0;padding:0"><div class="tw"><table><thead><tr><th>Bulan</th><th style="text-align:right">Pariwisata</th><th style="text-align:right">AKAP</th><th style="text-align:right">Total</th></tr></thead><tbody>'+rows+'</tbody></table></div></div></div>';
+}
+/* aksi */
+function akVal(id){var e=$(id);return e?String(e.value||'').trim():''}
+function akBook(){
+  var d=akSelDep(akDaySel()),A=AK(),seats=(S.akPick||[]).slice();
+  if(!d||!d.u){toast('Keberangkatan ini tidak punya unit.',true);return}
+  if(d.ms<=Date.now()){toast('Keberangkatan ini sudah berangkat.',true);return}
+  if(!seats.length){toast('Pilih kursi dulu.',true);return}
+  var name=akVal('#ak-name');if(!name){toast('Isi nama penumpang.',true);return}
+  var taken={};akSim(d).forEach(function(t){taken[t.seat]=1});akMan(d).forEach(function(t){if(t.status==='aktif')taken[t.seat]=1});
+  var bad=seats.filter(function(s){return taken[s]});if(bad.length){toast('Kursi '+bad.join(', ')+' sudah terisi.',true);S.akPick=[];render();return}
+  var now=Date.now(),pr=akTarif(d.day,d.dir);
+  seats.forEach(function(s,i){A.tix.push({id:'t'+now.toString(36)+i,dep:d.key,seat:s,name:name,phone:akVal('#ak-phone'),from:akVal('#ak-from'),to:akVal('#ak-to'),agent:akVal('#ak-agent'),pay:akVal('#ak-pay')||'tunai',price:pr,status:'aktif',ts:now+i})});
+  S.akPick=[];akNoKeep=1;toast(seats.length+' tiket dipesan atas nama '+name+'.');akSave();
+}
+function akCancel(id){
+  var A=AK(),t=A.tix.find(function(x){return x.id===id});if(!t||t.status!=='aktif')return;
+  var d=akDepByKey(t.dep);if(!d||d.ms<=Date.now()){toast('Tiket tidak bisa dibatalkan setelah berangkat.',true);return}
+  var pct=dayOf(Date.now())<d.day?A.refund1:A.refund0;
+  t.status='batal';t.refund=Math.round(t.price*pct/100);t.cts=Date.now();
+  toast('Tiket dibatalkan, refund '+pct+'% ('+rupiah(t.refund)+').');akSave();
+}
+function akCsv(){
+  var P=akPeriod(),R=akRange(P.a,P.b),A=AK(),rows=[['Laporan agen AKAP',P.lbl],[],['Agen','Tiket','Penjualan','Komisi %','Komisi Rp','Setoran Rp']];
+  A.agents.forEach(function(a){var b=R.byAg[a.id]||{n:0,gross:0,comm:0};rows.push([a.name,b.n||0,b.gross||0,a.comm,b.comm||0,(b.gross||0)-(b.comm||0)])});
+  rows.push(['Total',R.pax,R.gross,'',R.comm,R.gross-R.comm]);
+  var csv=rows.map(function(r){return r.map(function(c){c=String(c==null?'':c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(',')}).join('\r\n'),
+      b=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download='laporan-agen-akap-'+P.lbl.replace(/\s+/g,'-').toLowerCase()+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500);
+}
+function akAct(act,d,el){
+  var A=AK();
+  switch(act){
+    case 'ak-prev':S.akDay=akDaySel()-1;S.akSel=null;S.akPick=[];akNoKeep=1;render();break;
+    case 'ak-next':S.akDay=akDaySel()+1;S.akSel=null;S.akPick=[];akNoKeep=1;render();break;
+    case 'ak-today':S.akDay=TODAY;S.akSel=null;S.akPick=[];akNoKeep=1;render();break;
+    case 'ak-sel':S.akSel=d.k;render();var e=$('.akdet');if(e&&e.scrollIntoView)e.scrollIntoView({block:'nearest'});break;
+    case 'ak-seat':{var i=S.akPick.indexOf(d.s);if(i>=0)S.akPick.splice(i,1);else S.akPick.push(d.s);if(el){el.classList.toggle('pick');el.classList.toggle('free')}var b=$('#ak-bookbtn');if(b)b.textContent='Pesan '+(S.akPick.length||'')+' kursi';break}
+    case 'ak-book':akBook();break;
+    case 'ak-cancel':akCancel(d.id);break;
+    case 'ak-csv':akCsv();break;
+    case 'ak-agent-add':{var nm=akVal('#ak-agn');if(!nm){toast('Isi nama agen.',true);break}A.agents.push({id:'a'+Date.now().toString(36),name:nm,loc:'',side:akVal('#ak-ags')||'B',comm:+akVal('#ak-agc')||0});akSave();break}
+    case 'ak-cargo-add':{var dk=akVal('#ak-cgd'),ds=akVal('#ak-cgt'),fe=+akVal('#ak-cgf')||0;if(!dk||!ds){toast('Pilih keberangkatan dan isi isi paket.',true);break}A.cargo.push({id:'g'+Date.now().toString(36),dep:dk,desc:ds,fee:fe,crew:akVal('#ak-cgc'),ts:Date.now()});toast('Paket dicatat dan masuk laporan.');akSave();break}
+    case 'ak-cargo-del':A.cargo=A.cargo.filter(function(g){return g.id!==d.id});akSave();break;
+    case 'div':S.div=d.v==='akap'?'akap':'wisata';lsSet('div',S.div);if(AK_TABS.indexOf(S.tab)>=0&&S.div==='wisata')location.hash='#jadwal';else if(WS_TABS.indexOf(S.tab)>=0&&S.div==='akap')location.hash='#akap';else render();break;
+  }
+}
+document.addEventListener('change',function(ev){
+  var t=ev.target,A;if(!t)return;
+  if(t.id==='ak-day'){if(t.value){S.akDay=toDay(t.value);S.akSel=null;S.akPick=[];akNoKeep=1;render()}return}
+  if(t.id==='ak-dep'){S.akSel=t.value;S.akPick=[];akNoKeep=1;render();return}
+  if(t.id==='akpy'){S.akY=+t.value;render();return}
+  if(t.id==='akpm'){S.akM=+t.value;render();return}
+  if(t.id==='finscope'){S.finScope=t.value;return}
+  var f=t.dataset&&t.dataset.akf;if(!f)return;
+  A=AK();var p=t.dataset.p,v=t.type==='checkbox'?t.checked:(t.type==='number'?Math.max(0,+t.value||0):t.value);
+  if(f==='u'){var u=akUnit(t.dataset.c);if(!u)return;if(/^crew\d$/.test(p))u.crew[+p.slice(4)]=String(v).trim();else{u[p]=v;if(p==='status'&&v==='servis'){u.from=toStr(TODAY)}if(p==='status'&&v==='aktif'){u.from='';u.until=''}}}
+  else if(f==='ag'){var a=A.agents.find(function(x){return x.id===t.dataset.id});if(!a)return;a[p]=v}
+  else if(f==='fx'){var x=A.fixed.find(function(z){return z.id===t.dataset.id});if(!x)return;x[p]=v;x.seed=0}
+  else if(f==='s'){if(p.indexOf('c.')===0)A.c[p.slice(2)]=v;else A[p]=v}
+  akSave();
+});
+/* isian form tiket tidak hilang saat tampilan dimuat ulang otomatis */
+var AK_FF=['#ak-name','#ak-phone','#ak-from','#ak-to','#ak-agent','#ak-pay'];
+function akKeep(){if(akNoKeep){akNoKeep=0;return null}if(S.tab!=='tiket')return null;var o={},any=false;AK_FF.forEach(function(k){var e=$(k);if(e){o[k]=e.value;any=true}});return any?o:null}
+function akRestore(o){if(!o)return;AK_FF.forEach(function(k){var e=$(k);if(e&&o[k]!=null)e.value=o[k]})}
+setInterval(function(){if(S.tab==='akap'&&!document.hidden&&S.ak)render()},30000);
+/* ---- obrolan Grup Crew: laporan perjalanan AKAP ---- */
+function akCrewCh(u,i){return {n:u.crew[i]||('Crew '+u.code),bus:u.code,col:CH_COL[(hash(u.code)+i*3)%CH_COL.length]}}
+function akChat(add,now){
+  var d0=dayOf(now),dd,A=AK();
+  for(dd=d0-3;dd<=d0;dd++)akDeps(dd).forEach(function(d){
+    if(!d.u||d.ms-36e5>now)return;
+    var rg=mkRng('akch|'+d.key),cr=[0,1,2].map(function(i){return akCrewCh(d.unit,i)}),who=function(){return cr[rg()<.4?0:rg()<.5?1:2]},s=akSum(d),
+        org=d.dir==='T'?'Cilacap':'Jakarta',dst=d.dir==='T'?'Jakarta':'Cilacap',dur=(+A.dur||8)*36e5,rest=(+A.rest||40)*6e4,mv=dur-rest,pP=d.dir==='T'?AK_PEJ/AK_KM:1-AK_PEJ/AK_KM,tP=d.ms+pP*mv;
+    add('ak|'+d.key+'|a',d.ms-25*6e4,who(),'Unit '+d.u+' siap di '+org+', penumpang mulai naik 🚌');
+    add('ak|'+d.key+'|b',d.ms+2*6e4,who(),'Berangkat dari '+org+' jam '+d.time+', penumpang '+s.pax+' orang dari 48 kursi. Bismillah 🙏'+(d.extra?' (unit tambahan musim Lebaran)':''));
+    add('ak|'+d.key+'|c',tP,who(),'Sudah sampai Pejagan, istirahat di Resto Pangeran '+A.rest+' menit ☕ Penumpang turun makan dan toilet');
+    add('ak|'+d.key+'|d',tP+rest,who(),'Lanjut jalan dari Pejagan menuju '+dst+', semua penumpang lengkap');
+    add('ak|'+d.key+'|e',d.end,who(),'Alhamdulillah sudah sampai '+dst+'. Penumpang turun semua, unit '+d.u+' parkir aman ✅');
+  });
+}
 /* ---------- Grup Crew (simulasi grup WhatsApp: crew bus dan kamu) ----------
    Semua pesan crew dibuat dari jadwal order yang ada (otomatis, deterministik) ditambah obrolan iseng harian.
    Pesan yang kamu ketik disimpan di settings row 'chat'. Crew membalas otomatis (simulasi). */
@@ -2827,6 +3236,7 @@ function chBuild(now){
     if(st.backStart)add('e|'+id+'|bk',st.backStart+jit(),who(),aPick(rg,['Rombongan sudah naik lagi, jalan pulang ya bos 🙏','Mulai balik dari '+dst+', estimasi sampai garasi jam '+chHM(w.ret),'Pulang! Semua penumpang lengkap, tidak ada yang ketinggalan 😂']));
     add('e|'+id+'|rt',w.ret+jit(),who(),aPick(rg,['Alhamdulillah sudah sampai garasi, unit masuk. Besok dicuci ya bos 🙏','Trip '+pc+' selesai, '+t.buses[0]+' sudah parkir aman ✅','Sampai garasi dengan selamat. Mohon istirahat dulu bos, capek 😴']));
   });
+  akChat(add,now);
   var d,k;
   for(d=Math.floor(now/DAY)-4;d<=Math.floor(now/DAY)+1;d++){
     var base=dayMs(dayOf(d*DAY+12*36e5)),rr=mkRng('chat|'+base),n=3+Math.floor(rr()*3),bs=S.buses.slice(),sd=shutHit(dayOf(base),dayOf(base));
@@ -3525,7 +3935,8 @@ document.addEventListener('click',function(ev){
     case 'del-bus':S.confirmKey='bus:'+d.code;render();break;
     case 'del-bus-yes':deleteBus(d.code);break;
     case 'chat-send':chSend();break;
-    case 'fin-pdf':finPdf();break;
+    case 'div':case 'ak-prev':case 'ak-next':case 'ak-today':case 'ak-sel':case 'ak-seat':case 'ak-book':case 'ak-cancel':case 'ak-csv':case 'ak-agent-add':case 'ak-cargo-add':case 'ak-cargo-del':akAct(act,d,el);break;
+    case 'fin-pdf':finPdf(S.finScope||'b');break;
     case 'fin-csv':case 'fin-addfix':case 'fin-delfix':case 'fin-addtx':case 'fin-deltx':case 'fin-saveset':finAct(act,d);break;
     case 'nf-filter':S.nfFilter=el.dataset.v;render();break;
     case 'seed-fleet':seedFleet();break;
@@ -3584,7 +3995,7 @@ document.addEventListener('change',function(ev){
   render();
 });
 document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&OPEN)closeSheet()});
-function syncTab(){var h=location.hash.replace('#','');if(h==='armada'){location.hash='#tracking';return}S.tab=['jadwal','tracking','order','pendapatan','keuangan','grup','notifikasi'].indexOf(h)>=0?h:'jadwal';S.confirmKey=null;render()}
+function syncTab(){var h=location.hash.replace('#','');if(h==='armada'){location.hash='#tracking';return}if(!h&&S.div==='akap')h='akap';S.tab=WS_TABS.concat(AK_TABS,['pendapatan','keuangan','grup','notifikasi']).indexOf(h)>=0?h:'jadwal';if(AK_TABS.indexOf(S.tab)>=0)S.div='akap';else if(WS_TABS.indexOf(S.tab)>=0)S.div='wisata';lsSet('div',S.div);S.confirmKey=null;render()}
 window.addEventListener('hashchange',syncTab);
 
 /* ---------- boot ---------- */
@@ -3599,7 +4010,7 @@ async function boot(){
   store.start(
     function(b){S.buses=b.sort(busSort);S.ready.buses=true;clearTimeout(slow);S.slow=false;onData()},
     function(t){S.trips=t;S.ready.trips=true;onData()},
-    function(rows){var nr=rows.find(function(r){return r.id==='notif'});if(nr){S.notif=nr.items||[];S.notifKnown=nr.known||null}var cr0=rows.find(function(r){return r.id==='chat'});if(cr0&&Array.isArray(cr0.items))S.chat=cr0.items;var fr=rows.find(function(r){return r.id==='fin'});if(fr){var fo=Object.assign({},fr);delete fo.id;S.fin=Object.assign(finDefault(),fo)}var a=rows.find(function(r){return r.id==='app'});S.setLoaded=true;if(a){S.settings=Object.assign({},a);delete S.settings.id;if(+a.gapHours>=0)S.gap=+a.gapHours}onData()},
+    function(rows){var nr=rows.find(function(r){return r.id==='notif'});if(nr){S.notif=nr.items||[];S.notifKnown=nr.known||null}var akr=rows.find(function(r){return r.id==='akap'});if(akr){var ako=Object.assign({},akr);delete ako.id;S.ak=akMerge(ako);S.akRev++}var cr0=rows.find(function(r){return r.id==='chat'});if(cr0&&Array.isArray(cr0.items))S.chat=cr0.items;var fr=rows.find(function(r){return r.id==='fin'});if(fr){var fo=Object.assign({},fr);delete fo.id;S.fin=Object.assign(finDefault(),fo)}var a=rows.find(function(r){return r.id==='app'});S.setLoaded=true;if(a){S.settings=Object.assign({},a);delete S.settings.id;if(+a.gapHours>=0)S.gap=+a.gapHours}onData()},
     function(e){S.error=e;render()}
   );
   render();
