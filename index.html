@@ -312,6 +312,7 @@ button.code{cursor:pointer;font:inherit}
 .m-bus .ring{rx:6}
 .revgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
 .revc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:2px}
+.ch-typing{font-style:italic;opacity:.65;font-size:.85em}
 .revc span{font-size:12px;color:var(--muted)}
 .fin-add{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px}.fin-add input,.fin-add select{padding:7px 9px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:inherit;font:inherit;min-width:0;max-width:100%}.fin-add input[type=number]{width:130px}.fin-add input[type=checkbox]{width:auto}.rtbl input.fin-amt{width:120px}
 .revc b{font-size:18px;font-variant-numeric:tabular-nums}
@@ -2791,10 +2792,12 @@ var NF_WHY=['rombongan terlambat kembali dari lokasi wisata','antrean keluar are
 var CH_DRV=['Darto','Slamet','Sugeng','Rohmat','Supri','Tarno','Kasdi','Wahyu','Teguh','Joko','Parno','Sunarto','Yanto','Mulyadi','Karyo'],
     CH_KER=['Dedi','Rizki','Ujang','Fajar','Bayu','Eko','Iwan','Anto','Agus','Heri','Doni','Rudi','Ade','Wawan','Bagas'],
     CH_COL=['#1f8f6b','#b4531c','#6f42c1','#c2255c','#1971c2','#a6740a','#0b7285','#9c36b5','#d9480f','#2b8a3e'];
+function chTitle(x){return String(x||'').trim().toLowerCase().replace(/(^|[\s.'-])([a-z])/g,function(m,a,b){return a+b.toUpperCase()})}
 function chCrew(code){
-  var i=Math.max(0,S.buses.findIndex(function(b){return b.code===code})),h=hash(code);
-  return [{n:'Pak '+CH_DRV[i%CH_DRV.length],bus:code,col:CH_COL[(i*3+h)%CH_COL.length],r:'sopir'},{n:'Mas '+CH_KER[(i*4+3)%CH_KER.length],bus:code,col:CH_COL[(i*7+h+4)%CH_COL.length],r:'kernet'}];
+  var bb=busByCode(code),i=Math.max(0,S.buses.findIndex(function(b){return b.code===code})),h=hash(code),d=chTitle(bb&&bb.driver),k=chTitle(bb&&bb.codriver);
+  return [{n:d||'Pak '+CH_DRV[i%CH_DRV.length],bus:code,col:CH_COL[(i*3+h)%CH_COL.length],r:'sopir'},{n:k||'Mas '+CH_KER[(i*4+3)%CH_KER.length],bus:code,col:CH_COL[(i*7+h+4)%CH_COL.length],r:'kernet'}];
 }
+var CH_PEND={};
 function chHM(ms){var d=new Date(ms);return pad(d.getHours())+':'+pad(d.getMinutes())}
 function chShort(c){return String(c||'').replace(/\s*\(.*?\)\s*/g,' ').replace(/^(Mudik (Gratis|Bareng) )/,'').trim().slice(0,38)}
 var CH_CHAT=['Pagi semua, kopi sudah siap belum? ☕','Solar naik lagi ya, dompet nangis 😅','Ada yang bawa charger cadangan? HP saya sekarat 🔋','Tadi ada penumpang nanya "ini bis kecepatan berapa pak?" Saya jawab: secukupnya 😂','Yang kemarin ninggalin sandal di bagasi, silakan diambil di garasi ya 🩴','Warung Mbok Yem di Wangon masih buka, enak soto ayamnya','Info: jalur Ajibarang ramai, mending lewat Wangon','Ban serep sudah dicek, aman bos','Saya baru ganti lagu playlist: dangdut koplo jilid 5 😎','Alhamdulillah hari ini lancar, tidak ada razia','Semoga besok cuaca cerah, kemarin hujan deras terus','Mas, jangan lupa isi air radiator ya','Ada yang tau bengkel las yang buka hari Minggu?','Selamat siang bos, unit aman dan bersih ✅','Kernet saya tadi ketiduran di kursi belakang, ketahuan penumpang 😂','Sore bos, baru selesai cuci bis, kinclong 🚌✨','Rombongan hari ini rame banget, nyanyi sepanjang jalan 🎤','Ada yang mau titip oleh-oleh? Saya mampir Wonosobo','Tol lancar, anginnya enak, tinggal ngantuknya yang susah dilawan','Mas, nanti malam siapa yang jaga pos garasi?','Hari ini makan siang pakai nasi padang, siapa yang mau ikut?','Maaf bos, tadi sinyal hilang di tanjakan','Pak, kalau ada order dadakan kabari ya, saya siap','Terima kasih bos, bonusnya sudah masuk 🙏','Wah, ada yang kena macet di Nagrek? Share info dong','Besok pagi saya mulai jam 4 ya, tolong dibangunin 😴','Saya baru lihat kucing tidur di bawah bis, hampir kelindas, Alhamdulillah selamat 🐈','Doakan lancar ya semua, besok jalur panjang','Bos, spion kiri tadi kesenggol ranting, cuma lecet tipis','Mas, bensin eh solar, jangan lupa struknya ya']
@@ -2835,6 +2838,8 @@ function chBuild(now){
   /* pesan kamu + balasan crew */
   (S.chat||[]).forEach(function(m){
     if(m.ts>from&&m.ts<=now)out.push({id:m.id,ts:m.ts,me:1,text:m.text});
+    if(m.ai&&m.ai.length){m.ai.forEach(function(a,i){var cc=chCrew(a.bus)[a.r==='kernet'?1:0];if(a.ts<=now)out.push({id:'r|'+m.id+'|'+i,ts:a.ts,n:cc.n,bus:cc.bus,col:cc.col,text:a.text,ai:1})});return}
+    if(CH_PEND[m.id])return;
     var rr=mkRng('rep|'+m.id),nr=1+Math.floor(rr()*3),q=/\?/.test(m.text),low=m.text.toLowerCase(),i,used={};
     for(i=0;i<nr;i++){
       var b=aPick(rr,S.buses);if(!b||used[b.code])continue;used[b.code]=1;
@@ -2854,6 +2859,7 @@ function chList(now){
     if(m.me){h+='<div class="ch-row me"><div class="ch-b me">'+esc(m.text)+'<span class="ch-t">'+chHM(m.ts)+' ✓✓</span></div></div>';prevN='';return}
     h+='<div class="ch-row"><div class="ch-b">'+(prevN!==m.n?'<b style="color:'+m.col+'">'+esc(m.n)+'</b> <span class="ch-bus">'+esc(m.bus)+'</span><br>':'')+esc(m.text)+'<span class="ch-t">'+chHM(m.ts)+'</span></div></div>';prevN=m.n;
   });
+  if(Object.keys(CH_PEND).length)h+='<div class="ch-row"><div class="ch-b"><span class="ch-typing">crew sedang mengetik...</span></div></div>';
   return h;
 }
 function chSeen(){var v=+lsGet('chat-seen');return v>0?v:0}
@@ -2864,7 +2870,7 @@ function viewChat(){
   var nm=[],b;S.buses.slice(0,6).forEach(function(x){nm.push(chCrew(x.code)[0].n)});
   setTimeout(function(){chScroll(true);var i=$('#ch-in');if(i&&window.matchMedia&&matchMedia('(pointer:fine)').matches)i.focus()},0);
   return '<div class="ch"><div class="ch-head"><div class="ch-ava">🚌</div><div><b>Crew Arsyi Trans</b><br><span class="ch-sub">'+(S.buses.length*2+1)+' anggota: Kamu, '+esc(nm.join(', '))+(S.buses.length>3?', ...':'')+'</span></div></div><div class="ch-list" id="ch-list">'+chList(Date.now())+'</div>'
-   +'<div class="ch-in"><input id="ch-in" type="text" maxlength="400" placeholder="Ketik pesan ke crew..." autocomplete="off" aria-label="Pesan"><button type="button" class="btn primary" data-act="chat-send">Kirim</button></div><p class="hint" style="margin:6px 2px 0">Obrolan ini simulasi: pesan crew dibuat otomatis dari jadwal order dan obrolan iseng, bukan pesan dari crew asli.</p></div>';
+   +'<div class="ch-in"><input id="ch-in" type="text" maxlength="400" placeholder="Ketik pesan ke crew..." autocomplete="off" aria-label="Pesan"><button type="button" class="btn primary" data-act="chat-send">Kirim</button></div><p class="hint" style="margin:6px 2px 0">Obrolan ini simulasi: nama crew diambil dari data tiap unit, tapi pesannya dibuat otomatis (dari jadwal order dan obrolan iseng), dan balasan atas pertanyaanmu ditulis AI, bukan crew asli.</p></div>';
 }
 function chSend(){
   var el=$('#ch-in'),tx=el&&el.value.trim();if(!tx)return;
@@ -2872,6 +2878,30 @@ function chSend(){
   S.chat=(S.chat||[]).concat([m]).slice(-100);el.value='';
   var l=$('#ch-list');if(l){l.innerHTML=chList(Date.now());chScroll(true)}
   store.put('settings','chat',{items:S.chat}).catch(function(){});
+  chAsk(m);
+}
+function chCtx(){
+  var now=Date.now(),t0=toDay(isoOf(now)),o=['Sekarang: '+new Date(now).toLocaleString('id-ID',{dateStyle:'full',timeStyle:'short'})+' (WIB)','Armada:'];
+  S.buses.forEach(function(b){o.push('- '+b.code+' | '+(TYPE[b.type]||b.type)+' | '+(isPrem(b)?'Premium':'Standar')+' | '+(b.body||'')+' | status '+(b.status||'siap')+' | sopir '+(b.driver||'-')+' | kernet '+(b.codriver||'-'))});
+  o.push('Order (14 hari lalu sampai 21 hari ke depan):');
+  var n=0;S.trips.filter(function(t){return !t.example&&t.start&&t.status!=='batal'&&toDay(t.end||t.start)>=t0-14&&toDay(t.start)<=t0+21}).sort(function(a,b){return a.start<b.start?-1:1}).slice(0,45).forEach(function(t){o.push('- '+t.start+(t.end&&t.end!==t.start?' s/d '+t.end:'')+' '+(t.startTime||'')+' | '+clip2(t.customer,40)+' | '+(t.pickup||'-')+' ke '+(t.destination||'-')+' | unit '+((t.buses||[]).join(',')||'belum ada')+' | '+(t.status||''))});
+  return o.join('\n');
+}
+function clip2(s,n){return String(s==null?'':s).slice(0,n)}
+function chAsk(m){
+  if(!window.fetch||location.protocol==='file:')return;
+  var crew=[];S.buses.slice(0,20).forEach(function(b){var c=chCrew(b.code);crew.push({n:c[0].n,bus:b.code,r:'sopir'},{n:c[1].n,bus:b.code,r:'kernet'})});
+  var hist=chBuild(Date.now()).filter(function(x){return x.id!==m.id}).slice(-12).map(function(x){return x.me?{w:'Bos',t:x.text}:{w:x.n+' ('+x.bus+')',t:x.text}});
+  CH_PEND[m.id]=1;var l0=$('#ch-list');if(l0){l0.innerHTML=chList(Date.now());chScroll(true)}
+  var done=function(){delete CH_PEND[m.id];var l=$('#ch-list');if(l){l.innerHTML=chList(Date.now());chScroll(true)}};
+  fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:m.text,crew:crew,hist:hist,ctx:chCtx()})})
+   .then(function(r){return r.ok?r.json():Promise.reject(new Error('http'))})
+   .then(function(j){
+     var ts=Date.now(),ai=((j&&j.replies)||[]).map(function(r){var c=crew[r.k];return c&&r.text?{bus:c.bus,r:c.r,text:String(r.text).slice(0,900),ts:ts}:null}).filter(Boolean);
+     if(!ai.length)throw new Error('empty');
+     var mm=(S.chat||[]).find(function(x){return x.id===m.id});if(!mm)return;
+     mm.ai=ai;return store.put('settings','chat',{items:S.chat});
+   }).catch(function(){}).then(done);
 }
 document.addEventListener('keydown',function(ev){if(ev.target&&ev.target.id==='ch-in'&&ev.key==='Enter'){ev.preventDefault();chSend()}});
 setInterval(function(){if(!S.buses.length)return;if(S.tab==='grup'){var l=$('#ch-list');if(l){var near=l.scrollHeight-l.scrollTop-l.clientHeight<140;l.innerHTML=chList(Date.now());if(near)l.scrollTop=l.scrollHeight;lsSet('chat-seen',String(Date.now()))}}else chBadge()},30000);
